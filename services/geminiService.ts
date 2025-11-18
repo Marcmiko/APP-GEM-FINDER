@@ -4,7 +4,7 @@ import { Token, GroundingChunk } from '../types';
 const getAiClient = () => {
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
-        throw new Error("API key is not configured. The application cannot connect to the AI service.");
+        throw new Error("AI API Key Not Found. Please add your API_KEY as an environment variable in your Vercel deployment settings to connect to the AI service.");
     }
     return new GoogleGenAI({ apiKey });
 };
@@ -159,7 +159,7 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
     **Step 2: GROUND TRUTH VERIFICATION (The Proof)**
     - For every potential candidate, you MUST find its canonical URL on Basescan (\`https://basescan.org/token/[CONTRACT_ADDRESS]\`). This is non-negotiable.
     - The \`address\`, \`name\`, and \`symbol\` in your final JSON output MUST be extracted directly from this verified Basescan source.
-    - Find a high-quality icon URL. A good source is often the token's page on DexScreener (e.g., \`https://dd.dexscreener.com/ds-data/tokens/base/[CONTRACT_ADDRESS].png\`). If a reliable icon cannot be found, set the \`iconUrl\` field to \`null\`.
+    - **CRITICAL: You MUST find a high-quality icon URL for the token.** This is a primary requirement for the user experience. Use DexScreener as your primary source (e.g., \`https://dd.dexscreener.com/ds-data/tokens/base/[CONTRACT_ADDRESS].png\`). If, after extensive searching, a reliable icon cannot be found, you may set the \`iconUrl\` field to \`null\`, but this should be a last resort.
 
     **Step 3: ON-CHAIN FORENSICS (The Security Audit)**
     - **Liquidity Health:** Is there at least $20,000 USD in liquidity? Is it verifiably locked? Search for proof of lock-up on platforms like Unicrypt or Team.Finance.

@@ -57,14 +57,11 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
             <NavItem page="saved-projects" activePage={activePage} setActivePage={setActivePage} badgeCount={savedCount}>Saved</NavItem>
           </div>
           
-          <a
-            href="https://ai.google.dev"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:block text-sm font-medium text-slate-400 hover:text-white transition-colors"
+          <span
+            className="hidden sm:block text-sm font-medium text-slate-400"
           >
-            Powered by Gemini
-          </a>
+            Powered by Marc Minkowski
+          </span>
         </div>
       </div>
     </header>
