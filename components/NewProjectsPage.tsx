@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
-import { findNewProjects } from '../services/geminiService';
-import { Token, GroundingChunk, ScanResult } from '../types';
+
+import React from 'react';
+import { Token } from '../types';
 import TokenCard from './TokenCard';
 import LoadingState from './LoadingState';
 import HistoryAccordion from './HistoryAccordion';
+import { useScanContext } from '../context/ScanContext';
 
 const SearchIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -24,37 +25,12 @@ interface NewProjectsPageProps {
 }
 
 const NewProjectsPage: React.FC<NewProjectsPageProps> = ({ savedTokens, onSave, onUnsave }) => {
-    const [tokens, setTokens] = useState<Token[]>([]);
-    const [sources, setSources] = useState<GroundingChunk[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
-    const [hasScanned, setHasScanned] = useState<boolean>(false);
-    const [history, setHistory] = useState<ScanResult[]>([]);
-    const [scanTime, setScanTime] = useState<Date | null>(null);
+    const { newProjects, scanNewProjects } = useScanContext();
+    const { tokens, sources, isLoading, error, hasScanned, history } = newProjects;
 
-    const handleFetch = useCallback(async () => {
-        if (tokens.length > 0 && scanTime) {
-            setHistory(prev => [{ timestamp: scanTime, tokens, sources }, ...prev]);
-        }
-        
-        setIsLoading(true);
-        setError(null);
-        setTokens([]);
-        setSources([]);
-        setHasScanned(true);
-
-        try {
-            const { tokens: foundTokens, sources: foundSources } = await findNewProjects();
-            setTokens(foundTokens);
-            setSources(foundSources);
-            setScanTime(new Date());
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching new projects.');
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [tokens, sources, scanTime]);
+    const handleFetch = () => {
+        scanNewProjects(true);
+    };
 
     const renderContent = () => {
         if (isLoading) {
@@ -98,7 +74,7 @@ const NewProjectsPage: React.FC<NewProjectsPageProps> = ({ savedTokens, onSave, 
                     New <span className="bg-gradient-to-r from-green-400 to-cyan-500 text-transparent bg-clip-text">Project Listings</span>
                 </h1>
                 <p className="mt-4 text-lg md:text-xl text-slate-400">
-                    A feed of the latest tokens on Base with a minimum liquidity of $10,000. Factual, AI-driven analysis to kickstart your research.
+                    A feed of the latest tokens on Base with a minimum liquidity of $4,000. Factual, AI-driven analysis to kickstart your research.
                 </p>
                 <div className="mt-8">
                     <button

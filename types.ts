@@ -12,6 +12,13 @@ export interface TokenAnalysis {
   verdict: string;
 }
 
+export interface SocialSentiment {
+  positive: number;
+  negative: number;
+  neutral: number;
+  summary: string;
+}
+
 export interface Token {
   name: string;
   symbol: string;
@@ -26,6 +33,7 @@ export interface Token {
   gemScore: number;
   analysis: TokenAnalysis;
   technicalIndicators?: TechnicalIndicators;
+  socialSentiment?: SocialSentiment;
   websiteUrl?: string | null;
   xUrl?: string | null;
   coinMarketCapUrl?: string | null;

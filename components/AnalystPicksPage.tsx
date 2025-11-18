@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
-import { getAnalystPicks } from '../services/geminiService';
-import { Token, GroundingChunk, ScanResult } from '../types';
+
+import React from 'react';
+import { Token } from '../types';
 import TokenCard from './TokenCard';
 import LoadingState from './LoadingState';
 import HistoryAccordion from './HistoryAccordion';
+import { useScanContext } from '../context/ScanContext';
 
 const CrystalBallIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -26,37 +27,12 @@ interface AnalystPicksPageProps {
 }
 
 const AnalystPicksPage: React.FC<AnalystPicksPageProps> = ({ savedTokens, onSave, onUnsave }) => {
-    const [tokens, setTokens] = useState<Token[]>([]);
-    const [sources, setSources] = useState<GroundingChunk[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
-    const [hasScanned, setHasScanned] = useState<boolean>(false);
-    const [history, setHistory] = useState<ScanResult[]>([]);
-    const [scanTime, setScanTime] = useState<Date | null>(null);
+    const { analystPicks, scanAnalystPicks } = useScanContext();
+    const { tokens, sources, isLoading, error, hasScanned, history } = analystPicks;
 
-    const handleScan = useCallback(async () => {
-        if (tokens.length > 0 && scanTime) {
-            setHistory(prev => [{ timestamp: scanTime, tokens, sources }, ...prev]);
-        }
-
-        setIsLoading(true);
-        setError(null);
-        setTokens([]);
-        setSources([]);
-        setHasScanned(true);
-
-        try {
-            const { tokens: foundTokens, sources: foundSources } = await getAnalystPicks();
-            setTokens(foundTokens);
-            setSources(foundSources);
-            setScanTime(new Date());
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred while getting analyst picks.');
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [tokens, sources, scanTime]);
+    const handleScan = () => {
+        scanAnalystPicks(true);
+    };
 
     const renderContent = () => {
         if (isLoading) {

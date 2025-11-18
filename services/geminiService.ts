@@ -60,8 +60,11 @@ const validateAndCoerceToken = (data: any): Token | null => {
         return null; 
     }
     
-    // Fallback for address if missing (simulated for display if AI finds a gem but fails verification)
-    const address = data.address || `0x0000000000000000000000000000000000${Math.floor(Math.random()*10000)}`;
+    // STRICT MODE: Ensure address starts with 0x
+    let address = String(data.address || '');
+    if (!address.startsWith('0x')) {
+        address = 'Address not found';
+    }
 
     return {
         name: String(data.name || 'Unknown Token'),
@@ -85,6 +88,12 @@ const validateAndCoerceToken = (data: any): Token | null => {
             rsi: data.technicalIndicators?.rsi ? robustParseFloat(data.technicalIndicators.rsi) : null,
             macd: data.technicalIndicators?.macd ? String(data.technicalIndicators.macd) : null,
             movingAverages: data.technicalIndicators?.movingAverages ? String(data.technicalIndicators.movingAverages) : null,
+        },
+        socialSentiment: {
+            positive: data.socialSentiment?.positive ? robustParseFloat(data.socialSentiment.positive) : 50,
+            negative: data.socialSentiment?.negative ? robustParseFloat(data.socialSentiment.negative) : 25,
+            neutral: data.socialSentiment?.neutral ? robustParseFloat(data.socialSentiment.neutral) : 25,
+            summary: data.socialSentiment?.summary ? String(data.socialSentiment.summary) : "Neutral social activity.",
         },
         websiteUrl: data.websiteUrl ? String(data.websiteUrl) : null,
         xUrl: data.xUrl ? String(data.xUrl) : null,
@@ -116,9 +125,7 @@ const parseAIResponse = (response: any): { tokens: Token[]; sources: GroundingCh
     if (jsonMatch) {
         jsonText = jsonMatch[0];
     } else {
-        // Fallback: try to clean up markdown if regex didn't match a clear array
         jsonText = jsonText.replace(/```json/g, '').replace(/```/g, '').trim();
-        // Attempt to find the first [
         const firstBracket = jsonText.indexOf('[');
         const lastBracket = jsonText.lastIndexOf(']');
         if (firstBracket !== -1 && lastBracket !== -1) {
@@ -147,6 +154,37 @@ const parseAIResponse = (response: any): { tokens: Token[]; sources: GroundingCh
     }
 }
 
+// --- CACHING UTILS ---
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+const getFromCache = (key: string): { tokens: Token[]; sources: GroundingChunk[] } | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+        const cached = localStorage.getItem(key);
+        if (!cached) return null;
+        
+        const { timestamp, data } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_TTL_MS) {
+            return data;
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+};
+
+const saveToCache = (key: string, data: { tokens: Token[]; sources: GroundingChunk[] }) => {
+    if (typeof window === 'undefined') return;
+    try {
+        localStorage.setItem(key, JSON.stringify({
+            timestamp: Date.now(),
+            data
+        }));
+    } catch (e) {
+        // ignore storage errors
+    }
+};
+
 // --- RETRY LOGIC HELPER ---
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -164,14 +202,20 @@ const generateWithRetry = async (ai: any, params: any, retries = 3): Promise<any
                 await wait(delay);
                 continue;
             }
-            // If we ran out of retries or it's a different error, throw it
             throw error;
         }
     }
 };
 
 
-export const findGems = async (startDate?: string, endDate?: string): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+export const findGems = async (startDate?: string, endDate?: string, forceRefresh = false): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+  const cacheKey = `gem_finder_${startDate || 'all'}_${endDate || 'all'}`;
+  
+  if (!forceRefresh) {
+      const cached = getFromCache(cacheKey);
+      if (cached) return cached;
+  }
+
   try {
     const ai = getAiClient();
     
@@ -180,27 +224,27 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
 
     const prompt = `
     You are a specialized Crypto Hunter for Base chain.
-    **CRITICAL INSTRUCTION:** You MUST return a list of 3 to 6 tokens. It is FORBIDDEN to return an empty list.
-    **MANDATORY:** You MUST find the REAL contract address (0x...) for every token. Do not invent addresses.
+    
+    **STRICT REALITY CHECK:**
+    1. You MUST verify that every token you list ACTUALLY EXISTS on the Base blockchain.
+    2. You MUST find a REAL contract address starting with '0x'. 
+    3. **DO NOT HALLUCINATE.** If you cannot find specific new gems, fallback to known trending tokens on Base (like AERO, BRETT, DEGEN, TOSHI) but DO NOT invent fake names.
     
     **TASK:** Find active, trending tokens on Base.
     
     **SEARCH STRATEGY:**
-    1. Search for: "Base chain top gainers today", "DexScreener Base trending", "CoinGecko Base new coins", "Alchemy Base DEX list".
-    2. Look for tokens with high volume ($50k+).
-    3. Find official links: Website, Twitter (X), CoinMarketCap, CoinGecko.
-    
-    **FALLBACK (MANDATORY):** 
-    If you cannot verify specific "new gems", simply return the **Top Volume** or **Top Trending** tokens on Base right now. The user wants to see *something*.
-    
-    **ANALYSIS:**
-    - If data is missing (like exact liquidity), ESTIMATE it based on the token's rank or volume.
-    - **GemScore:** Be generous. If it has volume, give it a score > 60.
-    - **Verdict:** If volume is high, say "High Momentum".
+    1. Query: "Base chain top gainers today", "DexScreener Base trending", "CoinGecko Base new coins", "Alchemy Base DEX list".
+    2. Find official links: Website, Twitter (X), CoinMarketCap, CoinGecko.
+    3. Get Technicals: RSI, MACD (Estimate from chart trends if needed).
+    4. Get Sentiment: Search X (Twitter) for community sentiment.
+
+    **SCORING:**
+    - Calculate **GemScore** (0-100) based on: 40% Volume/Liquidity, 40% Social Hype (X/Twitter), 20% Security.
+    - If the token has high volume but low social presence, score lower.
 
     **JSON OUTPUT:**
     Return a JSON Array of token objects.
-    Include fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
+    Include fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis (summary, strengths, risks, verdict), technicalIndicators (rsi, macd, movingAverages), socialSentiment (positive, negative, neutral, summary), websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
     `;
 
     const response = await generateWithRetry(ai, {
@@ -211,7 +255,9 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
       },
     });
 
-    return parseAIResponse(response);
+    const result = parseAIResponse(response);
+    if (result.tokens.length > 0) saveToCache(cacheKey, result);
+    return result;
 
   } catch (error: any) {
     console.error("findGems error:", error);
@@ -222,29 +268,31 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
   }
 };
 
-export const findNewProjects = async (): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+export const findNewProjects = async (forceRefresh = false): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+  const cacheKey = 'new_projects';
+  
+  if (!forceRefresh) {
+      const cached = getFromCache(cacheKey);
+      if (cached) return cached;
+  }
+
   try {
     const ai = getAiClient();
     const prompt = `
     You are a "New Listing" scanner for Base.
-    **OBJECTIVE:** List 3-5 tokens that are either NEW or TRENDING on Base.
-    **CONSTRAINT:** You MUST return a JSON Array. Do NOT return an empty array.
-    **ADDRESS:** You MUST find the REAL contract address (0x...) for every token.
+    
+    **STRICT REALITY CHECK:**
+    1. **REAL TOKENS ONLY.** Verify existence on DexScreener Base or CoinGecko Base.
+    2. **NO FAKE ADDRESSES.** You must find the 0x contract address.
+    3. If you can't find brand new tokens, return the **Top Trending** tokens on Base instead. Better to show popular real tokens than fake new ones.
     
     **SEARCH STRATEGY:**
     1. Search "New Base chain tokens DexScreener", "Base trending coins Coingecko", "Alchemy Base DEX list".
-    2. Look for tokens listed recently (last 30 days).
-    3. Find official links: Website, Twitter (X), CoinMarketCap, CoinGecko.
+    2. **Traction Check:** Do they have an active Twitter (X)? If not, flag as High Risk.
     
-    **FALLBACK (CRITICAL):**
-    If you cannot find perfectly "new" tokens (last 24h), return the **Top Trending** tokens on Base instead.
-    Mark them as "Trending" in the analysis.
-    IT IS BETTER TO SHOW POPULAR TOKENS THAN NOTHING.
-    If creation date is unknown, use "Recently".
-
-    **OUTPUT:**
+    **JSON OUTPUT:**
     Return a JSON Array of token objects.
-    Include fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
+    Include fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, socialSentiment, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
     `;
 
     const response = await generateWithRetry(ai, {
@@ -255,7 +303,9 @@ export const findNewProjects = async (): Promise<{ tokens: Token[]; sources: Gro
       },
     });
 
-    return parseAIResponse(response);
+    const result = parseAIResponse(response);
+    if (result.tokens.length > 0) saveToCache(cacheKey, result);
+    return result;
 
   } catch (error: any) {
     console.error("findNewProjects error:", error);
@@ -266,27 +316,33 @@ export const findNewProjects = async (): Promise<{ tokens: Token[]; sources: Gro
   }
 };
 
-export const getAnalystPicks = async (): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+export const getAnalystPicks = async (forceRefresh = false): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+  const cacheKey = 'analyst_picks';
+  
+  if (!forceRefresh) {
+      const cached = getFromCache(cacheKey);
+      if (cached) return cached;
+  }
+
   try {
     const ai = getAiClient();
     const prompt = `
     You are a Degen Analyst.
+    
+    **STRICT REALITY CHECK:**
+    1. **REAL TOKENS ONLY.** Do not invent projects.
+    2. **VALIDATE:** Check if key KOLs (Key Opinion Leaders) are talking about them on X.
+    
     **TASK:** Provide 3 "High Conviction" plays on Base.
-    **RULE:** You MUST pick 3 tokens. It is FORBIDDEN to return an empty list.
-    **ADDRESS:** You MUST find the REAL contract address (0x...) for every token.
     
     **STRATEGY:**
     - Look for "Narratives" (AI, Memes, RWA).
-    - If technicals are unclear, base the "Conviction Score" on Volume and Community mentions.
-    - Find official links: Website, Twitter (X), CoinMarketCap, CoinGecko.
-    - **Verdict:** Be decisive. "Buy the dip" or "Breakout Watch".
+    - **Conviction Score:** Based on Narrative Strength + KOL Validation.
+    - **Verdict:** "Buy the dip", "Breakout Watch", "Accumulate".
     
-    **FALLBACK:**
-    If you are unsure, pick the top 3 highest volume tokens on Base (like BRETT, DEGEN, TOSHI, AERO) and analyze their current chart setup.
-
-    **OUTPUT:**
-    JSON Array only.
-    Include fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
+    **JSON OUTPUT:**
+    Return a JSON Array of token objects.
+    Include fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, convictionScore, analysis, technicalIndicators, socialSentiment, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
     `;
 
     const response = await generateWithRetry(ai, {
@@ -297,7 +353,9 @@ export const getAnalystPicks = async (): Promise<{ tokens: Token[]; sources: Gro
       },
     });
 
-    return parseAIResponse(response);
+    const result = parseAIResponse(response);
+    if (result.tokens.length > 0) saveToCache(cacheKey, result);
+    return result;
 
   } catch (error: any) {
     console.error("getAnalystPicks error:", error);
@@ -308,28 +366,33 @@ export const getAnalystPicks = async (): Promise<{ tokens: Token[]; sources: Gro
   }
 };
 
-export const findSocialTrends = async (): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+    const cacheKey = 'social_trends';
+  
+    if (!forceRefresh) {
+        const cached = getFromCache(cacheKey);
+        if (cached) return cached;
+    }
+
     try {
       const ai = getAiClient();
       const prompt = `
       You are a Social Media Trend Scanner.
-      **PROBLEM:** The user says "nothing found". 
-      **SOLUTION:** You MUST return 5 tokens that are POPULAR on Base right now.
-      **ADDRESS:** You MUST find the REAL contract address (0x...) for every token.
+      
+      **STRICT REALITY CHECK:**
+      1. **REAL DATA ONLY.** Ensure the token exists on Base.
+      2. **NO FAKES.** If you can't verify the contract, do not list it.
+      
+      **TASK:** Return 5 tokens that are POPULAR on Base right now based on X/Twitter.
       
       **SEARCH STRATEGY:**
       1. Search "Trending Base meme coins Twitter", "Base chain viral tokens".
       2. **FALLBACK:** If you can't find specific tweets, assume that **Top Trending on DexScreener Base** IS the social trend (because volume = attention).
-      3. Do NOT be afraid to list popular coins (BRETT, DEGEN, TOSHI, etc.) if they are trending *today*.
-      4. Find official links: Website, Twitter (X), CoinMarketCap, CoinGecko.
-  
-      **SCORING:**
-      - **Gem Score:** Based on HYPE. 
-      - **Analysis:** Mention "Social Sentiment" or "Community Strength" in the summary.
+      3. **Sentiment:** Analyze the "Vibe". Is it Euphoric? Fearful? Scammy?
       
-      **OUTPUT:**
-      JSON Array of Token objects.
-      Include fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
+      **JSON OUTPUT:**
+      Return a JSON Array of Token objects.
+      Include fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, socialSentiment (positive/negative/neutral), websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
       `;
   
       const response = await generateWithRetry(ai, {
@@ -340,7 +403,9 @@ export const findSocialTrends = async (): Promise<{ tokens: Token[]; sources: Gr
         },
       });
   
-      return parseAIResponse(response);
+      const result = parseAIResponse(response);
+      if (result.tokens.length > 0) saveToCache(cacheKey, result);
+      return result;
   
     } catch (error: any) {
       console.error("findSocialTrends error:", error);

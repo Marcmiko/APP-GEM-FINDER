@@ -283,18 +283,21 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
           {token.analysis?.summary || "No summary provided by AI."}
         </p>
 
-        <div 
-            onClick={handleCopyAddress}
-            className="mt-3 flex items-center justify-between bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 rounded px-3 py-2 cursor-pointer transition-colors group"
-            title="Click to copy contract address"
-        >
-             <div className="flex items-center space-x-2 overflow-hidden min-w-0">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex-shrink-0">Contract</span>
-                <span className="text-xs font-mono text-slate-400 group-hover:text-slate-200 truncate transition-colors">{token.address}</span>
-            </div>
-             <div className="pl-2 text-slate-500 group-hover:text-indigo-400 transition-colors flex-shrink-0">
-               {isCopied ? <CheckIcon className="w-4 h-4 text-green-400" /> : <CopyIcon className="w-4 h-4" />}
-            </div>
+        {/* CONTRACT ADDRESS SECTION */}
+        <div className="mt-3 relative">
+             <div className="flex items-center justify-between bg-slate-900/60 border border-slate-700/50 rounded-lg p-2">
+                <div className="flex flex-col min-w-0 flex-1 mr-2">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Contract Address (CA)</span>
+                    <code className="text-xs font-mono text-slate-300 truncate select-all">{token.address}</code>
+                </div>
+                <button 
+                    onClick={handleCopyAddress}
+                    className="flex items-center justify-center w-8 h-8 bg-slate-800 hover:bg-indigo-600 rounded-md transition-colors group flex-shrink-0 border border-slate-700"
+                    title="Copy Address"
+                >
+                    {isCopied ? <CheckIcon className="w-4 h-4 text-green-400" /> : <CopyIcon className="w-4 h-4 text-slate-400 group-hover:text-white" />}
+                </button>
+             </div>
         </div>
 
         <div className="mt-4 space-y-3">
