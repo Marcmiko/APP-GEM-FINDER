@@ -2,9 +2,12 @@ import { GoogleGenAI } from "@google/genai";
 import { Token, GroundingChunk } from '../types';
 
 const getAiClient = () => {
-    const apiKey = process.env.API_KEY;
+    // Robustly try to get the API key from standard process.env or Vite's import.meta.env
+    // Vercel/Vite requires variables to start with VITE_ to be exposed to the client bundle.
+    const apiKey = process.env.API_KEY || (import.meta as any).env?.VITE_API_KEY || (import.meta as any).env?.API_KEY;
+    
     if (!apiKey) {
-        throw new Error("AI API Key Not Found. Please add your API_KEY as an environment variable in your Vercel deployment settings to connect to the AI service.");
+        throw new Error("AI API Key Not Found.\n\nTROUBLESHOOTING:\n1. In Vercel Settings > Environment Variables, ensure you have added your key.\n2. Rename the variable to 'VITE_API_KEY' (Vite requires this prefix).\n3. CRITICAL: Go to Deployments and click 'Redeploy' for the changes to take effect.");
     }
     return new GoogleGenAI({ apiKey });
 };
