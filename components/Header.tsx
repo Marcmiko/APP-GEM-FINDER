@@ -60,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
           <span
             className="hidden sm:block text-sm font-medium text-slate-400"
           >
-            Powered by Marc Minkowski
+            Powered by Marcmiko
           </span>
         </div>
       </div>

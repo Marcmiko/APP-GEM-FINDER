@@ -147,7 +147,7 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
     }
 
     const prompt = `
-    You are an Elite On-chain Analyst and Crypto Anthropologist. Your mission is to unearth high-potential, fundamentally sound, and verifiable new tokens on the Base blockchain.
+    You are an Elite On-chain Analyst and Crypto Anthropologist specializing in the Base blockchain. Your mission is to unearth high-potential, fundamentally sound, and verifiable **NEW** tokens.
 
     **ZERO-TOLERANCE POLICY FOR HALLUCINATION:**
     Accuracy is your only metric for success. It is infinitely better to return an empty array \`[]\` than to return a single piece of fake or unverified information. A wrong contract address is a critical failure.
@@ -155,24 +155,25 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
     **MANDATORY MULTI-LAYERED VETTING PROTOCOL:**
     Every token must pass every step of this protocol. If it fails one, it is discarded.
 
-    **Step 1: SIGNAL DISCOVERY (The Hunt)**
-    - Scan DEXs (Aerodrome, Uniswap, PancakeSwap) and aggregators (DEXTools, DexScreener, Birdeye) for tokens ${dateFilterInstruction}
-    - Prioritize tokens exhibiting **early signs of strong momentum**: a rapidly increasing holder count, significant 24-hour volume spikes relative to their liquidity, and a growing wave of positive social media chatter.
+    **Step 1: SIGNAL DISCOVERY (The Hunt for Newness)**
+    - Focus your search on **newly listed pairs** on Base ${dateFilterInstruction}
+    - Use Google Search to simulate scanning "New Pairs" sections of DexScreener and DEXTools.
+    - Search queries to simulate: "Newest Base tokens DexScreener", "Top trending new Base tokens last 24 hours", "Base blockchain new listings Aerodrome".
+    - Prioritize tokens exhibiting **early signs of strong momentum**: a rapidly increasing holder count, significant 24-hour volume spikes relative to their liquidity, and a growing wave of positive social media chatter on X (Twitter) and Farcaster.
 
     **Step 2: GROUND TRUTH VERIFICATION (The Proof)**
     - For every potential candidate, you MUST find its canonical URL on Basescan (\`https://basescan.org/token/[CONTRACT_ADDRESS]\`). This is non-negotiable.
     - The \`address\`, \`name\`, and \`symbol\` in your final JSON output MUST be extracted directly from this verified Basescan source.
-    - **CRITICAL: You MUST find a high-quality icon URL for the token.** This is a primary requirement for the user experience. Use DexScreener as your primary source (e.g., \`https://dd.dexscreener.com/ds-data/tokens/base/[CONTRACT_ADDRESS].png\`). If, after extensive searching, a reliable icon cannot be found, you may set the \`iconUrl\` field to \`null\`, but this should be a last resort.
+    - **CRITICAL: You MUST find a high-quality icon URL for the token.** This is a primary requirement for the user experience. Use DexScreener as your primary source (e.g., \`https://dd.dexscreener.com/ds-data/tokens/base/[CONTRACT_ADDRESS].png\`). If, after extensive searching, a reliable icon cannot be found, you may set the \`iconUrl\` field to \`null\`.
 
     **Step 3: ON-CHAIN FORENSICS (The Security Audit)**
     - **Liquidity Health:** Is there at least $20,000 USD in liquidity? Is it verifiably locked? Search for proof of lock-up on platforms like Unicrypt or Team.Finance.
-    - **Contract Integrity:** Is contract ownership renounced? Use your search tools to check the contract address on honeypot detectors or security analysis platforms. Note any potential red flags like proxy functions or blacklist capabilities.
-    - **Wallet Distribution:** Analyze the top holders on Basescan. Are there multiple, non-exchange wallets holding >5% of the supply? A high concentration of tokens in a few private wallets is a major risk and must be noted in the analysis.
+    - **Contract Integrity:** Is contract ownership renounced? Use your search tools to check the contract address on honeypot detectors or security analysis platforms.
+    - **Wallet Distribution:** Analyze the top holders. Are there multiple, non-exchange wallets holding >5% of the supply?
 
     **Step 4: COMMUNITY & NARRATIVE ANALYSIS (The Vibe Check)**
-    - **Social Footprint:** Go beyond just finding an X/Twitter account. Is there a real, growing community? Search for official Telegram or Discord channels and assess the activity level and sentiment.
-    - **Sentiment Analysis:** Differentiate between organic hype and bot spam. Are real users asking intelligent questions, creating their own content, and having genuine discussions? This is a powerful bullish signal.
-    - **Narrative Strength:** Does the project have a compelling story, a unique meme, or a clear utility? What makes it stand out from the hundreds of other new tokens? This MUST be a key part of your analysis.
+    - **Social Footprint:** Go beyond just finding an X/Twitter account. Is there a real, growing community?
+    - **Narrative Strength:** Does the project have a compelling story, a unique meme, or a clear utility? What makes it stand out from the hundreds of other new tokens?
 
     **Step 5: FINAL SYNTHESIS & OUTPUT**
     - Before outputting, perform one final check: Does the URL \`https://basescan.org/token/{{address}}\` lead to the correct token?
@@ -200,8 +201,8 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
         "coinMarketCapUrl": null,
         "analysis": {
           "summary": "A brief, factual summary of the project's utility or meme.",
-          "strengths": "Strong on-chain health with locked liquidity and renounced ownership. Community on X and Telegram shows rapid organic growth and positive sentiment. Clear narrative that is easy to understand.",
-          "risks": "Top 5 wallets hold 15% of supply, which poses a risk. Project is still very new and dependent on maintaining momentum.",
+          "strengths": "Strong on-chain health with locked liquidity. Community on X shows rapid organic growth. Clear narrative.",
+          "risks": "Top 5 wallets hold 15% of supply. Project is still very new.",
           "verdict": "Strong Buy"
         }
       }
@@ -232,29 +233,31 @@ export const findNewProjects = async (): Promise<{ tokens: Token[]; sources: Gro
   try {
     const ai = getAiClient();
     const prompt = `
-    You are a meticulous On-chain Data Aggregator. Your task is to provide a clean, verified list of new, credible projects on the Base blockchain that meet a minimum threshold of legitimacy, intended for users to begin their own research.
+    You are a meticulous On-chain Data Aggregator specializing in "New Pairs" on the Base blockchain. Your task is to provide a clean, verified list of **FRESHLY LISTED** tokens.
 
-    **PRIMARY DIRECTIVE: DATA ACCURACY & STRICT FILTERING.**
-    Your goal is to be an objective filter, not a subjective analyst. All data must be verified. Projects that do not meet every single criterion below must be excluded.
+    **PRIMARY DIRECTIVE: MAXIMIZE DISCOVERY & VERIFY EXISTENCE.**
+    The user is reporting that no projects are being found, which is statistically impossible on an active chain like Base.
+    **You MUST dig deeper and relax strict financial thresholds to find *new* projects.**
 
-    **MANDATORY FILTERING CRITERIA:**
-    1.  **Launch Window:** The token contract must have been created within the **last 14 days**.
-    2.  **Liquidity Threshold:** The token MUST have a minimum of **$25,000 USD** in liquidity.
-    3.  **Holder Threshold:** The token MUST have a minimum of **150 unique wallet addresses** holding it.
-    4.  **Web Presence:** The project MUST have BOTH:
-        - A functional, professional-looking official website (\`websiteUrl\`). A single "coming soon" page is not sufficient.
-        - An active, official X (Twitter) account (\`xUrl\`).
+    **ADJUSTED FILTERING CRITERIA (RELAXED):**
+    1.  **Freshness:** Launched within the last **0 to 7 days**. Focus on "Just Listed" or "New Pairs".
+    2.  **Liquidity Threshold:** Minimum **$4,000 USD**. (Lowered to capture very early stage projects).
+    3.  **Holder Threshold:** Minimum **30 unique wallet addresses**. (Lowered).
+    4.  **Verification:** The contract address MUST be real and verified on Basescan. This is the only non-negotiable.
+    5.  **Socials:** Highly preferred, but if a token has >$5,000 volume and no website, it can still be listed as a "Degen Play" / "New Listing".
+
+    **SEARCH STRATEGY:**
+    - Use Google Search to find "New Pairs" lists on DexScreener Base and DEXTools Base.
+    - Search for "Base blockchain new listings last 24 hours", "Top trending new Base tokens today".
+    - Look for tokens that have actual trading volume.
 
     **DATA INTEGRITY PROTOCOL:**
-    - For every token that passes the filters, find its canonical Basescan URL (\`https://basescan.org/token/[CONTRACT_ADDRESS]\`). This is your source of truth for on-chain data.
-    - Verify that all provided URLs (\`websiteUrl\`, \`xUrl\`) are active, lead to the correct project, and are not broken links. If a valid link cannot be found for any required field, the project must be discarded.
-    - Extract all on-chain data points (\`liquidity\`, \`marketCap\`, \`holders\`, etc.) from reliable sources like DexScreener or the DEX itself, cross-referencing with Basescan.
-    - Find a high-quality \`iconUrl\`. If one is not available, set it to \`null\`.
+    - Find the canonical Basescan URL (\`https://basescan.org/token/[CONTRACT_ADDRESS]\`).
+    - **MANDATORY:** Find a high-quality \`iconUrl\`. Use DexScreener logic: \`https://dd.dexscreener.com/ds-data/tokens/base/[CONTRACT_ADDRESS].png\`.
 
     **OUTPUT FORMAT:**
     - Your final response MUST be ONLY a valid JSON array of token objects.
-    - If no tokens meet all the above criteria, return an empty array: \`[]\`.
-    - The analysis section should be neutral and factual.
+    - Return \`[]\` ONLY if there are absolutely no tokens found after a broad search.
 
     **JSON Object Structure Example:**
     \`\`\`json
@@ -265,20 +268,20 @@ export const findNewProjects = async (): Promise<{ tokens: Token[]; sources: Gro
         "address": "0xAnotherVerifiedContractAddress...",
         "iconUrl": "https://dd.dexscreener.com/ds-data/tokens/base/0xanothervierified....png",
         "creationDate": "2024-07-29",
-        "liquidity": 35000,
-        "volume24h": 50000,
-        "marketCap": 150000,
-        "holders": 210,
-        "isLiquidityLocked": true,
+        "liquidity": 5000,
+        "volume24h": 12000,
+        "marketCap": 50000,
+        "holders": 45,
+        "isLiquidityLocked": false,
         "isOwnershipRenounced": false,
         "gemScore": 0,
         "websiteUrl": "https://newcredibleproject.io",
         "xUrl": "https://twitter.com/newcredibleproject",
         "coinMarketCapUrl": null,
         "analysis": {
-          "summary": "A factual summary of this new project's stated mission based on its official website and documentation.",
-          "strengths": "N/A",
-          "risks": "N/A",
+          "summary": "A factual summary of this new project.",
+          "strengths": "Fresh listing, active volume.",
+          "risks": "Low liquidity, very new.",
           "verdict": "New Listing"
         }
       }
@@ -309,27 +312,27 @@ export const getAnalystPicks = async (): Promise<{ tokens: Token[]; sources: Gro
   try {
     const ai = getAiClient();
     const prompt = `
-    You are an Elite Crypto Narrative Spotter and High-Risk Speculator. You are a "degen's degen," but with a sharp, intuitive eye for what separates a potential 100x memecoin from a worthless rug pull. Your task is to find a few of these subjective, high-risk "Analyst's Picks" on the Base blockchain.
+    You are an Elite Crypto Narrative Spotter and High-Risk Speculator for the Base blockchain. You are a "degen's degen," searching for the next viral runner.
 
     **PRIMARY DIRECTIVE: ART, NOT SCIENCE. NARRATIVE IS EVERYTHING.**
-    Your goal is to identify tokens based on their story, meme potential, community vibe, and overall concept. On-chain metrics are secondary to your qualitative "gut feeling" about a project's potential to go viral.
-
-    **WHERE TO HUNT FOR ALPHA:**
-    - **Farcaster:** Scour channels like /base, /memecoins, and other alpha groups for nascent projects generating organic buzz. What are people genuinely laughing at or excited about?
-    - **X (Twitter):** Follow known Base alpha hunters and look at what *they're* looking at. What new projects are getting subtle engagement from influential accounts?
-    - **Dexscreener/DEXTools:** Look for brand new pairs with a flurry of activity, creative names/tickers, and unusually high social engagement (comments, reactions) for their age.
+    Your goal is to identify tokens based on their story, meme potential, community vibe, and overall concept. 
+    
+    **SEARCH STRATEGY (THE ALPHA HUNT):**
+    - Search for "trending memes on Base", "Base God narratives", "Brett derivatives", or unique new art projects.
+    - Scour search results for "Farcaster Base gems" or "Twitter Base alpha callers".
+    - Look for projects that are **new** (under 30 days old) but have explosive social engagement.
 
     **WHAT TO LOOK FOR (THE "IT" FACTOR):**
-    - **A+ Narrative:** Is the meme clever, timely, and viral? Is the utility concept unique and exciting? Does it have a "story" that's easy to tell and share on social media?
-    - **Effort & Aesthetics:** Does the website, art, and branding show high effort? In the memecoin world, aesthetics are a powerful signal of a dedicated team.
-    - **Authentic Community Vibe:** This is your most important signal. Is there a small but passionate group of early believers? Are they creating their own memes and content? Look for genuine, funny engagement, not just "LFG" or bot spam. An active, humorous dev in a public chat is a huge plus.
+    - **A+ Narrative:** Is the meme clever, timely, and viral? 
+    - **Effort & Aesthetics:** Does the website and branding show high effort?
+    - **Authentic Community Vibe:** Is there a passionate group of early believers?
 
     **ANALYSIS & OUTPUT MANDATE:**
-    - **Verification is still mandatory:** You must find a real, working contract address on Basescan. Do not invent projects.
-    - **Justify Your Conviction (\`analysis.strengths\`):** Be specific. Don't just say "good community." Say "The community on Farcaster is already creating high-quality memes, and the main dev is actively and humorously engaging with every reply, building a cult-like following."
-    - **Brutal Honesty (\`analysis.risks\`):** Be explicit. "This is a pure degen play with a 99% chance of going to zero. Liquidity is unlocked, ownership is not renounced, and the project's survival depends entirely on social momentum and hype."
-    - **\`convictionScore\`:** This is not a technical score. It's a measure of your personal gut feeling (1-100) in the narrative's power to overcome the obvious technical risks.
-    - Your goal is to find 1-3 *exceptional* opportunities. It is better to return an empty array \`[]\` than to recommend a mediocre project.
+    - **Verification is mandatory:** You must find a real, working contract address on Basescan.
+    - **MANDATORY:** Find a high-quality \`iconUrl\`. Use DexScreener logic.
+    - **Justify Your Conviction:** Be specific about why this meme works.
+    - **Brutal Honesty:** Explicitly state the risks.
+    - Your goal is to find 1-3 *exceptional* opportunities.
     - Your final response MUST be ONLY a valid JSON array of token objects.
 
     **JSON Object Structure Example:**
@@ -354,8 +357,8 @@ export const getAnalystPicks = async (): Promise<{ tokens: Token[]; sources: Gro
         "coinMarketCapUrl": null,
         "analysis": {
           "summary": "A memecoin based on the [explain the timely and clever concept].",
-          "strengths": "The meme is highly relevant to current crypto culture and the art style is unique and instantly shareable. The dev is very active on X, building a strong, humorous brand personality. Early engagement is 100% organic.",
-          "risks": "Pure gamble. Extremely new with almost no liquidity and an anonymous team. The contract has not been renounced. The token's value is based entirely on its ability to go viral.",
+          "strengths": "The meme is highly relevant to current crypto culture. Early engagement is 100% organic.",
+          "risks": "Pure gamble. Extremely new with almost no liquidity.",
           "verdict": "High-Risk Narrative Play"
         }
       }
