@@ -278,6 +278,20 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
           {token.analysis?.summary || "No summary provided by AI."}
         </p>
 
+        <div 
+            onClick={handleCopyAddress}
+            className="mt-3 flex items-center justify-between bg-slate-900/40 hover:bg-slate-900/60 border border-slate-700/50 rounded px-3 py-2 cursor-pointer transition-colors group"
+            title="Click to copy contract address"
+        >
+             <div className="flex items-center space-x-2 overflow-hidden min-w-0">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex-shrink-0">Contract</span>
+                <span className="text-xs font-mono text-slate-400 group-hover:text-slate-200 truncate transition-colors">{token.address}</span>
+            </div>
+             <div className="pl-2 text-slate-500 group-hover:text-indigo-400 transition-colors flex-shrink-0">
+               {isCopied ? <CheckIcon className="w-4 h-4 text-green-400" /> : <CopyIcon className="w-4 h-4" />}
+            </div>
+        </div>
+
         <div className="mt-4 space-y-3">
              <AnalysisSection 
                 title="Strengths (Bull Case)"
