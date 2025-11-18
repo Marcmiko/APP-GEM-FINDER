@@ -130,9 +130,19 @@ const parseAIResponse = (response: any): { tokens: Token[]; sources: GroundingCh
     }
 }
 
-export const findGems = async (): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+export const findGems = async (startDate?: string, endDate?: string): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
   try {
     const ai = getAiClient();
+    
+    let dateFilterInstruction = "launched within the **last 7 days**.";
+    if (startDate && endDate) {
+      dateFilterInstruction = `launched between **${startDate}** and **${endDate}**.`;
+    } else if (startDate) {
+      dateFilterInstruction = `launched on or after **${startDate}**.`;
+    } else if (endDate) {
+      dateFilterInstruction = `launched on or before **${endDate}**.`;
+    }
+
     const prompt = `
     You are an Elite On-chain Analyst and Crypto Anthropologist. Your mission is to unearth high-potential, fundamentally sound, and verifiable new tokens on the Base blockchain.
 
@@ -143,12 +153,13 @@ export const findGems = async (): Promise<{ tokens: Token[]; sources: GroundingC
     Every token must pass every step of this protocol. If it fails one, it is discarded.
 
     **Step 1: SIGNAL DISCOVERY (The Hunt)**
-    - Scan DEXs (Aerodrome, Uniswap, PancakeSwap) and aggregators (DEXTools, DexScreener, Birdeye) for tokens launched within the **last 7 days**.
+    - Scan DEXs (Aerodrome, Uniswap, PancakeSwap) and aggregators (DEXTools, DexScreener, Birdeye) for tokens ${dateFilterInstruction}
     - Prioritize tokens exhibiting **early signs of strong momentum**: a rapidly increasing holder count, significant 24-hour volume spikes relative to their liquidity, and a growing wave of positive social media chatter.
 
     **Step 2: GROUND TRUTH VERIFICATION (The Proof)**
     - For every potential candidate, you MUST find its canonical URL on Basescan (\`https://basescan.org/token/[CONTRACT_ADDRESS]\`). This is non-negotiable.
     - The \`address\`, \`name\`, and \`symbol\` in your final JSON output MUST be extracted directly from this verified Basescan source.
+    - Find a high-quality icon URL. A good source is often the token's page on DexScreener (e.g., \`https://dd.dexscreener.com/ds-data/tokens/base/[CONTRACT_ADDRESS].png\`). If a reliable icon cannot be found, set the \`iconUrl\` field to \`null\`.
 
     **Step 3: ON-CHAIN FORENSICS (The Security Audit)**
     - **Liquidity Health:** Is there at least $20,000 USD in liquidity? Is it verifiably locked? Search for proof of lock-up on platforms like Unicrypt or Team.Finance.
