@@ -3,35 +3,13 @@ import { GoogleGenAI } from "@google/genai";
 import { Token, GroundingChunk } from '../types';
 
 const getAiClient = () => {
-    let apiKey = '';
-
-    // 1. Try accessing process.env safely. 
-    // In some browser environments, accessing 'process' directly throws a ReferenceError if not polyfilled.
-    try {
-        if (typeof process !== 'undefined' && process.env) {
-            apiKey = process.env.API_KEY || '';
-        }
-    } catch (e) {
-        // process is not defined, ignore and proceed to next method
-    }
-
-    // 2. Try accessing Vite's import.meta.env safely.
-    if (!apiKey) {
-        try {
-            // Use type assertion to avoid TypeScript errors if types aren't fully set up
-            const meta = import.meta as any;
-            if (meta && meta.env) {
-                // Check both VITE_ prefixed (exposed to client) and standard keys
-                apiKey = meta.env.VITE_API_KEY || meta.env.API_KEY || '';
-            }
-        } catch (e) {
-            console.warn("Failed to access import.meta.env", e);
-        }
-    }
+    // Per guidelines, exclusively use process.env.API_KEY.
+    const apiKey = process.env.API_KEY;
     
     if (!apiKey) {
-        throw new Error("AI API Key Not Found.\n\nTROUBLESHOOTING:\n1. In Vercel Settings > Environment Variables, ensure you have added your key.\n2. Rename the variable to 'VITE_API_KEY' (Vite requires this prefix).\n3. CRITICAL: Go to Deployments and click 'Redeploy' for the changes to take effect.");
+        throw new Error("AI API Key is missing. Please ensure process.env.API_KEY is configured.");
     }
+    
     return new GoogleGenAI({ apiKey });
 };
 
@@ -172,6 +150,7 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
       - **RSI (14):** Try to find the value (0-100). If not found, estimate based on "Overbought" (>70) or "Oversold" (<30).
       - **MACD:** Signal (e.g., "Bullish Cross", "Bearish", "Neutral").
       - **Moving Averages:** Trend relative to MA (e.g., "Above MA50").
+    - **Scoring:** Calculate 'gemScore' (0-100) based on 40% Momentum, 30% Social Sentiment (Twitter/Farcaster hype), 30% Security.
 
     **DATA EXTRACTION:**
     - **Address:** Try to find the 0x address.
@@ -242,8 +221,9 @@ export const findNewProjects = async (): Promise<{ tokens: Token[]; sources: Gro
     - Liquidity < $4k: "High Risk / Degen"
     - Volume > $50k & Age < 3 days: "Snipe / Momentum"
 
-    **TECHNICALS:**
+    **TECHNIGALS:**
     - Attempt to find RSI (14) if chart data exists in search snippets.
+    - Calculate 'gemScore' based on early traction.
 
     **OUTPUT:**
     Return a JSON Array of valid token objects. Prioritize finding *something*.
@@ -278,8 +258,9 @@ export const getAnalystPicks = async (): Promise<{ tokens: Token[]; sources: Gro
     - Sources: Alchemy Base Dapps, CoinGecko Trending, DexScreener.
     
     **ANALYSIS:**
-    - **Conviction Score (0-100):** Based on hype + technical structure.
+    - **Conviction Score (0-100):** Based on Narrative strength + Technical Structure + Community Hype.
     - **Technicals:** Look for "Golden Cross", "RSI Divergence", or "Breakout" patterns in search results.
+    - **Verdict:** Provide specific trading advice (e.g., "Accumulate on Dips", "Breakout Imminent").
 
     **OUTPUT:**
     JSON Array only.
