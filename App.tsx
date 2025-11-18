@@ -3,11 +3,12 @@ import Header from './components/Header';
 import GemFinderPage from './components/GemFinderPage';
 import NewProjectsPage from './components/NewProjectsPage';
 import AnalystPicksPage from './components/AnalystPicksPage';
+import SocialTrendsPage from './components/SocialTrendsPage';
 import SavedProjectsPage from './components/SavedProjectsPage';
 import { Token } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 
-export type Page = 'gem-finder' | 'new-projects' | 'analyst-picks' | 'saved-projects';
+export type Page = 'gem-finder' | 'new-projects' | 'analyst-picks' | 'social-trends' | 'saved-projects';
 
 const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('gem-finder');
@@ -39,6 +40,7 @@ const App: React.FC = () => {
         {activePage === 'gem-finder' && <GemFinderPage {...savedTokenProps} />}
         {activePage === 'new-projects' && <NewProjectsPage {...savedTokenProps} />}
         {activePage === 'analyst-picks' && <AnalystPicksPage {...savedTokenProps} />}
+        {activePage === 'social-trends' && <SocialTrendsPage {...savedTokenProps} />}
         {activePage === 'saved-projects' && <SavedProjectsPage {...savedTokenProps} />}
       </main>
       <footer className="text-center py-6 border-t border-slate-800 mt-16">

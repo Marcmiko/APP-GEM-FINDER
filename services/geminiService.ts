@@ -3,11 +3,24 @@ import { GoogleGenAI } from "@google/genai";
 import { Token, GroundingChunk } from '../types';
 
 const getAiClient = () => {
-    // Per guidelines, exclusively use process.env.API_KEY.
-    const apiKey = process.env.API_KEY;
+    let apiKey: string | undefined;
+    
+    // Try standard process.env (works in some node-like envs)
+    try {
+        apiKey = process.env.API_KEY;
+    } catch (e) {
+        // Ignore reference error
+    }
+
+    // Try Vite specific env var (works in Vercel/Vite)
+    // @ts-ignore
+    if (!apiKey && typeof import.meta !== 'undefined' && import.meta.env) {
+        // @ts-ignore
+        apiKey = import.meta.env.VITE_API_KEY;
+    }
     
     if (!apiKey) {
-        throw new Error("AI API Key is missing. Please ensure process.env.API_KEY is configured.");
+        throw new Error("AI API Key Not Found. TROUBLESHOOTING: 1. In Vercel Settings > Environment Variables, ensure you have added your key. 2. Rename the variable to 'VITE_API_KEY' (Vite requires this prefix). 3. CRITICAL: Go to Deployments and click 'Redeploy' for the changes to take effect.");
     }
     
     return new GoogleGenAI({ apiKey });
@@ -282,3 +295,46 @@ export const getAnalystPicks = async (): Promise<{ tokens: Token[]; sources: Gro
     throw error;
   }
 };
+
+export const findSocialTrends = async (): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+    try {
+      const ai = getAiClient();
+      const prompt = `
+      You are a Social Media Sentiment Analyst for Crypto.
+      **GOAL:** Find Base tokens that are actively trending on **X (Twitter)** and **Farcaster**.
+      
+      **SEARCH QUERIES:**
+      - "Base chain gems trending on X today"
+      - "Most mentioned Base tokens Twitter"
+      - "$TICKER on Base smart money mentions"
+      - "Base chain viral coins"
+      
+      **SOURCES:**
+      - Prioritize findings from social signals, influencer calls, and viral hashtags.
+      - Use DexScreener or CoinGecko to get the metrics for the mentioned tokens.
+  
+      **SCORING (Social Focused):**
+      - **Gem Score (0-100):** 60% Social Hype (Volume of posts/likes), 20% Volume, 20% Safety.
+      - **Analysis:** The summary MUST explain *why* people are talking about it (e.g., "Viral meme", "New partnership", "KOL shill").
+      
+      **OUTPUT:**
+      JSON Array of Token objects.
+      Ensure you find the Contract Address and Icon URL.
+      Include "technicalIndicators" if chart data is visible.
+      `;
+  
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+        },
+      });
+  
+      return parseAIResponse(response);
+  
+    } catch (error) {
+      console.error("findSocialTrends error:", error);
+      throw error;
+    }
+  };

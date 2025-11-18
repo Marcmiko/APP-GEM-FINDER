@@ -50,10 +50,11 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
             <span className="text-xl font-bold text-white tracking-wider">Base Gem Finder</span>
           </div>
           
-          <div className="flex items-center space-x-1 p-1 bg-slate-800 rounded-lg">
+          <div className="flex items-center space-x-1 p-1 bg-slate-800 rounded-lg overflow-x-auto no-scrollbar">
             <NavItem page="gem-finder" activePage={activePage} setActivePage={setActivePage}>Gem Finder</NavItem>
             <NavItem page="new-projects" activePage={activePage} setActivePage={setActivePage}>New Listings</NavItem>
-            <NavItem page="analyst-picks" activePage={activePage} setActivePage={setActivePage}>Analyst's Picks</NavItem>
+            <NavItem page="analyst-picks" activePage={activePage} setActivePage={setActivePage}>Analyst</NavItem>
+            <NavItem page="social-trends" activePage={activePage} setActivePage={setActivePage}>Social Trends</NavItem>
             <NavItem page="saved-projects" activePage={activePage} setActivePage={setActivePage} badgeCount={savedCount}>Saved</NavItem>
           </div>
           
