@@ -33,6 +33,11 @@ const CMCIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM10.21 8.21l1.59 1.59 1.59-1.59L15.3 10.12l-1.59 1.59 1.59 1.59-1.91 1.91-1.59-1.59-1.59 1.59-1.91-1.91 1.59-1.59-1.59-1.59 1.91-1.91z" />
     </svg>
 );
+const GeckoIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z" />
+    </svg>
+);
 const CopyIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375V17.25" /></svg>
 );
@@ -332,22 +337,22 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
           <SecurityCheck label="Ownership Renounced" isSecure={!!token.isOwnershipRenounced} />
         </div>
 
-        <div className="mt-4 border-t border-slate-700 pt-4 space-y-2">
+        <div className="mt-4 border-t border-slate-700 pt-4 grid grid-cols-2 gap-3">
             <a 
                 href={`https://basescan.org/token/${token.address}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center space-x-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-4"
+                className="flex items-center justify-center space-x-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
             >
-                <span>Basescan</span>
                 <ExternalLinkIcon className="w-4 h-4" />
+                <span>Basescan</span>
             </a>
             {token.websiteUrl && (
               <a 
                   href={token.websiteUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center space-x-2 text-sm text-slate-300 hover:text-white transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-4"
+                  className="flex items-center justify-center space-x-2 text-sm text-slate-300 hover:text-white transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
               >
                   <WebsiteIcon className="w-4 h-4" />
                   <span>Website</span>
@@ -358,10 +363,10 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
                   href={token.xUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center space-x-2 text-sm text-sky-400 hover:text-sky-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-4"
+                  className="flex items-center justify-center space-x-2 text-sm text-sky-400 hover:text-sky-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
               >
                   <XIcon className="w-4 h-4" />
-                  <span>X (Twitter)</span>
+                  <span>Twitter</span>
               </a>
             )}
             {token.coinMarketCapUrl && (
@@ -369,10 +374,21 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
                   href={token.coinMarketCapUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center space-x-2 text-sm text-orange-400 hover:text-orange-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-4"
+                  className="flex items-center justify-center space-x-2 text-sm text-orange-400 hover:text-orange-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
               >
                   <CMCIcon className="w-4 h-4" />
-                  <span>CoinMarketCap</span>
+                  <span>CMC</span>
+              </a>
+            )}
+            {token.coingeckoUrl && (
+              <a 
+                  href={token.coingeckoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center space-x-2 text-sm text-green-400 hover:text-green-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
+              >
+                  <GeckoIcon className="w-4 h-4" />
+                  <span>Gecko</span>
               </a>
             )}
         </div>

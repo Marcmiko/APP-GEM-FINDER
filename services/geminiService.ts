@@ -89,6 +89,7 @@ const validateAndCoerceToken = (data: any): Token | null => {
         websiteUrl: data.websiteUrl ? String(data.websiteUrl) : null,
         xUrl: data.xUrl ? String(data.xUrl) : null,
         coinMarketCapUrl: data.coinMarketCapUrl ? String(data.coinMarketCapUrl) : null,
+        coingeckoUrl: data.coingeckoUrl ? String(data.coingeckoUrl) : null,
         iconUrl: data.iconUrl ? String(data.iconUrl) : null,
         convictionScore: data.convictionScore ? Math.round(robustParseFloat(data.convictionScore)) : undefined,
     };
@@ -180,12 +181,14 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
     const prompt = `
     You are a specialized Crypto Hunter for Base chain.
     **CRITICAL INSTRUCTION:** You MUST return a list of 3 to 6 tokens. It is FORBIDDEN to return an empty list.
+    **MANDATORY:** You MUST find the REAL contract address (0x...) for every token. Do not invent addresses.
     
     **TASK:** Find active, trending tokens on Base.
     
     **SEARCH STRATEGY:**
-    1. Search for: "Base chain top gainers today", "DexScreener Base trending", "CoinGecko Base new coins".
+    1. Search for: "Base chain top gainers today", "DexScreener Base trending", "CoinGecko Base new coins", "Alchemy Base DEX list".
     2. Look for tokens with high volume ($50k+).
+    3. Find official links: Website, Twitter (X), CoinMarketCap, CoinGecko.
     
     **FALLBACK (MANDATORY):** 
     If you cannot verify specific "new gems", simply return the **Top Volume** or **Top Trending** tokens on Base right now. The user wants to see *something*.
@@ -197,6 +200,7 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
 
     **JSON OUTPUT:**
     Return a JSON Array of token objects.
+    Include fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
     `;
 
     const response = await generateWithRetry(ai, {
@@ -225,10 +229,12 @@ export const findNewProjects = async (): Promise<{ tokens: Token[]; sources: Gro
     You are a "New Listing" scanner for Base.
     **OBJECTIVE:** List 3-5 tokens that are either NEW or TRENDING on Base.
     **CONSTRAINT:** You MUST return a JSON Array. Do NOT return an empty array.
+    **ADDRESS:** You MUST find the REAL contract address (0x...) for every token.
     
     **SEARCH STRATEGY:**
     1. Search "New Base chain tokens DexScreener", "Base trending coins Coingecko", "Alchemy Base DEX list".
     2. Look for tokens listed recently (last 30 days).
+    3. Find official links: Website, Twitter (X), CoinMarketCap, CoinGecko.
     
     **FALLBACK (CRITICAL):**
     If you cannot find perfectly "new" tokens (last 24h), return the **Top Trending** tokens on Base instead.
@@ -238,6 +244,7 @@ export const findNewProjects = async (): Promise<{ tokens: Token[]; sources: Gro
 
     **OUTPUT:**
     Return a JSON Array of token objects.
+    Include fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
     `;
 
     const response = await generateWithRetry(ai, {
@@ -266,10 +273,12 @@ export const getAnalystPicks = async (): Promise<{ tokens: Token[]; sources: Gro
     You are a Degen Analyst.
     **TASK:** Provide 3 "High Conviction" plays on Base.
     **RULE:** You MUST pick 3 tokens. It is FORBIDDEN to return an empty list.
+    **ADDRESS:** You MUST find the REAL contract address (0x...) for every token.
     
     **STRATEGY:**
     - Look for "Narratives" (AI, Memes, RWA).
     - If technicals are unclear, base the "Conviction Score" on Volume and Community mentions.
+    - Find official links: Website, Twitter (X), CoinMarketCap, CoinGecko.
     - **Verdict:** Be decisive. "Buy the dip" or "Breakout Watch".
     
     **FALLBACK:**
@@ -277,6 +286,7 @@ export const getAnalystPicks = async (): Promise<{ tokens: Token[]; sources: Gro
 
     **OUTPUT:**
     JSON Array only.
+    Include fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
     `;
 
     const response = await generateWithRetry(ai, {
@@ -305,11 +315,13 @@ export const findSocialTrends = async (): Promise<{ tokens: Token[]; sources: Gr
       You are a Social Media Trend Scanner.
       **PROBLEM:** The user says "nothing found". 
       **SOLUTION:** You MUST return 5 tokens that are POPULAR on Base right now.
+      **ADDRESS:** You MUST find the REAL contract address (0x...) for every token.
       
       **SEARCH STRATEGY:**
       1. Search "Trending Base meme coins Twitter", "Base chain viral tokens".
       2. **FALLBACK:** If you can't find specific tweets, assume that **Top Trending on DexScreener Base** IS the social trend (because volume = attention).
       3. Do NOT be afraid to list popular coins (BRETT, DEGEN, TOSHI, etc.) if they are trending *today*.
+      4. Find official links: Website, Twitter (X), CoinMarketCap, CoinGecko.
   
       **SCORING:**
       - **Gem Score:** Based on HYPE. 
@@ -317,6 +329,7 @@ export const findSocialTrends = async (): Promise<{ tokens: Token[]; sources: Gr
       
       **OUTPUT:**
       JSON Array of Token objects.
+      Include fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
       `;
   
       const response = await generateWithRetry(ai, {

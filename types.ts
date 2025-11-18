@@ -29,6 +29,7 @@ export interface Token {
   websiteUrl?: string | null;
   xUrl?: string | null;
   coinMarketCapUrl?: string | null;
+  coingeckoUrl?: string | null;
   iconUrl?: string | null;
   convictionScore?: number;
 }
