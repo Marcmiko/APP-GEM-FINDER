@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { Token, GroundingChunk } from '../types';
 
@@ -89,6 +90,11 @@ const validateAndCoerceToken = (data: any): Token | null => {
             risks: String(data.analysis?.risks || 'Standard volatility risks.'),
             verdict: String(data.analysis?.verdict || 'Monitor'),
         },
+        technicalIndicators: {
+            rsi: data.technicalIndicators?.rsi ? robustParseFloat(data.technicalIndicators.rsi) : null,
+            macd: data.technicalIndicators?.macd ? String(data.technicalIndicators.macd) : null,
+            movingAverages: data.technicalIndicators?.movingAverages ? String(data.technicalIndicators.movingAverages) : null,
+        },
         websiteUrl: data.websiteUrl ? String(data.websiteUrl) : null,
         xUrl: data.xUrl ? String(data.xUrl) : null,
         coinMarketCapUrl: data.coinMarketCapUrl ? String(data.coinMarketCapUrl) : null,
@@ -156,19 +162,20 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
 
     **SEARCH STRATEGY (FIND THE GEMS):**
     1.  **Query:** Search for "Top trending tokens on Base chain today", "CoinGecko Base top gainers", "DexScreener Base trending".
-    2.  **Sources:** Use data from **CoinGecko** (\`https://www.coingecko.com/en/exchanges/decentralized/base\`) and **Alchemy Dapps** to find what is hot.
+    2.  **Sources:** Use data from **CoinGecko** (\`https://www.coingecko.com/en/exchanges/decentralized/base\`), **Alchemy Dapps**, and **DexScreener** to find what is hot.
     3.  **Focus:** Look for tokens with high Volume relative to Liquidity (Vol/Liq > 0.5 is good).
 
-    **FINANCIAL ANALYSIS (MANDATORY):**
-    For each token found, you MUST calculate a VERDICT based on this logic:
-    - **Strong Buy:** High Volume + Rising Price + Locked Liquidity.
-    - **Potential Buy:** Good narrative but Price is dipping (Buy the Dip).
-    - **Wait/Monitor:** Volume is dropping or price is skyrocketing too fast (FOMO risk).
-    - **High Risk:** Low Liquidity (<$10k) but high volume (Degen play).
+    **FINANCIAL & TECHNICAL ANALYSIS (MANDATORY):**
+    For each token found:
+    - **Verdict:** Calculate based on Volume/Liquidity ratio and trend.
+    - **Technical Indicators:** Search for "RSI", "MACD", or "Chart" for the token.
+      - **RSI (14):** Try to find the value (0-100). If not found, estimate based on "Overbought" (>70) or "Oversold" (<30).
+      - **MACD:** Signal (e.g., "Bullish Cross", "Bearish", "Neutral").
+      - **Moving Averages:** Trend relative to MA (e.g., "Above MA50").
 
     **DATA EXTRACTION:**
-    - **Address:** Try to find the 0x address. If you find the name/symbol but no address on a simple search, fill the address with "Check DexScreener" or a placeholder. **Do not discard the token just because the address is hard to copy.**
-    - **Icon:** Try to find an icon URL. If not, set to null.
+    - **Address:** Try to find the 0x address.
+    - **Icon:** Try to find an icon URL.
 
     **JSON OUTPUT:**
     Return a JSON Array.
@@ -192,6 +199,11 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
           "strengths": "Volume is 2x Liquidity indicating high demand.",
           "risks": "Price is volatile.",
           "verdict": "Strong Buy" 
+        },
+        "technicalIndicators": {
+          "rsi": 65,
+          "macd": "Bullish Convergence",
+          "movingAverages": "Reclaiming MA50"
         }
       }
     ]
@@ -222,17 +234,20 @@ export const findNewProjects = async (): Promise<{ tokens: Token[]; sources: Gro
     **GOAL:** Populate the list with **Recently Added** tokens. 
     
     **SEARCH TARGETS:**
-    - Go to "CoinGecko New Cryptocurrencies" and filter for Base chain if possible in search query.
-    - Search "Newest Base tokens DexScreener", "Alchemy Base new dapps".
-    - Look for tokens listed in the **last 14 days**.
+    - "CoinGecko New Cryptocurrencies Base chain"
+    - "Alchemy list of Base DEXs"
+    - "Newest Base tokens DexScreener"
 
-    **VERDICT LOGIC (The "Should I Buy?" Check):**
-    - If Liquidity < $5k: Verdict = "High Risk / Degen"
-    - If Volume > $50k and Age < 3 days: Verdict = "Snipe / Momentum"
-    - If Volume is 0: Verdict = "Avoid / Dead"
+    **VERDICT LOGIC:**
+    - Liquidity < $4k: "High Risk / Degen"
+    - Volume > $50k & Age < 3 days: "Snipe / Momentum"
+
+    **TECHNICALS:**
+    - Attempt to find RSI (14) if chart data exists in search snippets.
 
     **OUTPUT:**
-    Return a JSON Array of valid token objects. prioritize finding *something* over finding *nothing*.
+    Return a JSON Array of valid token objects. Prioritize finding *something*.
+    Include "technicalIndicators": { "rsi": ... } if data found.
     `;
 
     const response = await ai.models.generateContent({
@@ -259,17 +274,16 @@ export const getAnalystPicks = async (): Promise<{ tokens: Token[]; sources: Gro
     **GOAL:** Find 3 high-risk/high-reward plays on Base.
     
     **STRATEGY:**
-    - Ignore strict financial safety. Focus on **Social Hype**.
-    - Search: "Base trending memes twitter", "Farcaster trending tokens", "Base God ecosystem".
-    - Check **Alchemy Base Dapps** for new protocols gaining traction.
+    - Focus on **Social Hype** (Twitter/Farcaster) + **Technical Breakouts**.
+    - Sources: Alchemy Base Dapps, CoinGecko Trending, DexScreener.
     
-    **ANALYSIS REQUIRED:**
-    - **Conviction Score (0-100):** How hard is the community shilling this?
-    - **Verdict:** "Ape In" (High Conviction), "Small Bag" (Medium), "Watch" (Low).
-    - **Rationale:** Why is this interesting? (e.g. "The founder is doxed", "The meme is funny", "Tied to Coinbase news").
+    **ANALYSIS:**
+    - **Conviction Score (0-100):** Based on hype + technical structure.
+    - **Technicals:** Look for "Golden Cross", "RSI Divergence", or "Breakout" patterns in search results.
 
     **OUTPUT:**
     JSON Array only.
+    Include "technicalIndicators" with RSI, MACD, MA status.
     `;
 
     const response = await ai.models.generateContent({

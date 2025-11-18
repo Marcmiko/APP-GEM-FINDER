@@ -1,3 +1,10 @@
+
+export interface TechnicalIndicators {
+  rsi: number | null;
+  macd: string | null;
+  movingAverages: string | null;
+}
+
 export interface TokenAnalysis {
   summary: string;
   strengths: string;
@@ -18,6 +25,7 @@ export interface Token {
   isOwnershipRenounced: boolean;
   gemScore: number;
   analysis: TokenAnalysis;
+  technicalIndicators?: TechnicalIndicators;
   websiteUrl?: string | null;
   xUrl?: string | null;
   coinMarketCapUrl?: string | null;

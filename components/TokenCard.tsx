@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Token } from '../types';
+import { Token, TechnicalIndicators } from '../types';
 
 // --- ICONS ---
 const VerifiedIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -96,6 +97,72 @@ const AnalysisSection: React.FC<{ title: string; content: string; icon: React.Re
             <p className="mt-1 pl-7 text-sm text-slate-400">{content}</p>
         </div>
     );
+}
+
+const TechnicalSection: React.FC<{ indicators?: TechnicalIndicators }> = ({ indicators }) => {
+    if (!indicators || (!indicators.rsi && !indicators.macd)) return null;
+
+    // RSI Color Logic
+    const getRsiColor = (rsi: number) => {
+        if (rsi >= 70) return 'bg-red-500'; // Overbought
+        if (rsi <= 30) return 'bg-green-500'; // Oversold
+        return 'bg-indigo-500'; // Neutral
+    };
+    
+    // RSI Value Display Color
+    const getRsiTextColor = (rsi: number) => {
+        if (rsi >= 70) return 'text-red-400';
+        if (rsi <= 30) return 'text-green-400';
+        return 'text-indigo-400';
+    }
+
+    return (
+        <div className="mt-4 bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
+                    <path d="M15.5 2A1.5 1.5 0 0014 3.5v8a1.5 1.5 0 001.5 1.5h1a1.5 1.5 0 001.5-1.5v-8A1.5 1.5 0 0016.5 2h-1zM9.5 6A1.5 1.5 0 008 7.5v4a1.5 1.5 0 001.5 1.5h1a1.5 1.5 0 001.5-1.5v-4A1.5 1.5 0 0010.5 6h-1zM3.5 10a1.5 1.5 0 00-1.5 1.5v.5a1.5 1.5 0 001.5 1.5h1a1.5 1.5 0 001.5-1.5v-.5a1.5 1.5 0 00-1.5-1.5h-1z" />
+                </svg>
+                Technical Indicators
+            </h4>
+            <div className="grid grid-cols-1 gap-3">
+                {indicators.rsi !== null && (
+                    <div>
+                        <div className="flex justify-between text-xs mb-1">
+                            <span className="text-slate-400 font-medium">RSI (14)</span>
+                            <span className={`font-mono font-bold ${getRsiTextColor(indicators.rsi)}`}>{indicators.rsi}</span>
+                        </div>
+                        <div className="w-full bg-slate-700 rounded-full h-1.5">
+                            <div 
+                                className={`h-1.5 rounded-full transition-all duration-500 ${getRsiColor(indicators.rsi)}`} 
+                                style={{ width: `${Math.min(Math.max(indicators.rsi, 0), 100)}%` }}
+                            ></div>
+                        </div>
+                        <div className="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                            <span>Oversold (Buy)</span>
+                            <span>Overbought (Sell)</span>
+                        </div>
+                    </div>
+                )}
+                
+                {(indicators.macd || indicators.movingAverages) && (
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                        {indicators.macd && (
+                             <div className="bg-slate-800 rounded px-2 py-1.5">
+                                <span className="block text-[10px] text-slate-500 uppercase">MACD</span>
+                                <span className="text-xs font-medium text-white truncate" title={indicators.macd}>{indicators.macd}</span>
+                            </div>
+                        )}
+                         {indicators.movingAverages && (
+                             <div className="bg-slate-800 rounded px-2 py-1.5">
+                                <span className="block text-[10px] text-slate-500 uppercase">Trend (MA)</span>
+                                <span className="text-xs font-medium text-white truncate" title={indicators.movingAverages}>{indicators.movingAverages}</span>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    )
 }
 
 const SecurityCheck: React.FC<{ label: string; isSecure: boolean }> = ({ label, isSecure }) => {
@@ -224,7 +291,11 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
                 iconClass="text-amber-400"
                 icon={<BearIcon />}
             />
-             <div className={`p-3 rounded-lg border ${verdictStyle.style}`}>
+            
+            {/* Technical Analysis Section */}
+            <TechnicalSection indicators={token.technicalIndicators} />
+
+             <div className={`p-3 rounded-lg border mt-3 ${verdictStyle.style}`}>
                 <div className="flex items-center space-x-2">
                     {verdictStyle.icon}
                     <h4 className="text-sm font-bold">AI Verdict: {token.analysis?.verdict || 'Not Rated'}</h4>
