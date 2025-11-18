@@ -5,22 +5,24 @@ import { Token, GroundingChunk } from '../types';
 const getAiClient = () => {
     let apiKey: string | undefined;
     
-    // Try standard process.env (works in some node-like envs)
-    try {
-        apiKey = process.env.API_KEY;
-    } catch (e) {
-        // Ignore reference error
-    }
-
-    // Try Vite specific env var (works in Vercel/Vite)
+    // 1. Try Vercel/Vite specific env var (Primary for frontend)
     // @ts-ignore
-    if (!apiKey && typeof import.meta !== 'undefined' && import.meta.env) {
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
         // @ts-ignore
         apiKey = import.meta.env.VITE_API_KEY;
     }
+
+    // 2. Fallback to standard process.env (if defined in local dev or custom build)
+    if (!apiKey) {
+        try {
+            apiKey = process.env.API_KEY;
+        } catch (e) {
+            // Ignore process not defined error
+        }
+    }
     
     if (!apiKey) {
-        throw new Error("AI API Key Not Found. TROUBLESHOOTING: 1. In Vercel Settings > Environment Variables, ensure you have added your key. 2. Rename the variable to 'VITE_API_KEY' (Vite requires this prefix). 3. CRITICAL: Go to Deployments and click 'Redeploy' for the changes to take effect.");
+        throw new Error("ERROR: API Key not found. In Vercel Settings > Environment Variables, add 'VITE_API_KEY' with your key value. Then go to Deployments -> Redeploy.");
     }
     
     return new GoogleGenAI({ apiKey });
