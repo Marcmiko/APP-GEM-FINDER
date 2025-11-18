@@ -57,8 +57,6 @@ const robustParseFloat = (value: any): number => {
 // Validates and coerces a single token object to match the Token interface
 const validateAndCoerceToken = (data: any): Token | null => {
     if (!data || (!data.address && !data.symbol)) {
-        // If we don't have an address, we try to survive with just a name/symbol for display
-        // But ideally we need an address.
         return null; 
     }
     
@@ -112,16 +110,23 @@ const parseAIResponse = (response: any): { tokens: Token[]; sources: GroundingCh
         jsonText = '';
     }
 
-    jsonText = jsonText.trim();
-
-    if (jsonText.startsWith("```json")) {
-      jsonText = jsonText.substring(7, jsonText.length - 3).trim();
-    } else if (jsonText.startsWith("```")) {
-      jsonText = jsonText.substring(3, jsonText.length - 3).trim();
+    // Robust JSON extraction using Regex to find the array [...]
+    const jsonMatch = jsonText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+    if (jsonMatch) {
+        jsonText = jsonMatch[0];
+    } else {
+        // Fallback: try to clean up markdown if regex didn't match a clear array
+        jsonText = jsonText.replace(/```json/g, '').replace(/```/g, '').trim();
+        // Attempt to find the first [
+        const firstBracket = jsonText.indexOf('[');
+        const lastBracket = jsonText.lastIndexOf(']');
+        if (firstBracket !== -1 && lastBracket !== -1) {
+            jsonText = jsonText.substring(firstBracket, lastBracket + 1);
+        }
     }
     
     if (!jsonText || !jsonText.startsWith('[')) {
-        console.log("Invalid JSON:", jsonText);
+        console.log("Failed to extract JSON array from:", response.text);
         return { tokens: [], sources: [] };
     }
 
@@ -141,6 +146,30 @@ const parseAIResponse = (response: any): { tokens: Token[]; sources: GroundingCh
     }
 }
 
+// --- RETRY LOGIC HELPER ---
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const generateWithRetry = async (ai: any, params: any, retries = 3): Promise<any> => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await ai.models.generateContent(params);
+        } catch (error: any) {
+            const isOverloaded = error?.message?.includes('503') || error?.status === 503;
+            const isRateLimited = error?.message?.includes('429') || error?.status === 429;
+            
+            if (i < retries - 1 && (isOverloaded || isRateLimited)) {
+                const delay = 1000 * Math.pow(2, i); // 1s, 2s, 4s
+                console.warn(`AI Server overloaded (Attempt ${i + 1}/${retries}). Retrying in ${delay}ms...`);
+                await wait(delay);
+                continue;
+            }
+            // If we ran out of retries or it's a different error, throw it
+            throw error;
+        }
+    }
+};
+
+
 export const findGems = async (startDate?: string, endDate?: string): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
   try {
     const ai = getAiClient();
@@ -149,62 +178,28 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
     if (startDate) dateFilterInstruction = `launched after ${startDate}`;
 
     const prompt = `
-    You are a pragmatic Crypto Analyst for the Base blockchain.
-    **USER PROBLEM:** The user is complaining they see "Nothing found". 
-    **YOUR GOAL:** Return a list of active, trending tokens on Base. Do NOT return an empty list unless the blockchain is dead.
-
-    **SEARCH STRATEGY (FIND THE GEMS):**
-    1.  **Query:** Search for "Top trending tokens on Base chain today", "CoinGecko Base top gainers", "DexScreener Base trending".
-    2.  **Sources:** Use data from **CoinGecko** (\`https://www.coingecko.com/en/exchanges/decentralized/base\`), **Alchemy Dapps**, and **DexScreener** to find what is hot.
-    3.  **Focus:** Look for tokens with high Volume relative to Liquidity (Vol/Liq > 0.5 is good).
-
-    **FINANCIAL & TECHNICAL ANALYSIS (MANDATORY):**
-    For each token found:
-    - **Verdict:** Calculate based on Volume/Liquidity ratio and trend.
-    - **Technical Indicators:** Search for "RSI", "MACD", or "Chart" for the token.
-      - **RSI (14):** Try to find the value (0-100). If not found, estimate based on "Overbought" (>70) or "Oversold" (<30).
-      - **MACD:** Signal (e.g., "Bullish Cross", "Bearish", "Neutral").
-      - **Moving Averages:** Trend relative to MA (e.g., "Above MA50").
-    - **Scoring:** Calculate 'gemScore' (0-100) based on 40% Momentum, 30% Social Sentiment (Twitter/Farcaster hype), 30% Security.
-
-    **DATA EXTRACTION:**
-    - **Address:** Try to find the 0x address.
-    - **Icon:** Try to find an icon URL.
+    You are a specialized Crypto Hunter for Base chain.
+    **CRITICAL INSTRUCTION:** You MUST return a list of 3 to 6 tokens. It is FORBIDDEN to return an empty list.
+    
+    **TASK:** Find active, trending tokens on Base.
+    
+    **SEARCH STRATEGY:**
+    1. Search for: "Base chain top gainers today", "DexScreener Base trending", "CoinGecko Base new coins".
+    2. Look for tokens with high volume ($50k+).
+    
+    **FALLBACK (MANDATORY):** 
+    If you cannot verify specific "new gems", simply return the **Top Volume** or **Top Trending** tokens on Base right now. The user wants to see *something*.
+    
+    **ANALYSIS:**
+    - If data is missing (like exact liquidity), ESTIMATE it based on the token's rank or volume.
+    - **GemScore:** Be generous. If it has volume, give it a score > 60.
+    - **Verdict:** If volume is high, say "High Momentum".
 
     **JSON OUTPUT:**
-    Return a JSON Array.
-    \`\`\`json
-    [
-      {
-        "name": "Token Name",
-        "symbol": "TKN",
-        "address": "0x...", 
-        "creationDate": "2024-...",
-        "liquidity": 50000, 
-        "volume24h": 100000,
-        "marketCap": 200000,
-        "holders": 500,
-        "gemScore": 85,
-        "isLiquidityLocked": true,
-        "isOwnershipRenounced": false,
-        "iconUrl": "https://...", 
-        "analysis": {
-          "summary": "Trending due to [Reason].",
-          "strengths": "Volume is 2x Liquidity indicating high demand.",
-          "risks": "Price is volatile.",
-          "verdict": "Strong Buy" 
-        },
-        "technicalIndicators": {
-          "rsi": 65,
-          "macd": "Bullish Convergence",
-          "movingAverages": "Reclaiming MA50"
-        }
-      }
-    ]
-    \`\`\`
+    Return a JSON Array of token objects.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await generateWithRetry(ai, {
       model: "gemini-2.5-flash",
       contents: prompt,
       config: {
@@ -214,8 +209,11 @@ export const findGems = async (startDate?: string, endDate?: string): Promise<{ 
 
     return parseAIResponse(response);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("findGems error:", error);
+    if (error?.message?.includes('503') || error?.status === 503) {
+        throw new Error("AI servers are currently overloaded. Please wait 30 seconds and try again.");
+    }
     throw error;
   }
 };
@@ -225,27 +223,24 @@ export const findNewProjects = async (): Promise<{ tokens: Token[]; sources: Gro
     const ai = getAiClient();
     const prompt = `
     You are a "New Listing" scanner for Base.
-    **GOAL:** Populate the list with **Recently Added** tokens. 
+    **OBJECTIVE:** List 3-5 tokens that are either NEW or TRENDING on Base.
+    **CONSTRAINT:** You MUST return a JSON Array. Do NOT return an empty array.
     
-    **SEARCH TARGETS:**
-    - "CoinGecko New Cryptocurrencies Base chain"
-    - "Alchemy list of Base DEXs"
-    - "Newest Base tokens DexScreener"
-
-    **VERDICT LOGIC:**
-    - Liquidity < $4k: "High Risk / Degen"
-    - Volume > $50k & Age < 3 days: "Snipe / Momentum"
-
-    **TECHNIGALS:**
-    - Attempt to find RSI (14) if chart data exists in search snippets.
-    - Calculate 'gemScore' based on early traction.
+    **SEARCH STRATEGY:**
+    1. Search "New Base chain tokens DexScreener", "Base trending coins Coingecko", "Alchemy Base DEX list".
+    2. Look for tokens listed recently (last 30 days).
+    
+    **FALLBACK (CRITICAL):**
+    If you cannot find perfectly "new" tokens (last 24h), return the **Top Trending** tokens on Base instead.
+    Mark them as "Trending" in the analysis.
+    IT IS BETTER TO SHOW POPULAR TOKENS THAN NOTHING.
+    If creation date is unknown, use "Recently".
 
     **OUTPUT:**
-    Return a JSON Array of valid token objects. Prioritize finding *something*.
-    Include "technicalIndicators": { "rsi": ... } if data found.
+    Return a JSON Array of token objects.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await generateWithRetry(ai, {
       model: "gemini-2.5-flash",
       contents: prompt,
       config: {
@@ -255,8 +250,11 @@ export const findNewProjects = async (): Promise<{ tokens: Token[]; sources: Gro
 
     return parseAIResponse(response);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("findNewProjects error:", error);
+    if (error?.message?.includes('503') || error?.status === 503) {
+        throw new Error("AI servers are busy. Please try again shortly.");
+    }
     throw error;
   }
 };
@@ -266,23 +264,22 @@ export const getAnalystPicks = async (): Promise<{ tokens: Token[]; sources: Gro
     const ai = getAiClient();
     const prompt = `
     You are a Degen Analyst.
-    **GOAL:** Find 3 high-risk/high-reward plays on Base.
+    **TASK:** Provide 3 "High Conviction" plays on Base.
+    **RULE:** You MUST pick 3 tokens. It is FORBIDDEN to return an empty list.
     
     **STRATEGY:**
-    - Focus on **Social Hype** (Twitter/Farcaster) + **Technical Breakouts**.
-    - Sources: Alchemy Base Dapps, CoinGecko Trending, DexScreener.
+    - Look for "Narratives" (AI, Memes, RWA).
+    - If technicals are unclear, base the "Conviction Score" on Volume and Community mentions.
+    - **Verdict:** Be decisive. "Buy the dip" or "Breakout Watch".
     
-    **ANALYSIS:**
-    - **Conviction Score (0-100):** Based on Narrative strength + Technical Structure + Community Hype.
-    - **Technicals:** Look for "Golden Cross", "RSI Divergence", or "Breakout" patterns in search results.
-    - **Verdict:** Provide specific trading advice (e.g., "Accumulate on Dips", "Breakout Imminent").
+    **FALLBACK:**
+    If you are unsure, pick the top 3 highest volume tokens on Base (like BRETT, DEGEN, TOSHI, AERO) and analyze their current chart setup.
 
     **OUTPUT:**
     JSON Array only.
-    Include "technicalIndicators" with RSI, MACD, MA status.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await generateWithRetry(ai, {
       model: "gemini-2.5-flash",
       contents: prompt,
       config: {
@@ -292,8 +289,11 @@ export const getAnalystPicks = async (): Promise<{ tokens: Token[]; sources: Gro
 
     return parseAIResponse(response);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("getAnalystPicks error:", error);
+    if (error?.message?.includes('503') || error?.status === 503) {
+        throw new Error("AI servers are busy. Please try again shortly.");
+    }
     throw error;
   }
 };
@@ -302,30 +302,24 @@ export const findSocialTrends = async (): Promise<{ tokens: Token[]; sources: Gr
     try {
       const ai = getAiClient();
       const prompt = `
-      You are a Social Media Sentiment Analyst for Crypto.
-      **GOAL:** Find Base tokens that are actively trending on **X (Twitter)** and **Farcaster**.
+      You are a Social Media Trend Scanner.
+      **PROBLEM:** The user says "nothing found". 
+      **SOLUTION:** You MUST return 5 tokens that are POPULAR on Base right now.
       
-      **SEARCH QUERIES:**
-      - "Base chain gems trending on X today"
-      - "Most mentioned Base tokens Twitter"
-      - "$TICKER on Base smart money mentions"
-      - "Base chain viral coins"
-      
-      **SOURCES:**
-      - Prioritize findings from social signals, influencer calls, and viral hashtags.
-      - Use DexScreener or CoinGecko to get the metrics for the mentioned tokens.
+      **SEARCH STRATEGY:**
+      1. Search "Trending Base meme coins Twitter", "Base chain viral tokens".
+      2. **FALLBACK:** If you can't find specific tweets, assume that **Top Trending on DexScreener Base** IS the social trend (because volume = attention).
+      3. Do NOT be afraid to list popular coins (BRETT, DEGEN, TOSHI, etc.) if they are trending *today*.
   
-      **SCORING (Social Focused):**
-      - **Gem Score (0-100):** 60% Social Hype (Volume of posts/likes), 20% Volume, 20% Safety.
-      - **Analysis:** The summary MUST explain *why* people are talking about it (e.g., "Viral meme", "New partnership", "KOL shill").
+      **SCORING:**
+      - **Gem Score:** Based on HYPE. 
+      - **Analysis:** Mention "Social Sentiment" or "Community Strength" in the summary.
       
       **OUTPUT:**
       JSON Array of Token objects.
-      Ensure you find the Contract Address and Icon URL.
-      Include "technicalIndicators" if chart data is visible.
       `;
   
-      const response = await ai.models.generateContent({
+      const response = await generateWithRetry(ai, {
         model: "gemini-2.5-flash",
         contents: prompt,
         config: {
@@ -335,8 +329,11 @@ export const findSocialTrends = async (): Promise<{ tokens: Token[]; sources: Gr
   
       return parseAIResponse(response);
   
-    } catch (error) {
+    } catch (error: any) {
       console.error("findSocialTrends error:", error);
+      if (error?.message?.includes('503') || error?.status === 503) {
+        throw new Error("AI servers are busy. Please try again shortly.");
+    }
       throw error;
     }
   };
