@@ -1,0 +1,5 @@
+{
+  "name": "Base Gem Finder",
+  "description": "An AI-powered tool to discover high-potential new crypto tokens on the Base blockchain before they gain widespread attention. Uses simulated DEX scanning and AI analysis to identify potential gems.",
+  "requestFramePermissions": []
+}
