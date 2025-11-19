@@ -9,9 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^1.29.1",
+    "@uniswap/sdk-core": "^7.9.0",
+    "@uniswap/widgets": "^2.59.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@google/genai": "^1.29.1"
+    "react-redux": "^9.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
