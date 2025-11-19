@@ -16,6 +16,12 @@ const SpinIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     </svg>
 );
 
+const SearchIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
+        <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+    </svg>
+);
+
 interface HeaderProps {
     activePage: Page;
     setActivePage: (page: Page) => void;
@@ -29,17 +35,19 @@ const NavItem: React.FC<{
     children: React.ReactNode;
     badgeCount?: number;
     isLoading?: boolean;
-}> = ({ page, activePage, setActivePage, children, badgeCount, isLoading }) => {
+    icon?: React.ReactNode;
+}> = ({ page, activePage, setActivePage, children, badgeCount, isLoading, icon }) => {
     const isActive = page === activePage;
     return (
         <button
             onClick={() => setActivePage(page)}
-            className={`relative flex items-center px-3 py-2 text-sm font-semibold rounded-md transition-all ${
+            className={`relative flex items-center px-3 py-2 text-sm font-semibold rounded-md transition-all whitespace-nowrap ${
                 isActive 
                 ? 'bg-indigo-600 text-white' 
                 : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
             }`}
         >
+            {icon && <span className="mr-2">{icon}</span>}
             {children}
             {isLoading && (
                 <SpinIcon className="ml-2 w-3 h-3 animate-spin text-cyan-300" />
@@ -54,28 +62,28 @@ const NavItem: React.FC<{
 }
 
 const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }) => {
-  const { gemFinder, newProjects, analystPicks, socialTrends } = useScanContext();
+  const { gemFinder, newProjects, analystPicks, socialTrends, tokenAnalyzer } = useScanContext();
 
   return (
     <header className="bg-slate-900/60 backdrop-blur-sm sticky top-0 z-50 border-b border-slate-800">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-shrink-0">
              <DiamondIcon className="w-8 h-8 text-indigo-400"/>
-            <span className="text-xl font-bold text-white tracking-wider">Base Gem Finder</span>
+            <span className="hidden md:block text-xl font-bold text-white tracking-wider">Base Gem Finder</span>
+            <span className="md:hidden text-xl font-bold text-white tracking-wider">BGF</span>
           </div>
           
-          <div className="flex items-center space-x-1 p-1 bg-slate-800 rounded-lg overflow-x-auto no-scrollbar">
+          <div className="flex items-center space-x-1 p-1 bg-slate-800 rounded-lg overflow-x-auto no-scrollbar max-w-[calc(100vw-120px)]">
             <NavItem page="gem-finder" activePage={activePage} setActivePage={setActivePage} isLoading={gemFinder.isLoading}>Gem Finder</NavItem>
             <NavItem page="new-projects" activePage={activePage} setActivePage={setActivePage} isLoading={newProjects.isLoading}>New Listings</NavItem>
             <NavItem page="analyst-picks" activePage={activePage} setActivePage={setActivePage} isLoading={analystPicks.isLoading}>Analyst</NavItem>
-            <NavItem page="social-trends" activePage={activePage} setActivePage={setActivePage} isLoading={socialTrends.isLoading}>Social Trends</NavItem>
+            <NavItem page="social-trends" activePage={activePage} setActivePage={setActivePage} isLoading={socialTrends.isLoading}>Trends</NavItem>
+            <NavItem page="token-analyzer" activePage={activePage} setActivePage={setActivePage} isLoading={tokenAnalyzer.isLoading} icon={<SearchIcon className="w-4 h-4" />}>Analyzer</NavItem>
             <NavItem page="saved-projects" activePage={activePage} setActivePage={setActivePage} badgeCount={savedCount}>Saved</NavItem>
           </div>
           
-          <span
-            className="hidden sm:block text-sm font-medium text-slate-400"
-          >
+          <span className="hidden lg:block text-xs font-medium text-slate-500 flex-shrink-0 ml-4">
             Powered by Marcmiko
           </span>
         </div>

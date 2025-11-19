@@ -226,12 +226,12 @@ export const findGems = async (startDate?: string, endDate?: string, forceRefres
     2. **VERIFICATION:** If you find a token name, search for "TokenName base address 0x". If you can't find the 0x address, DISCARD IT.
     
     **SEARCH QUERIES TO RUN:**
-    - "site:dexscreener.com/base trending"
-    - "site:geckoterminal.com base pools"
-    - "top gainers base chain 24h"
+    - "site:dexscreener.com/base trending ${Date.now()}"
+    - "site:geckoterminal.com base pools ${Date.now()}"
+    - "top gainers base chain 24h ${Date.now()}"
     
-    **FALLBACK:**
-    If you cannot find *new* gems, return the current TOP TRENDING tokens on Base (e.g., AERO, BRETT, DEGEN, TOSHI) with their real addresses.
+    **CRITICAL FALLBACK:**
+    If you cannot find *new* gems, you **MUST** return the current TOP TRENDING tokens on Base (e.g., AERO, BRETT, DEGEN, TOSHI, MOG) with their real addresses. DO NOT RETURN AN EMPTY LIST. Mark them as "Trending Fallback" in the summary.
     
     **OUTPUT:**
     JSON Array of objects.
@@ -274,13 +274,13 @@ export const findNewProjects = async (forceRefresh = false): Promise<{ tokens: T
     
     **STRICT VALIDATION:**
     - You MUST provide the Contract Address (0x...).
-    - Search specifically for: "site:dexscreener.com/base/ new pairs" OR "site:basescan.org/tokens recent".
+    - Search specifically for: "site:dexscreener.com/base/ new pairs" OR "site:basescan.org/tokens recent ${Date.now()}".
     
     **STRATEGY:**
     1. Find names of new tokens.
     2. Search "[Token Name] base contract address".
     3. If address is not found, do not include the token.
-    4. **FALLBACK:** If no brand new tokens are verifiable, return "Recently Trending" tokens on Base.
+    4. **CRITICAL FALLBACK:** If no brand new tokens are verifiable, return "Recently Trending" tokens on Base (like VIRTUAL, LUNA, KEYCAT, etc). IT IS FORBIDDEN TO RETURN EMPTY.
     
     **OUTPUT:**
     JSON Array of objects.
@@ -322,9 +322,12 @@ export const getAnalystPicks = async (forceRefresh = false): Promise<{ tokens: T
     **GOAL:** Identify 3 "High Conviction" tokens.
     
     **DATA EXTRACTION:**
-    - Search for "Base chain bullish narrative twitter".
+    - Search for "Base chain bullish narrative twitter ${Date.now()}".
     - Cross-reference with "site:dexscreener.com/base" to find the Real Contract Address.
     - **DO NOT INVENT DATA.** Only use tokens where you can find a 0x address.
+    
+    **FALLBACK:**
+    If specific "picks" are hard to verify, return the Blue Chips of Base (AERO, BRETT) as "Safe Picks". DO NOT RETURN EMPTY.
     
     **OUTPUT:**
     JSON Array of objects.
@@ -369,6 +372,7 @@ export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: 
       1. Identify trending tickers ($BRETT, $TOSHI, $DEGEN, etc).
       2. **MANDATORY:** Search "[Ticker] base address" to find the 0x contract.
       3. If you can't find the address, check the "Top Volume" list on DexScreener Base, as high volume usually correlates with social trends.
+      4. **FALLBACK:** Return the most popular memes on Base if specific new trends are not found. DO NOT RETURN EMPTY.
       
       **OUTPUT:**
       JSON Array of objects.
@@ -390,6 +394,45 @@ export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: 
   
     } catch (error: any) {
       console.error("findSocialTrends error:", error);
+      throw error;
+    }
+  };
+
+  export const analyzeSpecificToken = async (query: string): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+    try {
+      const ai = getAiClient();
+      const prompt = `
+      You are a Specialized Crypto Token Auditor.
+      
+      **GOAL:** Perform a deep-dive analysis on the specific token requested by the user: "${query}".
+      
+      **INSTRUCTIONS:**
+      1. **Identify the Token:** If the query is a name (e.g., "Toshi") or ticker ("$MOG"), find its Contract Address on Base immediately (search "[Query] base contract address"). If the query is already a 0x address, use it directly.
+      2. **Fetch Data:** Search specifically for this token on DexScreener, BaseScan, and Twitter.
+      3. **Analyze:**
+         - **Security:** Is liquidity locked? Ownership renounced?
+         - **Social:** What is the sentiment on X right now?
+         - **Technicals:** RSI, Volume, Market Cap.
+      
+      **OUTPUT:**
+      Return a JSON Array with EXACTLY ONE token object containing all the deep analysis.
+      Fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, socialSentiment, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
+      `;
+  
+      const response = await generateWithRetry(ai, {
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+          thinkingConfig: { thinkingBudget: 2048 }
+        },
+      });
+  
+      const result = parseAIResponse(response);
+      return result;
+  
+    } catch (error: any) {
+      console.error("analyzeSpecificToken error:", error);
       throw error;
     }
   };

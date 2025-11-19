@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Token, GroundingChunk, ScanResult } from '../types';
-import { findGems, findNewProjects, getAnalystPicks, findSocialTrends } from '../services/geminiService';
+import { findGems, findNewProjects, getAnalystPicks, findSocialTrends, analyzeSpecificToken } from '../services/geminiService';
 
 interface PageState {
   tokens: Token[];
@@ -18,10 +18,12 @@ interface ScanContextType {
   newProjects: PageState;
   analystPicks: PageState;
   socialTrends: PageState;
+  tokenAnalyzer: PageState;
   scanGemFinder: (forceRefresh?: boolean) => Promise<void>;
   scanNewProjects: (forceRefresh?: boolean) => Promise<void>;
   scanAnalystPicks: (forceRefresh?: boolean) => Promise<void>;
   scanSocialTrends: (forceRefresh?: boolean) => Promise<void>;
+  analyzeToken: (query: string) => Promise<void>;
 }
 
 const initialPageState: PageState = {
@@ -41,6 +43,7 @@ export const ScanProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [newProjects, setNewProjects] = useState<PageState>(initialPageState);
   const [analystPicks, setAnalystPicks] = useState<PageState>(initialPageState);
   const [socialTrends, setSocialTrends] = useState<PageState>(initialPageState);
+  const [tokenAnalyzer, setTokenAnalyzer] = useState<PageState>(initialPageState);
 
   // Helper to update state generically
   const updateState = (
@@ -57,11 +60,7 @@ export const ScanProvider: React.FC<{ children: React.ReactNode }> = ({ children
     forceRefresh: boolean = true
   ) => {
     
-    // Immediately set loading state to true.
-    // Using functional update to access the VERY latest state for history preservation
     setter(prev => {
-        // If we have previous data, save it to history before wiping for new scan (optional, or keep displaying it?)
-        // Let's keep displaying old data while loading (better UX), but mark loading=true
         let newHistory = prev.history;
         if (prev.tokens.length > 0 && prev.scanTime) {
              newHistory = [{ timestamp: prev.scanTime, tokens: prev.tokens, sources: prev.sources }, ...prev.history];
@@ -72,12 +71,10 @@ export const ScanProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isLoading: true,
             error: null,
             history: newHistory
-            // We do NOT reset tokens here so the UI doesn't flash empty.
         };
     });
 
     try {
-      // This await allows the code to run in the background even if the component that called it unmounts
       const { tokens, sources } = await scanFn(forceRefresh);
       
       setter(prev => ({
@@ -115,6 +112,37 @@ export const ScanProvider: React.FC<{ children: React.ReactNode }> = ({ children
     performScan(setSocialTrends, findSocialTrends, forceRefresh), 
   []);
 
+  const analyzeToken = useCallback(async (query: string) => {
+     setTokenAnalyzer(prev => ({
+        ...prev,
+        isLoading: true,
+        error: null,
+        // Do not clear previous result while loading
+     }));
+
+     try {
+        const { tokens, sources } = await analyzeSpecificToken(query);
+        setTokenAnalyzer(prev => ({
+            ...prev,
+            tokens,
+            sources,
+            scanTime: new Date(),
+            isLoading: false,
+            hasScanned: true,
+            history: prev.tokens.length > 0 && prev.scanTime 
+                ? [{ timestamp: prev.scanTime, tokens: prev.tokens, sources: prev.sources }, ...prev.history] 
+                : prev.history
+        }));
+     } catch (err) {
+        console.error("Analysis failed:", err);
+        setTokenAnalyzer(prev => ({
+            ...prev,
+            isLoading: false,
+            error: err instanceof Error ? err.message : 'Analysis failed',
+        }));
+     }
+  }, []);
+
   return (
     <ScanContext.Provider
       value={{
@@ -122,10 +150,12 @@ export const ScanProvider: React.FC<{ children: React.ReactNode }> = ({ children
         newProjects,
         analystPicks,
         socialTrends,
+        tokenAnalyzer,
         scanGemFinder,
         scanNewProjects,
         scanAnalystPicks,
         scanSocialTrends,
+        analyzeToken
       }}
     >
       {children}
