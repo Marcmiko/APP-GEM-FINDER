@@ -12,8 +12,8 @@
     "@google/genai": "^1.29.1",
     "@uniswap/sdk-core": "^7.9.0",
     "@uniswap/widgets": "^2.59.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-redux": "^9.2.0"
   },
   "devDependencies": {
