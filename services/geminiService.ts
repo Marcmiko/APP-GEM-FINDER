@@ -1,243 +1,127 @@
 
 import { GoogleGenAI } from "@google/genai";
 import { Token, GroundingChunk } from '../types';
+import { searchDexScreener, mapDexScreenerPairToToken, DexScreenerPair } from './dexScreenerService';
+import { searchCoinGecko, getTrendingCoinGecko } from './coinGeckoService';
 
 const getAiClient = () => {
-    let apiKey: string | undefined;
-    
-    // 1. Try Vercel/Vite specific env var (Primary for frontend)
+  let apiKey: string | undefined;
+
+  // 1. Try Vercel/Vite specific env var (Primary for frontend)
+  // @ts-ignore
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
     // @ts-ignore
-    if (typeof import.meta !== 'undefined' && import.meta.env) {
-        // @ts-ignore
-        apiKey = import.meta.env.VITE_API_KEY;
-    }
+    apiKey = import.meta.env.VITE_API_KEY;
+  }
 
-    // 2. Fallback to standard process.env (if defined in local dev or custom build)
-    if (!apiKey) {
-        try {
-            apiKey = process.env.API_KEY;
-        } catch (e) {
-            // Ignore process not defined error
-        }
-    }
-    
-    if (!apiKey) {
-        throw new Error("API Key missing. Check Vercel Environment Variables (VITE_API_KEY).");
-    }
-    
-    return new GoogleGenAI({ apiKey });
-};
-
-// Helper to robustly parse numbers from various AI string formats (e.g., "$10,000", "1.2M")
-const robustParseFloat = (value: any): number => {
-    if (typeof value === 'number') return value;
-    if (typeof value !== 'string') return 0;
-    
-    let numStr = value.trim().toUpperCase();
-    let multiplier = 1;
-
-    if (numStr.endsWith('K')) {
-        multiplier = 1000;
-        numStr = numStr.slice(0, -1);
-    } else if (numStr.endsWith('M')) {
-        multiplier = 1000000;
-        numStr = numStr.slice(0, -1);
-    } else if (numStr.endsWith('B')) {
-        multiplier = 1000000000;
-        numStr = numStr.slice(0, -1);
-    }
-    
-    // Remove characters that are not digits, decimal point, or a negative sign
-    const cleanedStr = numStr.replace(/[^0-9.-]+/g, '');
-    const num = parseFloat(cleanedStr);
-
-    return isNaN(num) ? 0 : num * multiplier;
-};
-
-// Validates and coerces a single token object to match the Token interface
-const validateAndCoerceToken = (data: any): Token | null => {
-    if (!data || (!data.address && !data.symbol)) {
-        return null; 
-    }
-    
-    // STRICT MODE: Ensure address starts with 0x and is length 42
-    let address = String(data.address || '').trim();
-    const addressRegex = /^0x[a-fA-F0-9]{40}$/;
-    
-    if (!addressRegex.test(address)) {
-        // Fail silently on invalid address to prevent hallucinations
-        return null;
-    }
-
-    return {
-        name: String(data.name || 'Unknown Token'),
-        symbol: String(data.symbol || '???'),
-        address: address,
-        creationDate: String(data.creationDate || 'Recently'),
-        liquidity: robustParseFloat(data.liquidity),
-        volume24h: robustParseFloat(data.volume24h),
-        marketCap: robustParseFloat(data.marketCap),
-        holders: Math.round(robustParseFloat(data.holders)),
-        isLiquidityLocked: Boolean(data.isLiquidityLocked),
-        isOwnershipRenounced: Boolean(data.isOwnershipRenounced),
-        gemScore: Math.round(robustParseFloat(data.gemScore)),
-        analysis: {
-            summary: String(data.analysis?.summary || 'Analysis unavailable.'),
-            strengths: String(data.analysis?.strengths || 'High potential detected.'),
-            risks: String(data.analysis?.risks || 'Standard volatility risks.'),
-            verdict: String(data.analysis?.verdict || 'Monitor'),
-        },
-        technicalIndicators: {
-            rsi: data.technicalIndicators?.rsi ? robustParseFloat(data.technicalIndicators.rsi) : null,
-            macd: data.technicalIndicators?.macd ? String(data.technicalIndicators.macd) : null,
-            movingAverages: data.technicalIndicators?.movingAverages ? String(data.technicalIndicators.movingAverages) : null,
-        },
-        socialSentiment: {
-            positive: data.socialSentiment?.positive ? robustParseFloat(data.socialSentiment.positive) : 50,
-            negative: data.socialSentiment?.negative ? robustParseFloat(data.socialSentiment.negative) : 25,
-            neutral: data.socialSentiment?.neutral ? robustParseFloat(data.socialSentiment.neutral) : 25,
-            summary: data.socialSentiment?.summary ? String(data.socialSentiment.summary) : "Neutral social activity.",
-        },
-        websiteUrl: data.websiteUrl ? String(data.websiteUrl) : null,
-        xUrl: data.xUrl ? String(data.xUrl) : null,
-        coinMarketCapUrl: data.coinMarketCapUrl ? String(data.coinMarketCapUrl) : null,
-        coingeckoUrl: data.coingeckoUrl ? String(data.coingeckoUrl) : null,
-        iconUrl: data.iconUrl ? String(data.iconUrl) : null,
-        convictionScore: data.convictionScore ? Math.round(robustParseFloat(data.convictionScore)) : undefined,
-    };
-};
-
-const parseAIResponse = (response: any): { tokens: Token[]; sources: GroundingChunk[] } => {
-    if (!response || !response.candidates || response.candidates.length === 0) {
-        return { tokens: [], sources: [] };
-    }
-    
-    let jsonText: string;
+  // 2. Fallback to standard process.env (if defined in local dev or custom build)
+  if (!apiKey) {
     try {
-        jsonText = response.text || '';
+      apiKey = process.env.API_KEY;
     } catch (e) {
-        jsonText = '';
+      // Ignore process not defined error
     }
+  }
 
-    // Robust JSON extraction using Regex to find the array [...]
-    const jsonMatch = jsonText.match(/\[\s*\{[\s\S]*\}\s*\]/);
-    if (jsonMatch) {
-        jsonText = jsonMatch[0];
-    } else {
-        jsonText = jsonText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const firstBracket = jsonText.indexOf('[');
-        const lastBracket = jsonText.lastIndexOf(']');
-        if (firstBracket !== -1 && lastBracket !== -1) {
-            jsonText = jsonText.substring(firstBracket, lastBracket + 1);
-        }
-    }
-    
-    if (!jsonText || !jsonText.startsWith('[')) {
-        return { tokens: [], sources: [] };
-    }
+  if (!apiKey) {
+    throw new Error("API Key missing. Check Vercel Environment Variables (VITE_API_KEY).");
+  }
 
-    try {
-        const parsedData = JSON.parse(jsonText);
-        if (!Array.isArray(parsedData)) return { tokens: [], sources: [] };
-
-        const tokens = parsedData
-            .map(validateAndCoerceToken)
-            .filter((token): token is Token => token !== null);
-
-        const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
-        return { tokens, sources: sources as GroundingChunk[] };
-    } catch (error) {
-        console.error("Parsing error:", error);
-        return { tokens: [], sources: [] };
-    }
-}
+  return new GoogleGenAI({ apiKey });
+};
 
 // --- CACHING UTILS ---
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 const getFromCache = (key: string): { tokens: Token[]; sources: GroundingChunk[] } | null => {
-    if (typeof window === 'undefined') return null;
-    try {
-        const cached = localStorage.getItem(key);
-        if (!cached) return null;
-        
-        const { timestamp, data } = JSON.parse(cached);
-        if (Date.now() - timestamp < CACHE_TTL_MS) {
-            return data;
-        }
-        return null;
-    } catch (e) {
-        return null;
+  if (typeof window === 'undefined') return null;
+  try {
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+
+    const { timestamp, data } = JSON.parse(cached);
+    if (Date.now() - timestamp < CACHE_TTL_MS) {
+      return data;
     }
+    return null;
+  } catch (e) {
+    return null;
+  }
 };
 
 const saveToCache = (key: string, data: { tokens: Token[]; sources: GroundingChunk[] }) => {
-    if (typeof window === 'undefined') return;
-    try {
-        localStorage.setItem(key, JSON.stringify({
-            timestamp: Date.now(),
-            data
-        }));
-    } catch (e) {
-        // ignore storage errors
-    }
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify({
+      timestamp: Date.now(),
+      data
+    }));
+  } catch (e) {
+    // ignore storage errors
+  }
 };
 
 // --- RETRY LOGIC HELPER ---
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const generateWithRetry = async (ai: any, params: any, retries = 3): Promise<any> => {
-    for (let i = 0; i < retries; i++) {
-        try {
-            return await ai.models.generateContent(params);
-        } catch (error: any) {
-            const isOverloaded = error?.message?.includes('503') || error?.status === 503;
-            const isRateLimited = error?.message?.includes('429') || error?.status === 429;
-            
-            if (i < retries - 1 && (isOverloaded || isRateLimited)) {
-                const delay = 1000 * Math.pow(2, i); // 1s, 2s, 4s
-                await wait(delay);
-                continue;
-            }
-            throw error;
-        }
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await ai.models.generateContent(params);
+    } catch (error: any) {
+      const isOverloaded = error?.message?.includes('503') || error?.status === 503;
+      const isRateLimited = error?.message?.includes('429') || error?.status === 429;
+
+      if (i < retries - 1 && (isOverloaded || isRateLimited)) {
+        const delay = 1000 * Math.pow(2, i); // 1s, 2s, 4s
+        await wait(delay);
+        continue;
+      }
+      throw error;
     }
+  }
 };
 
+// --- CORE LOGIC ---
 
-export const findGems = async (startDate?: string, endDate?: string, forceRefresh = false): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
-  const cacheKey = `gem_finder_${startDate || 'all'}_${endDate || 'all'}`;
-  
-  if (!forceRefresh) {
-      const cached = getFromCache(cacheKey);
-      if (cached) return cached;
+const FALLBACK_TOKENS = ["BRETT", "DEGEN", "TOSHI", "AERO", "MOG", "KEYCAT", "VIRTUAL", "HIGHER"];
+
+const fetchTokensFromNames = async (names: string[]): Promise<Token[]> => {
+  const tokens: Token[] = [];
+  const seenAddresses = new Set<string>();
+
+  for (const name of names) {
+    // 1. Try DexScreener first (best for new/meme tokens)
+    const pairs = await searchDexScreener(name);
+
+    if (pairs.length > 0) {
+      // Sort by liquidity to get the "real" one
+      pairs.sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
+      const bestPair = pairs[0];
+
+      if (!seenAddresses.has(bestPair.baseToken.address)) {
+        tokens.push(mapDexScreenerPairToToken(bestPair));
+        seenAddresses.add(bestPair.baseToken.address);
+        continue; // Found on DexScreener, move to next name
+      }
+    }
+
+    // 2. If not found or low quality, try CoinGecko
+    const cgTokens = await searchCoinGecko(name);
+    if (cgTokens.length > 0) {
+      const bestCg = cgTokens[0];
+      if (!seenAddresses.has(bestCg.address)) {
+        tokens.push(bestCg);
+        seenAddresses.add(bestCg.address);
+      }
+    }
   }
+  return tokens;
+};
 
+const getGeminiSuggestions = async (prompt: string): Promise<{ names: string[], sources: GroundingChunk[] }> => {
   try {
     const ai = getAiClient();
-    
-    const prompt = `
-    You are a Crypto Data Extractor.
-    
-    **GOAL:** Find REAL, TRADEABLE tokens on Base blockchain.
-    
-    **CRITICAL RULES:**
-    1. **NO HALLUCINATIONS:** You must find the specific contract address (starts with 0x) on a website like DexScreener, BaseScan, or CoinGecko.
-    2. **VERIFICATION:** If you find a token name, search for "TokenName base address 0x". If you can't find the 0x address, DISCARD IT.
-    
-    **SEARCH QUERIES TO RUN:**
-    - "site:dexscreener.com/base trending ${Date.now()}"
-    - "site:geckoterminal.com base pools ${Date.now()}"
-    - "top gainers base chain 24h ${Date.now()}"
-    
-    **CRITICAL FALLBACK:**
-    If you cannot find *new* gems, you **MUST** return the current TOP TRENDING tokens on Base (e.g., AERO, BRETT, DEGEN, TOSHI, MOG) with their real addresses. DO NOT RETURN AN EMPTY LIST. Mark them as "Trending Fallback" in the summary.
-    
-    **OUTPUT:**
-    JSON Array of objects.
-    Fields: name, symbol, address (MUST BE 0x...), liquidity, volume24h, marketCap, holders, gemScore (0-100), analysis, technicalIndicators, socialSentiment, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
-    `;
-
     const response = await generateWithRetry(ai, {
       model: "gemini-2.5-flash",
       contents: prompt,
@@ -247,192 +131,183 @@ export const findGems = async (startDate?: string, endDate?: string, forceRefres
       },
     });
 
-    const result = parseAIResponse(response);
+    let text = response.text || '';
+    // Extract JSON array of strings
+    const jsonMatch = text.match(/\[\s*".*"\s*\]/s) || text.match(/\[\s*'.*'\s*\]/s);
+    let names: string[] = [];
+
+    if (jsonMatch) {
+      try {
+        // Replace single quotes with double quotes for valid JSON if needed
+        const jsonStr = jsonMatch[0].replace(/'/g, '"');
+        names = JSON.parse(jsonStr);
+      } catch (e) {
+        console.warn("Failed to parse JSON from Gemini:", e);
+      }
+    }
+
+    // Fallback: split by commas if no JSON found but text looks like a list
+    if (names.length === 0 && text.includes(',')) {
+      names = text.split(',').map(s => s.trim()).filter(s => s.length > 1 && s.length < 20);
+    }
+
+    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
+    return { names, sources: sources as GroundingChunk[] };
+
+  } catch (error) {
+    console.error("Gemini suggestion error:", error);
+    return { names: [], sources: [] };
+  }
+};
+
+export const findGems = async (startDate?: string, endDate?: string, forceRefresh = false): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+  const cacheKey = `gem_finder_${startDate || 'all'}_${endDate || 'all'}`;
+
+  if (!forceRefresh) {
+    const cached = getFromCache(cacheKey);
+    if (cached) return cached;
+  }
+
+  try {
+    const prompt = `
+    Find the top 10 TRENDING token tickers on Base blockchain right now.
+    Look for "Top Gainers", "Trending", or "Hottest" tokens on Base from the last 24 hours.
+    Return ONLY a JSON array of strings (tickers or names). Example: ["BRETT", "DEGEN", "TOSHI"].
+    Do not include any other text.
+    `;
+
+    const { names, sources } = await getGeminiSuggestions(prompt);
+
+    // Mix in CoinGecko trending if available
+    const cgTrending = await getTrendingCoinGecko();
+    const combinedNames = [...new Set([...names, ...cgTrending, ...FALLBACK_TOKENS])];
+
+    const tokens = await fetchTokensFromNames(combinedNames);
+
+    const result = { tokens: tokens.slice(0, 12), sources }; // Limit to 12
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
     return result;
 
   } catch (error: any) {
     console.error("findGems error:", error);
-    throw error;
+    // Fallback to hardcoded list if AI fails completely
+    const tokens = await fetchTokensFromNames(FALLBACK_TOKENS);
+    return { tokens, sources: [] };
   }
 };
 
 export const findNewProjects = async (forceRefresh = false): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
   const cacheKey = 'new_projects';
-  
+
   if (!forceRefresh) {
-      const cached = getFromCache(cacheKey);
-      if (cached) return cached;
+    const cached = getFromCache(cacheKey);
+    if (cached) return cached;
   }
 
   try {
-    const ai = getAiClient();
     const prompt = `
-    You are a "New Listing" Scanner.
-    
-    **GOAL:** List the most recent tokens added to Base DEXs (Uniswap, Aerodrome).
-    
-    **STRICT VALIDATION:**
-    - You MUST provide the Contract Address (0x...).
-    - Search specifically for: "site:dexscreener.com/base/ new pairs" OR "site:basescan.org/tokens recent ${Date.now()}".
-    
-    **STRATEGY:**
-    1. Find names of new tokens.
-    2. Search "[Token Name] base contract address".
-    3. If address is not found, do not include the token.
-    4. **CRITICAL FALLBACK:** If no brand new tokens are verifiable, return "Recently Trending" tokens on Base (like VIRTUAL, LUNA, KEYCAT, etc). IT IS FORBIDDEN TO RETURN EMPTY.
-    
-    **OUTPUT:**
-    JSON Array of objects.
-    Fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, socialSentiment, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
+    Find 10 NEWLY LAUNCHED tokens on Base blockchain from the last 24-48 hours.
+    Look for "New Pairs", "New Listings", or "Recent Mints" on Base.
+    Return ONLY a JSON array of strings (tickers or names).
     `;
 
-    const response = await generateWithRetry(ai, {
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        tools: [{ googleSearch: {} }],
-        thinkingConfig: { thinkingBudget: 2048 }
-      },
-    });
+    const { names, sources } = await getGeminiSuggestions(prompt);
+    // For new projects, if AI fails, we might not want to show old trending ones, but better than nothing.
+    const searchList = names.length > 0 ? names : ["VIRTUAL", "LUNA", "KEYCAT"];
 
-    const result = parseAIResponse(response);
+    const tokens = await fetchTokensFromNames(searchList);
+
+    const result = { tokens: tokens.slice(0, 12), sources };
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
     return result;
 
   } catch (error: any) {
     console.error("findNewProjects error:", error);
-    throw error;
+    return { tokens: [], sources: [] };
   }
 };
 
 export const getAnalystPicks = async (forceRefresh = false): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
   const cacheKey = 'analyst_picks';
-  
+
   if (!forceRefresh) {
-      const cached = getFromCache(cacheKey);
-      if (cached) return cached;
+    const cached = getFromCache(cacheKey);
+    if (cached) return cached;
   }
 
   try {
-    const ai = getAiClient();
     const prompt = `
-    You are a Crypto Analyst for Base Chain.
-    
-    **GOAL:** Identify 3 "High Conviction" tokens.
-    
-    **DATA EXTRACTION:**
-    - Search for "Base chain bullish narrative twitter ${Date.now()}".
-    - Cross-reference with "site:dexscreener.com/base" to find the Real Contract Address.
-    - **DO NOT INVENT DATA.** Only use tokens where you can find a 0x address.
-    
-    **FALLBACK:**
-    If specific "picks" are hard to verify, return the Blue Chips of Base (AERO, BRETT) as "Safe Picks". DO NOT RETURN EMPTY.
-    
-    **OUTPUT:**
-    JSON Array of objects.
-    Fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, convictionScore, analysis, technicalIndicators, socialSentiment, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
+    Find 5 "High Conviction" or "Blue Chip" tokens on Base blockchain that analysts are bullish on.
+    Return ONLY a JSON array of strings.
     `;
 
-    const response = await generateWithRetry(ai, {
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        tools: [{ googleSearch: {} }],
-        thinkingConfig: { thinkingBudget: 2048 }
-      },
-    });
+    const { names, sources } = await getGeminiSuggestions(prompt);
+    const searchList = names.length > 0 ? names : ["AERO", "BRETT", "PRIME"];
 
-    const result = parseAIResponse(response);
+    const tokens = await fetchTokensFromNames(searchList);
+
+    const result = { tokens: tokens.slice(0, 12), sources };
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
     return result;
 
   } catch (error: any) {
     console.error("getAnalystPicks error:", error);
-    throw error;
+    const tokens = await fetchTokensFromNames(["AERO", "BRETT"]);
+    return { tokens, sources: [] };
   }
 };
 
 export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
-    const cacheKey = 'social_trends';
-  
-    if (!forceRefresh) {
-        const cached = getFromCache(cacheKey);
-        if (cached) return cached;
+  const cacheKey = 'social_trends';
+
+  if (!forceRefresh) {
+    const cached = getFromCache(cacheKey);
+    if (cached) return cached;
+  }
+
+  try {
+    const prompt = `
+      Find tokens on Base blockchain that are trending on Twitter/X right now.
+      Return ONLY a JSON array of strings (tickers).
+      `;
+
+    const { names, sources } = await getGeminiSuggestions(prompt);
+    const searchList = names.length > 0 ? names : ["DEGEN", "MOG", "TOSHI"];
+
+    const tokens = await fetchTokensFromNames(searchList);
+
+    const result = { tokens: tokens.slice(0, 12), sources };
+    if (result.tokens.length > 0) saveToCache(cacheKey, result);
+    return result;
+
+  } catch (error: any) {
+    console.error("findSocialTrends error:", error);
+    const tokens = await fetchTokensFromNames(["DEGEN", "MOG"]);
+    return { tokens, sources: [] };
+  }
+};
+
+export const analyzeSpecificToken = async (query: string): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
+  try {
+    // Direct search first
+    const pairs = await searchDexScreener(query);
+    // Sort by liquidity
+    pairs.sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
+
+    if (pairs.length > 0) {
+      return { tokens: [mapDexScreenerPairToToken(pairs[0])], sources: [] };
     }
 
-    try {
-      const ai = getAiClient();
-      const prompt = `
-      You are a Social Sentiment Tracker for Base.
-      
-      **GOAL:** Find tokens that people are talking about on X (Twitter).
-      
-      **PROCESS:**
-      1. Identify trending tickers ($BRETT, $TOSHI, $DEGEN, etc).
-      2. **MANDATORY:** Search "[Ticker] base address" to find the 0x contract.
-      3. If you can't find the address, check the "Top Volume" list on DexScreener Base, as high volume usually correlates with social trends.
-      4. **FALLBACK:** Return the most popular memes on Base if specific new trends are not found. DO NOT RETURN EMPTY.
-      
-      **OUTPUT:**
-      JSON Array of objects.
-      Fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, socialSentiment, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
-      `;
-  
-      const response = await generateWithRetry(ai, {
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          tools: [{ googleSearch: {} }],
-          thinkingConfig: { thinkingBudget: 2048 }
-        },
-      });
-  
-      const result = parseAIResponse(response);
-      if (result.tokens.length > 0) saveToCache(cacheKey, result);
-      return result;
-  
-    } catch (error: any) {
-      console.error("findSocialTrends error:", error);
-      throw error;
+    // Fallback to CoinGecko
+    const cgTokens = await searchCoinGecko(query);
+    if (cgTokens.length > 0) {
+      return { tokens: [cgTokens[0]], sources: [] };
     }
-  };
 
-  export const analyzeSpecificToken = async (query: string): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
-    try {
-      const ai = getAiClient();
-      const prompt = `
-      You are a Specialized Crypto Token Auditor.
-      
-      **GOAL:** Perform a deep-dive analysis on the specific token requested by the user: "${query}".
-      
-      **INSTRUCTIONS:**
-      1. **Identify the Token:** If the query is a name (e.g., "Toshi") or ticker ("$MOG"), find its Contract Address on Base immediately (search "[Query] base contract address"). If the query is already a 0x address, use it directly.
-      2. **Fetch Data:** Search specifically for this token on DexScreener, BaseScan, and Twitter.
-      3. **Analyze:**
-         - **Security:** Is liquidity locked? Ownership renounced?
-         - **Social:** What is the sentiment on X right now?
-         - **Technicals:** RSI, Volume, Market Cap.
-      
-      **OUTPUT:**
-      Return a JSON Array with EXACTLY ONE token object containing all the deep analysis.
-      Fields: name, symbol, address, liquidity, volume24h, marketCap, holders, gemScore, analysis, technicalIndicators, socialSentiment, websiteUrl, xUrl, coinMarketCapUrl, coingeckoUrl, iconUrl.
-      `;
-  
-      const response = await generateWithRetry(ai, {
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          tools: [{ googleSearch: {} }],
-          thinkingConfig: { thinkingBudget: 2048 }
-        },
-      });
-  
-      const result = parseAIResponse(response);
-      return result;
-  
-    } catch (error: any) {
-      console.error("analyzeSpecificToken error:", error);
-      throw error;
-    }
-  };
+    return { tokens: [], sources: [] };
+
+  } catch (error: any) {
+    console.error("analyzeSpecificToken error:", error);
+    throw error;
+  }
+};
