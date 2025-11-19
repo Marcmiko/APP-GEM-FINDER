@@ -13,8 +13,12 @@ interface SwapModalProps {
 // Base Chain ID
 const CHAIN_ID = 8453;
 
-// Public RPC Endpoint for Base
-const JSON_RPC_URL = 'https://mainnet.base.org';
+// Public RPC Endpoints for Base (with backups)
+const JSON_RPC_URLS = [
+    'https://mainnet.base.org',
+    'https://base.publicnode.com',
+    'https://1rpc.io/base'
+];
 
 const SwapModal: React.FC<SwapModalProps> = ({
     isOpen,
@@ -38,7 +42,7 @@ const SwapModal: React.FC<SwapModalProps> = ({
 
                 <div className="uniswap-widget-container">
                     <SwapWidget
-                        jsonRpcUrlMap={{ [CHAIN_ID]: [JSON_RPC_URL] }}
+                        jsonRpcUrlMap={{ [CHAIN_ID]: JSON_RPC_URLS }}
                         defaultChainId={CHAIN_ID}
                         defaultInputTokenAddress={initialInputTokenAddress}
                         defaultOutputTokenAddress={initialOutputTokenAddress}
