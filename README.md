@@ -1,20 +1,23 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Base Gem Finder
 
-# Run and deploy your AI Studio app
+AI-powered crypto token analyzer on Base blockchain.
 
-This contains everything you need to run your app locally.
+## Features
+- **Gem Finder**: AI analysis of new tokens.
+- **New Projects**: Real-time listing of new pairs.
+- **Analyst Picks**: Curated high-potential tokens.
+- **Social Trends**: Sentiment analysis from social media.
+- **Token Analyzer**: Deep dive into specific tokens.
+- **Swap**: Integrated Uniswap widget for trading.
+- **Alerts**: Browser-based price alerts.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1MRPqD3iZK9PmfeP_X3pB5qzcHiJ59zKH
+## Tech Stack
+- React 18
+- Vite
+- Tailwind CSS
+- Google Gemini API
+- Uniswap Widgets
+- DexScreener API
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Deployment
+Deployed on Vercel.
