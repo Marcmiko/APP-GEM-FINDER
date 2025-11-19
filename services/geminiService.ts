@@ -64,7 +64,7 @@ const saveToCache = (key: string, data: { tokens: Token[]; sources: GroundingChu
 // --- RETRY LOGIC HELPER ---
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const generateWithRetry = async (ai: any, params: any, retries = 3): Promise<any> => {
+const generateWithRetry = async (ai: any, params: any, retries = 5): Promise<any> => {
   for (let i = 0; i < retries; i++) {
     try {
       return await ai.models.generateContent(params);
@@ -73,7 +73,8 @@ const generateWithRetry = async (ai: any, params: any, retries = 3): Promise<any
       const isRateLimited = error?.message?.includes('429') || error?.status === 429;
 
       if (i < retries - 1 && (isOverloaded || isRateLimited)) {
-        const delay = 1000 * Math.pow(2, i); // 1s, 2s, 4s
+        const delay = 2000 * Math.pow(2, i); // 2s, 4s, 8s, 16s, 32s
+        console.warn(`Gemini API overloaded/rate-limited. Retrying in ${delay}ms... (Attempt ${i + 1}/${retries})`);
         await wait(delay);
         continue;
       }

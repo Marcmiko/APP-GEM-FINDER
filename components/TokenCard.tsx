@@ -2,10 +2,23 @@
 import React, { useState } from 'react';
 import { Token, TechnicalIndicators } from '../types';
 import SwapModal from './SwapModal';
+import { useAlerts } from '../context/AlertContext';
 
 // --- ICONS ---
 const VerifiedIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+);
+
+const BellIcon: React.FC<React.SVGProps<SVGSVGElement> & { active: boolean }> = ({ active, ...props }) => (
+    active ? (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+            <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0113.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 01-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 11-7.48 0 24.585 24.585 0 01-4.831-1.244.75.75 0 01-.298-1.205A8.217 8.217 0 005.25 9.75V9zm4.502 8.9a2.25 2.25 0 104.496 0 25.057 25.057 0 01-4.496 0z" clipRule="evenodd" />
+        </svg>
+    ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+        </svg>
+    )
 );
 const WarningIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 3.001-1.742 3.001H4.42c-1.53 0-2.493-1.667-1.743-3.001l5.58-9.92zM10 13a1 1 0 100-2 1 1 0 000 2zm-1-8a1 1 0 011-1h.008a1 1 0 011 1v3.006a1 1 0 01-1 1h-.008a1 1 0 01-1-1V5z" clipRule="evenodd" /></svg>
@@ -203,6 +216,8 @@ const formatNumber = (num?: number | null) => {
 }
 
 const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave }) => {
+    const { toggleAlert, isAlertActive } = useAlerts();
+    const isAlerting = isAlertActive(token.address);
     const [imgError, setImgError] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const verdictStyle = getVerdictStyle(token.analysis?.verdict || 'N/A');
@@ -248,14 +263,22 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
 
     return (
         <div className="relative bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between transform transition-all duration-300 hover:scale-[1.02] hover:border-indigo-500 hover:shadow-2xl hover:shadow-indigo-500/20">
-            <button
-                onClick={handleSaveToggle}
-                title={isSaved ? "Unsave Project" : "Save Project"}
-                aria-label={isSaved ? "Unsave this project" : "Save this project"}
-                className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors z-10 p-1"
-            >
-                <BookmarkIcon saved={isSaved} className="w-6 h-6" />
-            </button>
+            <div className="absolute top-4 right-4 flex space-x-2 z-10">
+                <button
+                    onClick={(e) => { e.stopPropagation(); toggleAlert(token.address); }}
+                    title={isAlerting ? "Turn off alerts" : "Alert me on price moves"}
+                    className={`p-1 transition-colors ${isAlerting ? 'text-yellow-400 hover:text-yellow-300' : 'text-slate-500 hover:text-white'}`}
+                >
+                    <BellIcon active={isAlerting} className="w-6 h-6" />
+                </button>
+                <button
+                    onClick={handleSaveToggle}
+                    title={isSaved ? "Unsave Project" : "Save Project"}
+                    className="text-slate-500 hover:text-white transition-colors p-1"
+                >
+                    <BookmarkIcon saved={isSaved} className="w-6 h-6" />
+                </button>
+            </div>
 
             <div>
                 <div className="flex justify-between items-start gap-4">
