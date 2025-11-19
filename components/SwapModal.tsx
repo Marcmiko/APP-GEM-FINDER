@@ -13,12 +13,30 @@ interface SwapModalProps {
 // Base Chain ID
 const CHAIN_ID = 8453;
 
-// Public RPC Endpoints for Base (with backups)
-const JSON_RPC_URLS = [
-    'https://mainnet.base.org',
-    'https://base.publicnode.com',
-    'https://1rpc.io/base'
-];
+// Public RPC Endpoint for Base
+const JSON_RPC_URL = 'https://mainnet.base.org';
+
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError(error: any) {
+        return { hasError: true };
+    }
+
+    componentDidCatch(error: any, errorInfo: any) {
+        console.error("SwapWidget Error:", error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return <div className="p-4 text-center text-red-400">Widget failed to load. Please refresh.</div>;
+        }
+        return this.props.children;
+    }
+}
 
 const SwapModal: React.FC<SwapModalProps> = ({
     isOpen,
@@ -41,24 +59,26 @@ const SwapModal: React.FC<SwapModalProps> = ({
                 </button>
 
                 <div className="uniswap-widget-container">
-                    <SwapWidget
-                        jsonRpcUrlMap={{ [CHAIN_ID]: JSON_RPC_URLS }}
-                        defaultChainId={CHAIN_ID}
-                        defaultInputTokenAddress={initialInputTokenAddress}
-                        defaultOutputTokenAddress={initialOutputTokenAddress}
-                        width="100%"
-                        theme={{
-                            primary: '#10B981', // Emerald 500
-                            secondary: '#334155', // Slate 700
-                            interactive: '#1E293B', // Slate 800
-                            container: '#0F172A', // Slate 900
-                            module: '#1E293B', // Slate 800
-                            accent: '#10B981', // Emerald 500
-                            outline: '#334155', // Slate 700
-                            dialog: '#0F172A', // Slate 900
-                            fontFamily: 'Inter',
-                        }}
-                    />
+                    <ErrorBoundary>
+                        <SwapWidget
+                            jsonRpcUrlMap={{ [CHAIN_ID]: [JSON_RPC_URL] }}
+                            defaultChainId={CHAIN_ID}
+                            defaultInputTokenAddress={initialInputTokenAddress}
+                            defaultOutputTokenAddress={initialOutputTokenAddress}
+                            width="100%"
+                            theme={{
+                                primary: '#10B981', // Emerald 500
+                                secondary: '#334155', // Slate 700
+                                interactive: '#1E293B', // Slate 800
+                                container: '#0F172A', // Slate 900
+                                module: '#1E293B', // Slate 800
+                                accent: '#10B981', // Emerald 500
+                                outline: '#334155', // Slate 700
+                                dialog: '#0F172A', // Slate 900
+                                fontFamily: 'Inter',
+                            }}
+                        />
+                    </ErrorBoundary>
                 </div>
             </div>
         </div>
