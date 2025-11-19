@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Token } from '../types';
 import TokenCard from './TokenCard';
 import LoadingState from './LoadingState';
@@ -30,25 +30,6 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
     const { tokens, sources, isLoading, error, hasScanned, history } = gemFinder;
     const [newGemsCount, setNewGemsCount] = useState(0);
 
-    // Trigger initial load from cache if available (handled by Context logic, but we can trigger a "soft" load if needed, 
-    // though usually the context state persists. If context is empty, we might want to try loading from cache via service 
-    // but for now we rely on user action or previous session)
-
-    // Only auto-scan if we have already scanned once manually
-    useEffect(() => {
-        if (hasScanned && !isLoading) {
-            const intervalId = setInterval(() => {
-                // Auto scan logic here if needed, for now we can re-use scanGemFinder
-                // But we need to check if new items found to update notification
-                 scanGemFinder(true).then(() => {
-                    // Logic to check for new gems would require comparing previous state
-                    // This is simplified for now
-                 });
-            }, 300000); // 5 minutes
-            return () => clearInterval(intervalId);
-        }
-    }, [hasScanned, isLoading, scanGemFinder]);
-
     const handleManualScan = () => {
         setNewGemsCount(0);
         scanGemFinder(true);
@@ -70,7 +51,7 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
             return (
                 <div className="text-center py-16 px-6 bg-slate-800/50 rounded-2xl border border-slate-700">
                     <h3 className="text-2xl font-bold text-white">No Gems Found This Time</h3>
-                    <p className="mt-2 text-slate-400">The AI completed its scan but couldn't find any new tokens matching the strict criteria right now. The market is always changing, try again later!</p>
+                    <p className="mt-2 text-slate-400">The AI is adhering to strict verification. Try scanning again in a few moments.</p>
                 </div>
             );
         }
@@ -109,7 +90,7 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                     Discover the Next <span className="bg-gradient-to-r from-blue-400 to-indigo-600 text-transparent bg-clip-text">100x Gem</span>
                 </h1>
                 <p className="mt-4 text-lg md:text-xl text-slate-400">
-                    Our AI scans the Base blockchain for new tokens with explosive potential. Find the next big crypto before anyone else.
+                    Our AI scans Base DEXs via Google Grounding to find valid, tradeable tokens.
                 </p>
                 <div className="mt-8">
                     <button

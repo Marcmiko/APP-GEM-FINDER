@@ -52,52 +52,68 @@ export const ScanProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const performScan = async (
     setter: React.Dispatch<React.SetStateAction<PageState>>,
-    currentState: PageState,
+    // We pass the setter instead of current state to avoid stale closures in async functions
     scanFn: (forceRefresh?: boolean) => Promise<{ tokens: Token[]; sources: GroundingChunk[] }>,
     forceRefresh: boolean = true
   ) => {
-    // If we have data and we are just "revisiting" the tab without forcing, don't re-scan
-    // But the user explicitly asked for concurrent background scanning, so usually we trigger this via button
     
-    if (currentState.tokens.length > 0 && currentState.scanTime) {
-        updateState(setter, {
-            history: [{ timestamp: currentState.scanTime, tokens: currentState.tokens, sources: currentState.sources }, ...currentState.history]
-        });
-    }
-
-    updateState(setter, { isLoading: true, error: null, hasScanned: true });
+    // Immediately set loading state to true.
+    // Using functional update to access the VERY latest state for history preservation
+    setter(prev => {
+        // If we have previous data, save it to history before wiping for new scan (optional, or keep displaying it?)
+        // Let's keep displaying old data while loading (better UX), but mark loading=true
+        let newHistory = prev.history;
+        if (prev.tokens.length > 0 && prev.scanTime) {
+             newHistory = [{ timestamp: prev.scanTime, tokens: prev.tokens, sources: prev.sources }, ...prev.history];
+        }
+        
+        return {
+            ...prev,
+            isLoading: true,
+            error: null,
+            history: newHistory
+            // We do NOT reset tokens here so the UI doesn't flash empty.
+        };
+    });
 
     try {
+      // This await allows the code to run in the background even if the component that called it unmounts
       const { tokens, sources } = await scanFn(forceRefresh);
-      updateState(setter, {
+      
+      setter(prev => ({
+        ...prev,
         tokens,
         sources,
         scanTime: new Date(),
         isLoading: false,
-      });
+        hasScanned: true
+      }));
+
     } catch (err) {
-      updateState(setter, {
-        error: err instanceof Error ? err.message : 'Unknown error',
+      console.error("Scan failed:", err);
+      setter(prev => ({
+        ...prev,
+        error: err instanceof Error ? err.message : 'Unknown error occurred during scan',
         isLoading: false,
-      });
+      }));
     }
   };
 
   const scanGemFinder = useCallback((forceRefresh = true) => 
-    performScan(setGemFinder, gemFinder, () => findGems(undefined, undefined, forceRefresh), forceRefresh), 
-  [gemFinder]);
+    performScan(setGemFinder, findGems.bind(null, undefined, undefined), forceRefresh), 
+  []);
 
   const scanNewProjects = useCallback((forceRefresh = true) => 
-    performScan(setNewProjects, newProjects, findNewProjects, forceRefresh), 
-  [newProjects]);
+    performScan(setNewProjects, findNewProjects, forceRefresh), 
+  []);
 
   const scanAnalystPicks = useCallback((forceRefresh = true) => 
-    performScan(setAnalystPicks, analystPicks, getAnalystPicks, forceRefresh), 
-  [analystPicks]);
+    performScan(setAnalystPicks, getAnalystPicks, forceRefresh), 
+  []);
 
   const scanSocialTrends = useCallback((forceRefresh = true) => 
-    performScan(setSocialTrends, socialTrends, findSocialTrends, forceRefresh), 
-  [socialTrends]);
+    performScan(setSocialTrends, findSocialTrends, forceRefresh), 
+  []);
 
   return (
     <ScanContext.Provider

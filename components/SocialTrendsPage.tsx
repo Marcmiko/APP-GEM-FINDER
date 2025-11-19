@@ -43,7 +43,7 @@ const SocialTrendsPage: React.FC<SocialTrendsPageProps> = ({ savedTokens, onSave
             return (
                 <div className="text-center py-16 px-6 bg-slate-800/50 rounded-2xl border border-slate-700">
                     <h3 className="text-2xl font-bold text-white">Silence on the Waves</h3>
-                    <p className="mt-2 text-slate-400">The social signals are mixed right now. No distinct viral trend on X or Farcaster met the confidence threshold. The narrative might be shifting—try again in a few minutes.</p>
+                    <p className="mt-2 text-slate-400">The AI couldn't find verifiable viral tokens on Base at this moment. Try again soon.</p>
                 </div>
             );
         }
@@ -74,7 +74,7 @@ const SocialTrendsPage: React.FC<SocialTrendsPageProps> = ({ savedTokens, onSave
                     Social <span className="bg-gradient-to-r from-blue-400 to-sky-300 text-transparent bg-clip-text">Trends & Hype</span>
                 </h1>
                 <p className="mt-4 text-lg md:text-xl text-slate-400">
-                    Real-time analysis of what's viral on X (Twitter) and Farcaster. We track mentions, engagement, and influencer calls to find where the crowd is going.
+                    Real-time analysis of what's viral. Verified contracts only.
                 </p>
                 <div className="mt-8">
                     <button

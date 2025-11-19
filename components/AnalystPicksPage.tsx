@@ -45,7 +45,7 @@ const AnalystPicksPage: React.FC<AnalystPicksPageProps> = ({ savedTokens, onSave
             return (
                 <div className="text-center py-16 px-6 bg-slate-800/50 rounded-2xl border border-slate-700">
                     <h3 className="text-2xl font-bold text-white">No Strong Feelings Right Now</h3>
-                    <p className="mt-2 text-slate-400">The analyst AI scanned the latest projects but didn't find any with a compelling enough narrative to feature. Check back soon for new insights!</p>
+                    <p className="mt-2 text-slate-400">The analyst AI couldn't verify high-conviction plays with valid contracts right now.</p>
                 </div>
             );
         }
@@ -76,7 +76,7 @@ const AnalystPicksPage: React.FC<AnalystPicksPageProps> = ({ savedTokens, onSave
                     Analyst's <span className="bg-gradient-to-r from-purple-400 to-pink-500 text-transparent bg-clip-text">High-Conviction Picks</span>
                 </h1>
                 <p className="mt-4 text-lg md:text-xl text-slate-400">
-                    High-risk, high-reward projects based on the AI's "gut feeling". These picks are chosen for their strong narrative and potential, not just on-chain metrics.
+                    High-risk, high-reward projects based on the AI's "gut feeling". Verified contracts only.
                 </p>
                 <div className="mt-8">
                     <button

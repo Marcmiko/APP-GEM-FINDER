@@ -43,7 +43,7 @@ const NewProjectsPage: React.FC<NewProjectsPageProps> = ({ savedTokens, onSave, 
             return (
                 <div className="text-center py-16 px-6 bg-slate-800/50 rounded-2xl border border-slate-700">
                     <h3 className="text-2xl font-bold text-white">No New Projects Found</h3>
-                    <p className="mt-2 text-slate-400">The AI couldn't find any new tokens created in the last 14 days that meet the minimum liquidity requirement. The market might be slow. Check back later for new listings!</p>
+                    <p className="mt-2 text-slate-400">The AI couldn't verify any brand new listings with safe contracts at this moment. Try again later.</p>
                 </div>
             );
         }
@@ -74,7 +74,7 @@ const NewProjectsPage: React.FC<NewProjectsPageProps> = ({ savedTokens, onSave, 
                     New <span className="bg-gradient-to-r from-green-400 to-cyan-500 text-transparent bg-clip-text">Project Listings</span>
                 </h1>
                 <p className="mt-4 text-lg md:text-xl text-slate-400">
-                    A feed of the latest tokens on Base with a minimum liquidity of $4,000. Factual, AI-driven analysis to kickstart your research.
+                    A feed of the latest tokens on Base. Verified contracts only.
                 </p>
                 <div className="mt-8">
                     <button
