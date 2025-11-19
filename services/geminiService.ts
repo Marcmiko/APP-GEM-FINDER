@@ -170,9 +170,11 @@ export const findGems = async (startDate?: string, endDate?: string, forceRefres
   }
 
   try {
+    const today = new Date().toISOString().split('T')[0];
     const prompt = `
-    Find the top 10 TRENDING token tickers on Base blockchain right now.
+    Find the top 10 TRENDING token tickers on Base blockchain right now (Current Date: ${today}).
     Look for "Top Gainers", "Trending", or "Hottest" tokens on Base from the last 24 hours.
+    Focus on tokens with high volume and community engagement.
     Return ONLY a JSON array of strings (tickers or names). Example: ["BRETT", "DEGEN", "TOSHI"].
     Do not include any other text.
     `;
@@ -206,17 +208,32 @@ export const findNewProjects = async (forceRefresh = false): Promise<{ tokens: T
   }
 
   try {
+    const today = new Date().toISOString().split('T')[0];
     const prompt = `
-    Find 10 NEWLY LAUNCHED tokens on Base blockchain from the last 24-48 hours.
+    Find 10 NEWLY LAUNCHED tokens on Base blockchain from the last 24-48 hours (Current Date: ${today}).
     Look for "New Pairs", "New Listings", or "Recent Mints" on Base.
+    Ignore any tokens launched before ${today}.
     Return ONLY a JSON array of strings (tickers or names).
     `;
 
     const { names, sources } = await getGeminiSuggestions(prompt);
-    // For new projects, if AI fails, we might not want to show old trending ones, but better than nothing.
+    // Fallback list must be recent-ish or generic placeholders
     const searchList = names.length > 0 ? names : ["VIRTUAL", "LUNA", "KEYCAT"];
 
-    const tokens = await fetchTokensFromNames(searchList);
+    // Fetch tokens
+    let tokens = await fetchTokensFromNames(searchList);
+
+    // STRICT FILTER: Only keep tokens created in the last 72 hours
+    // We need to re-fetch the raw pairs to filter by date, but fetchTokensFromNames returns Tokens.
+    // Ideally, fetchTokensFromNames should handle this or we filter the Tokens if we trust creationDate.
+    // Token interface has creationDate!
+
+    const now = Date.now();
+    tokens = tokens.filter(t => {
+      const created = new Date(t.creationDate).getTime();
+      const ageHours = (now - created) / (1000 * 60 * 60);
+      return ageHours <= 72; // 3 days max
+    });
 
     const result = { tokens: tokens.slice(0, 12), sources };
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
@@ -237,8 +254,10 @@ export const getAnalystPicks = async (forceRefresh = false): Promise<{ tokens: T
   }
 
   try {
+    const today = new Date().toISOString().split('T')[0];
     const prompt = `
-    Find 5 "High Conviction" or "Blue Chip" tokens on Base blockchain that analysts are bullish on.
+    Find 5 "High Conviction" or "Blue Chip" tokens on Base blockchain that analysts are bullish on right now (${today}).
+    Look for tokens with strong fundamentals, active development, and growing communities.
     Return ONLY a JSON array of strings.
     `;
 
@@ -296,19 +315,62 @@ export const analyzeSpecificToken = async (query: string): Promise<{ tokens: Tok
     pairs.sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
 
     if (pairs.length > 0) {
-      return { tokens: [mapDexScreenerPairToToken(pairs[0])], sources: [] };
+      const token = mapDexScreenerPairToToken(pairs[0]);
+      const enrichedToken = await enrichTokenAnalysis(token);
+      return { tokens: [enrichedToken], sources: [] };
     }
 
     // Fallback to CoinGecko
     const cgTokens = await searchCoinGecko(query);
     if (cgTokens.length > 0) {
-      return { tokens: [cgTokens[0]], sources: [] };
+      const token = cgTokens[0];
+      const enrichedToken = await enrichTokenAnalysis(token);
+      return { tokens: [enrichedToken], sources: [] };
     }
 
     return { tokens: [], sources: [] };
 
   } catch (error: any) {
-    console.error("analyzeSpecificToken error:", error);
     throw error;
+  }
+};
+
+export const enrichTokenAnalysis = async (token: Token): Promise<Token> => {
+  try {
+    const ai = getAiClient();
+    const prompt = `
+    Analyze the crypto token ${token.name} (${token.symbol}) on Base blockchain.
+    Data: Liquidity $${token.liquidity}, Volume $${token.volume24h}, Market Cap $${token.marketCap}.
+    
+    Provide a JSON object with the following fields:
+    - summary: A 1-sentence summary of what the project does.
+    - strengths: A short list of key strengths (e.g. "Strong community", "High volume").
+    - risks: A short list of key risks (e.g. "Low liquidity", "Anon team").
+    - verdict: A short investment verdict (e.g. "High Risk / High Reward", "Safe Bet").
+    
+    Return ONLY the JSON object.
+    `;
+
+    const response = await generateWithRetry(ai, {
+      model: "gemini-1.5-pro",
+      contents: prompt,
+      config: { responseMimeType: "application/json" }
+    });
+
+    const text = response.text || '{}';
+    const analysis = JSON.parse(text);
+
+    return {
+      ...token,
+      analysis: {
+        summary: analysis.summary || token.analysis.summary,
+        strengths: Array.isArray(analysis.strengths) ? analysis.strengths.join(", ") : (analysis.strengths || token.analysis.strengths),
+        risks: Array.isArray(analysis.risks) ? analysis.risks.join(", ") : (analysis.risks || token.analysis.risks),
+        verdict: analysis.verdict || token.analysis.verdict,
+      }
+    };
+  } catch (error) {
+    console.error(`Failed to enrich token ${token.symbol}:`, error);
+    return token;
   }
 };

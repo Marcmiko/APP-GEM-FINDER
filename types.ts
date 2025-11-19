@@ -34,10 +34,12 @@ export interface Token {
   analysis: TokenAnalysis;
   technicalIndicators?: TechnicalIndicators;
   socialSentiment?: SocialSentiment;
-  websiteUrl?: string | null;
-  xUrl?: string | null;
-  coinMarketCapUrl?: string | null;
-  coingeckoUrl?: string | null;
+  websiteUrl: string | null;
+  xUrl: string | null;
+  telegramUrl: string | null;
+  discordUrl: string | null;
+  coinMarketCapUrl: string | null;
+  coingeckoUrl: string | null;
   iconUrl?: string | null;
   convictionScore?: number;
 }
