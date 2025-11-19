@@ -123,7 +123,7 @@ const getGeminiSuggestions = async (prompt: string): Promise<{ names: string[], 
   try {
     const ai = getAiClient();
     const response = await generateWithRetry(ai, {
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-pro",
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],

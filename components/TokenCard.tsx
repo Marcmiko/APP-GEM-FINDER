@@ -10,7 +10,7 @@ const WarningIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 3.001-1.742 3.001H4.42c-1.53 0-2.493-1.667-1.743-3.001l5.58-9.92zM10 13a1 1 0 100-2 1 1 0 000 2zm-1-8a1 1 0 011-1h.008a1 1 0 011 1v3.006a1 1 0 01-1 1h-.008a1 1 0 01-1-1V5z" clipRule="evenodd" /></svg>
 );
 const ExternalLinkIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
 );
 const BullIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
@@ -35,7 +35,7 @@ const CMCIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 const GeckoIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z" />
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z" />
     </svg>
 );
 const CopyIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -51,7 +51,7 @@ const BookmarkIcon: React.FC<React.SVGProps<SVGSVGElement> & { saved: boolean }>
         </svg>
     ) : (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
         </svg>
     )
 );
@@ -64,13 +64,26 @@ const VerdictHighRisk: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (<sv
 const VerdictAvoid: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" /></svg>);
 const InfoIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>);
 
+const BuyIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path d="M2.25 2.25a.75.75 0 000 1.5h1.386c.17 0 .318.114.362.278l2.558 9.592a3.752 3.752 0 00-2.806 3.63c0 .414.336.75.75.75h15.75a.75.75 0 000-1.5H5.378A2.25 2.25 0 017.5 15h11.218a.75.75 0 00.674-.421 60.358 60.358 0 002.96-7.228.75.75 0 00-.525-.965A60.864 60.864 0 005.68 4.509l-.232-.867A1.875 1.875 0 003.636 2.25H2.25zM3.75 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM16.5 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+    </svg>
+);
+
+const SellIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path d="M10.464 8.746c.227-.18.497-.311.786-.394v2.795a2.252 2.252 0 01-.786-.393c-.394-.313-.546-.681-.546-1.004 0-.323.152-.691.546-1.004zM12.75 15.662v-2.824c.347.085.664.228.921.421.427.32.579.686.579.991 0 .305-.152.671-.579.991a2.534 2.534 0 01-.921.42z" />
+        <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v.816a3.836 3.836 0 00-1.72.756c-.712.566-1.112 1.35-1.112 2.178 0 .829.4 1.612 1.113 2.178.502.4 1.102.647 1.719.756v2.978a2.536 2.536 0 01-.921-.421l-.879-.66a.75.75 0 00-.9 1.2l.879.66c.533.4 1.169.645 1.821.75V18a.75.75 0 001.5 0v-.81a4.124 4.124 0 001.821-.749c.745-.559 1.179-1.344 1.179-2.191 0-.847-.434-1.632-1.179-2.191a4.122 4.122 0 00-1.821-.75V8.354c.29-.082.559-.213.786-.393l.879-.66a.75.75 0 00-.9-1.2l-.879.66a2.535 2.535 0 01-.786.393V6z" clipRule="evenodd" />
+    </svg>
+);
+
 
 // --- PROPS & COMPONENTS ---
 interface TokenCardProps {
-  token: Token;
-  isSaved: boolean;
-  onSave: (token: Token) => void;
-  onUnsave: (token: Token) => void;
+    token: Token;
+    isSaved: boolean;
+    onSave: (token: Token) => void;
+    onUnsave: (token: Token) => void;
 }
 
 const getVerdictStyle = (verdict: string) => {
@@ -91,7 +104,7 @@ const IconPlaceholder: React.FC<{ symbol?: string }> = ({ symbol }) => (
     </div>
 );
 
-const AnalysisSection: React.FC<{ title: string; content: string; icon: React.ReactNode; iconClass: string;}> = ({ title, content, icon, iconClass }) => {
+const AnalysisSection: React.FC<{ title: string; content: string; icon: React.ReactNode; iconClass: string; }> = ({ title, content, icon, iconClass }) => {
     if (content === 'N/A') return null;
     return (
         <div>
@@ -113,7 +126,7 @@ const TechnicalSection: React.FC<{ indicators?: TechnicalIndicators }> = ({ indi
         if (rsi <= 30) return 'bg-green-500'; // Oversold
         return 'bg-indigo-500'; // Neutral
     };
-    
+
     // RSI Value Display Color
     const getRsiTextColor = (rsi: number) => {
         if (rsi >= 70) return 'text-red-400';
@@ -137,8 +150,8 @@ const TechnicalSection: React.FC<{ indicators?: TechnicalIndicators }> = ({ indi
                             <span className={`font-mono font-bold ${getRsiTextColor(indicators.rsi)}`}>{indicators.rsi}</span>
                         </div>
                         <div className="w-full bg-slate-700 rounded-full h-1.5">
-                            <div 
-                                className={`h-1.5 rounded-full transition-all duration-500 ${getRsiColor(indicators.rsi)}`} 
+                            <div
+                                className={`h-1.5 rounded-full transition-all duration-500 ${getRsiColor(indicators.rsi)}`}
                                 style={{ width: `${Math.min(Math.max(indicators.rsi, 0), 100)}%` }}
                             ></div>
                         </div>
@@ -148,17 +161,17 @@ const TechnicalSection: React.FC<{ indicators?: TechnicalIndicators }> = ({ indi
                         </div>
                     </div>
                 )}
-                
+
                 {(indicators.macd || indicators.movingAverages) && (
                     <div className="grid grid-cols-2 gap-2 pt-1">
                         {indicators.macd && (
-                             <div className="bg-slate-800 rounded px-2 py-1.5">
+                            <div className="bg-slate-800 rounded px-2 py-1.5">
                                 <span className="block text-[10px] text-slate-500 uppercase">MACD</span>
                                 <span className="text-xs font-medium text-white truncate" title={indicators.macd}>{indicators.macd}</span>
                             </div>
                         )}
-                         {indicators.movingAverages && (
-                             <div className="bg-slate-800 rounded px-2 py-1.5">
+                        {indicators.movingAverages && (
+                            <div className="bg-slate-800 rounded px-2 py-1.5">
                                 <span className="block text-[10px] text-slate-500 uppercase">Trend (MA)</span>
                                 <span className="text-xs font-medium text-white truncate" title={indicators.movingAverages}>{indicators.movingAverages}</span>
                             </div>
@@ -189,215 +202,238 @@ const formatNumber = (num?: number | null) => {
 }
 
 const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave }) => {
-  const [imgError, setImgError] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
-  const verdictStyle = getVerdictStyle(token.analysis?.verdict || 'N/A');
-  const displayName = token.name || `${token.address.substring(0, 6)}...${token.address.substring(token.address.length - 4)}`;
-  const displaySymbol = token.symbol || '???';
+    const [imgError, setImgError] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
+    const verdictStyle = getVerdictStyle(token.analysis?.verdict || 'N/A');
+    const displayName = token.name || `${token.address.substring(0, 6)}...${token.address.substring(token.address.length - 4)}`;
+    const displaySymbol = token.symbol || '???';
 
-  const hasConvictionScore = token.convictionScore && token.convictionScore > 0;
-  const score = hasConvictionScore ? token.convictionScore : token.gemScore;
-  const scoreLabel = hasConvictionScore ? 'Conviction' : 'Gem Score';
-  const scoreColorClass = hasConvictionScore ? 'text-purple-400' : 'text-indigo-400';
+    const hasConvictionScore = token.convictionScore && token.convictionScore > 0;
+    const score = hasConvictionScore ? token.convictionScore : token.gemScore;
+    const scoreLabel = hasConvictionScore ? 'Conviction' : 'Gem Score';
+    const scoreColorClass = hasConvictionScore ? 'text-purple-400' : 'text-indigo-400';
 
-  const handleCopyAddress = () => {
-    if (!token.address) return;
-    navigator.clipboard.writeText(token.address).then(() => {
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
-    }).catch(err => {
-        console.error('Failed to copy address: ', err);
-    });
-  };
+    const handleCopyAddress = () => {
+        if (!token.address) return;
+        navigator.clipboard.writeText(token.address).then(() => {
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
+        }).catch(err => {
+            console.error('Failed to copy address: ', err);
+        });
+    };
 
-  const handleSaveToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isSaved) {
-        onUnsave(token);
-    } else {
-        onSave(token);
-    }
-  };
+    const handleSaveToggle = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isSaved) {
+            onUnsave(token);
+        } else {
+            onSave(token);
+        }
+    };
 
-  return (
-    <div className="relative bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between transform transition-all duration-300 hover:scale-[1.02] hover:border-indigo-500 hover:shadow-2xl hover:shadow-indigo-500/20">
-      <button 
-        onClick={handleSaveToggle}
-        title={isSaved ? "Unsave Project" : "Save Project"}
-        aria-label={isSaved ? "Unsave this project" : "Save this project"}
-        className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors z-10 p-1"
-      >
-          <BookmarkIcon saved={isSaved} className="w-6 h-6" />
-      </button>
+    return (
+        <div className="relative bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between transform transition-all duration-300 hover:scale-[1.02] hover:border-indigo-500 hover:shadow-2xl hover:shadow-indigo-500/20">
+            <button
+                onClick={handleSaveToggle}
+                title={isSaved ? "Unsave Project" : "Save Project"}
+                aria-label={isSaved ? "Unsave this project" : "Save this project"}
+                className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors z-10 p-1"
+            >
+                <BookmarkIcon saved={isSaved} className="w-6 h-6" />
+            </button>
 
-      <div>
-        <div className="flex justify-between items-start gap-4">
-            <div className="flex items-center space-x-3 min-w-0">
-                {token.iconUrl && !imgError ? (
-                    <img
-                        src={token.iconUrl}
-                        alt={`${token.name} icon`}
-                        className="w-10 h-10 rounded-full flex-shrink-0"
-                        onError={() => setImgError(true)}
-                    />
-                ) : (
-                    <IconPlaceholder symbol={token.symbol} />
-                )}
-                <div className="min-w-0">
-                    <h3 className="text-xl font-bold text-white truncate" title={token.name || token.address}>{displayName}</h3>
-                    <div className="flex items-center gap-2">
-                        <p className="text-indigo-400 font-mono text-sm">${displaySymbol}</p>
-                        <button 
+            <div>
+                <div className="flex justify-between items-start gap-4">
+                    <div className="flex items-center space-x-3 min-w-0">
+                        {token.iconUrl && !imgError ? (
+                            <img
+                                src={token.iconUrl}
+                                alt={`${token.name} icon`}
+                                className="w-10 h-10 rounded-full flex-shrink-0"
+                                onError={() => setImgError(true)}
+                            />
+                        ) : (
+                            <IconPlaceholder symbol={token.symbol} />
+                        )}
+                        <div className="min-w-0">
+                            <h3 className="text-xl font-bold text-white truncate" title={token.name || token.address}>{displayName}</h3>
+                            <div className="flex items-center gap-2">
+                                <p className="text-indigo-400 font-mono text-sm">${displaySymbol}</p>
+                                <button
+                                    onClick={handleCopyAddress}
+                                    title={isCopied ? "Copied!" : "Copy Address"}
+                                    aria-label={isCopied ? "Address copied to clipboard" : "Copy token address"}
+                                    className="text-slate-500 hover:text-white transition-colors duration-200"
+                                >
+                                    {isCopied ? (
+                                        <CheckIcon className="w-4 h-4 text-green-400" />
+                                    ) : (
+                                        <CopyIcon className="w-4 h-4" />
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {score > 0 &&
+                        <div className="flex items-center space-x-2 bg-slate-700/50 px-3 py-1.5 rounded-full flex-shrink-0">
+                            <div className="relative flex items-center justify-center">
+                                <svg className="transform -rotate-90 w-10 h-10">
+                                    <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-600" />
+                                    <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="4" fill="transparent"
+                                        strokeDasharray={100.5}
+                                        strokeDashoffset={100.5 - (score / 100) * 100.5}
+                                        className={scoreColorClass} />
+                                </svg>
+                                <span className="absolute text-sm font-bold text-white">{score}</span>
+                            </div>
+                            <span className="text-xs font-semibold text-slate-300">{scoreLabel}</span>
+                        </div>
+                    }
+                </div>
+
+                <p className="mt-4 text-sm text-slate-300 italic border-l-2 border-indigo-500 pl-3">
+                    {token.analysis?.summary || "No summary provided by AI."}
+                </p>
+
+                {/* CONTRACT ADDRESS SECTION */}
+                <div className="mt-3 relative">
+                    <div className="flex items-center justify-between bg-slate-900/60 border border-slate-700/50 rounded-lg p-2">
+                        <div className="flex flex-col min-w-0 flex-1 mr-2">
+                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Contract Address (CA)</span>
+                            <code className="text-xs font-mono text-slate-300 truncate select-all">{token.address}</code>
+                        </div>
+                        <button
                             onClick={handleCopyAddress}
-                            title={isCopied ? "Copied!" : "Copy Address"}
-                            aria-label={isCopied ? "Address copied to clipboard" : "Copy token address"}
-                            className="text-slate-500 hover:text-white transition-colors duration-200"
+                            className="flex items-center justify-center w-8 h-8 bg-slate-800 hover:bg-indigo-600 rounded-md transition-colors group flex-shrink-0 border border-slate-700"
+                            title="Copy Address"
                         >
-                            {isCopied ? (
-                                <CheckIcon className="w-4 h-4 text-green-400" />
-                            ) : (
-                                <CopyIcon className="w-4 h-4" />
-                            )}
+                            {isCopied ? <CheckIcon className="w-4 h-4 text-green-400" /> : <CopyIcon className="w-4 h-4 text-slate-400 group-hover:text-white" />}
                         </button>
                     </div>
                 </div>
-            </div>
-            { score > 0 && 
-              <div className="flex items-center space-x-2 bg-slate-700/50 px-3 py-1.5 rounded-full flex-shrink-0">
-                  <div className="relative flex items-center justify-center">
-                      <svg className="transform -rotate-90 w-10 h-10">
-                          <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-600" />
-                          <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="4" fill="transparent"
-                              strokeDasharray={100.5}
-                              strokeDashoffset={100.5 - (score / 100) * 100.5}
-                              className={scoreColorClass} />
-                      </svg>
-                      <span className="absolute text-sm font-bold text-white">{score}</span>
-                  </div>
-                  <span className="text-xs font-semibold text-slate-300">{scoreLabel}</span>
-              </div>
-            }
-        </div>
-        
-        <p className="mt-4 text-sm text-slate-300 italic border-l-2 border-indigo-500 pl-3">
-          {token.analysis?.summary || "No summary provided by AI."}
-        </p>
 
-        {/* CONTRACT ADDRESS SECTION */}
-        <div className="mt-3 relative">
-             <div className="flex items-center justify-between bg-slate-900/60 border border-slate-700/50 rounded-lg p-2">
-                <div className="flex flex-col min-w-0 flex-1 mr-2">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Contract Address (CA)</span>
-                    <code className="text-xs font-mono text-slate-300 truncate select-all">{token.address}</code>
-                </div>
-                <button 
-                    onClick={handleCopyAddress}
-                    className="flex items-center justify-center w-8 h-8 bg-slate-800 hover:bg-indigo-600 rounded-md transition-colors group flex-shrink-0 border border-slate-700"
-                    title="Copy Address"
-                >
-                    {isCopied ? <CheckIcon className="w-4 h-4 text-green-400" /> : <CopyIcon className="w-4 h-4 text-slate-400 group-hover:text-white" />}
-                </button>
-             </div>
-        </div>
+                <div className="mt-4 space-y-3">
+                    <AnalysisSection
+                        title="Strengths (Bull Case)"
+                        content={token.analysis?.strengths || "No strengths analysis available."}
+                        iconClass="text-green-400"
+                        icon={<BullIcon />}
+                    />
+                    <AnalysisSection
+                        title="Risks & Concerns (Bear Case)"
+                        content={token.analysis?.risks || "No risk analysis available."}
+                        iconClass="text-amber-400"
+                        icon={<BearIcon />}
+                    />
 
-        <div className="mt-4 space-y-3">
-             <AnalysisSection 
-                title="Strengths (Bull Case)"
-                content={token.analysis?.strengths || "No strengths analysis available."}
-                iconClass="text-green-400"
-                icon={<BullIcon />}
-            />
-            <AnalysisSection 
-                title="Risks & Concerns (Bear Case)"
-                content={token.analysis?.risks || "No risk analysis available."}
-                iconClass="text-amber-400"
-                icon={<BearIcon />}
-            />
-            
-            {/* Technical Analysis Section */}
-            <TechnicalSection indicators={token.technicalIndicators} />
+                    {/* Technical Analysis Section */}
+                    <TechnicalSection indicators={token.technicalIndicators} />
 
-             <div className={`p-3 rounded-lg border mt-3 ${verdictStyle.style}`}>
-                <div className="flex items-center space-x-2">
-                    {verdictStyle.icon}
-                    <h4 className="text-sm font-bold">AI Verdict: {token.analysis?.verdict || 'Not Rated'}</h4>
+                    <div className={`p-3 rounded-lg border mt-3 ${verdictStyle.style}`}>
+                        <div className="flex items-center space-x-2">
+                            {verdictStyle.icon}
+                            <h4 className="text-sm font-bold">AI Verdict: {token.analysis?.verdict || 'Not Rated'}</h4>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-      </div>
 
-      <div className="mt-6">
-        <div className="grid grid-cols-2 gap-4 text-sm">
-            <div><span className="text-slate-500">Market Cap:</span> <span className="text-white font-medium">{formatNumber(token.marketCap)}</span></div>
-            <div><span className="text-slate-500">Liquidity:</span> <span className="text-white font-medium">{formatNumber(token.liquidity)}</span></div>
-            <div><span className="text-slate-500">Volume (24h):</span> <span className="text-white font-medium">{formatNumber(token.volume24h)}</span></div>
-            <div><span className="text-slate-500">Holders:</span> <span className="text-white font-medium">{token.holders?.toLocaleString() || 'N/A'}</span></div>
-            <div className="col-span-2"><span className="text-slate-500">Created:</span> <span className="text-white font-medium">{token.creationDate || 'N/A'}</span></div>
-        </div>
+            <div className="mt-6">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div><span className="text-slate-500">Market Cap:</span> <span className="text-white font-medium">{formatNumber(token.marketCap)}</span></div>
+                    <div><span className="text-slate-500">Liquidity:</span> <span className="text-white font-medium">{formatNumber(token.liquidity)}</span></div>
+                    <div><span className="text-slate-500">Volume (24h):</span> <span className="text-white font-medium">{formatNumber(token.volume24h)}</span></div>
+                    <div><span className="text-slate-500">Holders:</span> <span className="text-white font-medium">{token.holders?.toLocaleString() || 'N/A'}</span></div>
+                    <div className="col-span-2"><span className="text-slate-500">Created:</span> <span className="text-white font-medium">{token.creationDate || 'N/A'}</span></div>
+                </div>
 
-        <div className="mt-6 border-t border-slate-700 pt-4 space-y-3">
-          <SecurityCheck label="Liquidity Locked" isSecure={!!token.isLiquidityLocked} />
-          <SecurityCheck label="Ownership Renounced" isSecure={!!token.isOwnershipRenounced} />
-        </div>
+                <div className="mt-6 border-t border-slate-700 pt-4 space-y-3">
+                    <SecurityCheck label="Liquidity Locked" isSecure={!!token.isLiquidityLocked} />
+                    <SecurityCheck label="Ownership Renounced" isSecure={!!token.isOwnershipRenounced} />
+                </div>
 
-        <div className="mt-4 border-t border-slate-700 pt-4 grid grid-cols-2 gap-3">
-            <a 
-                href={`https://basescan.org/token/${token.address}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center space-x-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
-            >
-                <ExternalLinkIcon className="w-4 h-4" />
-                <span>Basescan</span>
-            </a>
-            {token.websiteUrl && (
-              <a 
-                  href={token.websiteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center space-x-2 text-sm text-slate-300 hover:text-white transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
-              >
-                  <WebsiteIcon className="w-4 h-4" />
-                  <span>Website</span>
-              </a>
-            )}
-            {token.xUrl && (
-              <a 
-                  href={token.xUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center space-x-2 text-sm text-sky-400 hover:text-sky-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
-              >
-                  <XIcon className="w-4 h-4" />
-                  <span>Twitter</span>
-              </a>
-            )}
-            {token.coinMarketCapUrl && (
-              <a 
-                  href={token.coinMarketCapUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center space-x-2 text-sm text-orange-400 hover:text-orange-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
-              >
-                  <CMCIcon className="w-4 h-4" />
-                  <span>CMC</span>
-              </a>
-            )}
-            {token.coingeckoUrl && (
-              <a 
-                  href={token.coingeckoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center space-x-2 text-sm text-green-400 hover:text-green-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
-              >
-                  <GeckoIcon className="w-4 h-4" />
-                  <span>Gecko</span>
-              </a>
-            )}
+                <div className="mt-4 border-t border-slate-700 pt-4 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                        <a
+                            href={`https://app.uniswap.org/swap?chain=base&outputCurrency=${token.address}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center space-x-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors rounded-lg py-2.5 px-2 shadow-lg shadow-emerald-900/20 group"
+                        >
+                            <BuyIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                            <span>Buy</span>
+                        </a>
+                        <a
+                            href={`https://app.uniswap.org/swap?chain=base&inputCurrency=${token.address}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center space-x-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 transition-colors rounded-lg py-2.5 px-2 shadow-lg shadow-rose-900/20 group"
+                        >
+                            <SellIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                            <span>Sell</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div className="mt-4 border-t border-slate-700 pt-4 grid grid-cols-2 gap-3">
+                    <a
+                        href={`https://basescan.org/token/${token.address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center space-x-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
+                    >
+                        <ExternalLinkIcon className="w-4 h-4" />
+                        <span>Basescan</span>
+                    </a>
+                    {token.websiteUrl && (
+                        <a
+                            href={token.websiteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center space-x-2 text-sm text-slate-300 hover:text-white transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
+                        >
+                            <WebsiteIcon className="w-4 h-4" />
+                            <span>Website</span>
+                        </a>
+                    )}
+                    {token.xUrl && (
+                        <a
+                            href={token.xUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center space-x-2 text-sm text-sky-400 hover:text-sky-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
+                        >
+                            <XIcon className="w-4 h-4" />
+                            <span>Twitter</span>
+                        </a>
+                    )}
+                    {token.coinMarketCapUrl && (
+                        <a
+                            href={token.coinMarketCapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center space-x-2 text-sm text-orange-400 hover:text-orange-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
+                        >
+                            <CMCIcon className="w-4 h-4" />
+                            <span>CMC</span>
+                        </a>
+                    )}
+                    {token.coingeckoUrl && (
+                        <a
+                            href={token.coingeckoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center space-x-2 text-sm text-green-400 hover:text-green-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
+                        >
+                            <GeckoIcon className="w-4 h-4" />
+                            <span>Gecko</span>
+                        </a>
+                    )}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default TokenCard;
