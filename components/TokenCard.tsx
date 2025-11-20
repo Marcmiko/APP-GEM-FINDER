@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Token, TechnicalIndicators } from '../types';
-import SwapModal from './SwapModal';
 import { useAlerts } from '../context/AlertContext';
 
 // --- ICONS ---
@@ -249,17 +248,14 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
         });
     };
 
-    const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
-    const [swapConfig, setSwapConfig] = useState<{ input?: string; output?: string }>({});
-
-    const openBuyModal = () => {
-        setSwapConfig({ input: 'NATIVE', output: token.address });
-        setIsSwapModalOpen(true);
+    const handleBuy = () => {
+        const url = `https://app.uniswap.org/swap?chain=base&inputCurrency=ETH&outputCurrency=${token.address}`;
+        window.open(url, '_blank');
     };
 
-    const openSellModal = () => {
-        setSwapConfig({ input: token.address, output: 'NATIVE' });
-        setIsSwapModalOpen(true);
+    const handleSell = () => {
+        const url = `https://app.uniswap.org/swap?chain=base&inputCurrency=${token.address}&outputCurrency=ETH`;
+        window.open(url, '_blank');
     };
 
     const handleSaveToggle = (e: React.MouseEvent) => {
@@ -403,14 +399,14 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
                 <div className="mt-4 border-t border-slate-700 pt-4 space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                         <button
-                            onClick={openBuyModal}
+                            onClick={handleBuy}
                             className="flex items-center justify-center space-x-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors rounded-lg py-2.5 px-2 shadow-lg shadow-emerald-900/20 group"
                         >
                             <BuyIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
                             <span>Buy</span>
                         </button>
                         <button
-                            onClick={openSellModal}
+                            onClick={handleSell}
                             className="flex items-center justify-center space-x-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 transition-colors rounded-lg py-2.5 px-2 shadow-lg shadow-rose-900/20 group"
                         >
                             <SellIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -418,14 +414,6 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
                         </button>
                     </div>
                 </div>
-
-                <SwapModal
-                    isOpen={isSwapModalOpen}
-                    onClose={() => setIsSwapModalOpen(false)}
-                    tokenAddress={token.address}
-                    initialInputTokenAddress={swapConfig.input}
-                    initialOutputTokenAddress={swapConfig.output}
-                />
 
                 <div className="mt-4 border-t border-slate-700 pt-4 grid grid-cols-2 gap-3">
                     <a
