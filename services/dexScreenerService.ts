@@ -116,6 +116,7 @@ export const mapDexScreenerPairToToken = (pair: DexScreenerPair): Token => {
     volume24h: pair.volume?.h24 || 0,
     marketCap: pair.marketCap || pair.fdv || 0,
     holders: 0, // DexScreener doesn't provide holder count directly
+    buyPressure: calculateBuyPressure(pair),
     isLiquidityLocked: false, // Not provided by DexScreener API directly
     isOwnershipRenounced: false, // Not provided
     gemScore: calculateGemScore(pair),
@@ -171,6 +172,14 @@ const generateVerdict = (pair: DexScreenerPair): string => {
   if (score > 60) return "Good Potential 🚀";
   if (score > 40) return "Neutral / Watchlist 👀";
   return "High Risk / Avoid ⚠️";
+};
+
+const calculateBuyPressure = (pair: DexScreenerPair): number => {
+  const buys = pair.txns?.h24?.buys || 0;
+  const sells = pair.txns?.h24?.sells || 0;
+  const total = buys + sells;
+  if (total === 0) return 50; // Neutral if no volume
+  return Math.round((buys / total) * 100);
 };
 
 const calculateGemScore = (pair: DexScreenerPair): number => {

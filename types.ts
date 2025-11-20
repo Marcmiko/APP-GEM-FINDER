@@ -29,6 +29,7 @@ export interface Token {
   volume24h: number;
   marketCap: number;
   holders: number;
+  buyPressure: number; // 0-100 percentage of buys
   isLiquidityLocked: boolean;
   isOwnershipRenounced: boolean;
   gemScore: number;

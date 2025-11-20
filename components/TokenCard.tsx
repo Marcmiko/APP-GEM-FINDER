@@ -206,6 +206,50 @@ const TechnicalSection: React.FC<{ indicators?: TechnicalIndicators }> = ({ indi
     )
 }
 
+const BuyPressureGauge: React.FC<{ pressure: number }> = ({ pressure }) => {
+    // Pressure is 0-100 (percentage of buys)
+    // 0 = All Sells (Red), 100 = All Buys (Green), 50 = Neutral
+    const isBullish = pressure > 50;
+    const colorClass = isBullish ? 'bg-emerald-500' : 'bg-rose-500';
+    const textColor = isBullish ? 'text-emerald-400' : 'text-rose-400';
+    const label = isBullish ? 'Buy Pressure' : 'Sell Pressure';
+
+    return (
+        <div className="mt-4 bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+            <div className="flex justify-between items-center mb-2">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
+                        <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
+                    </svg>
+                    24h Buy Pressure
+                </h4>
+                <span className={`text-sm font-bold ${textColor}`}>{pressure}% Buys</span>
+            </div>
+
+            <div className="relative h-4 bg-slate-800 rounded-full overflow-hidden flex">
+                {/* Sells Part (Red) */}
+                <div
+                    className="h-full bg-rose-500/80 transition-all duration-1000"
+                    style={{ width: `${100 - pressure}%` }}
+                ></div>
+                {/* Buys Part (Green) */}
+                <div
+                    className="h-full bg-emerald-500/80 transition-all duration-1000"
+                    style={{ width: `${pressure}%` }}
+                ></div>
+
+                {/* Center Marker */}
+                <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/30 transform -translate-x-1/2"></div>
+            </div>
+
+            <div className="flex justify-between text-[10px] text-slate-500 mt-1">
+                <span>Sellers Dominating</span>
+                <span>Buyers Dominating</span>
+            </div>
+        </div>
+    );
+};
+
 const SecurityCheck: React.FC<{ label: string; isSecure: boolean }> = ({ label, isSecure }) => {
     const Icon = isSecure ? VerifiedIcon : WarningIcon;
     const color = isSecure ? 'text-green-400' : 'text-amber-400';
@@ -373,6 +417,9 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
 
                     {/* Technical Analysis Section */}
                     <TechnicalSection indicators={token.technicalIndicators} />
+
+                    {/* Buy Pressure Gauge */}
+                    {token.buyPressure !== undefined && <BuyPressureGauge pressure={token.buyPressure} />}
 
                     <div className={`p-3 rounded-lg border mt-3 ${verdictStyle.style}`}>
                         <div className="flex items-center space-x-2">
