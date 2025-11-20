@@ -7,16 +7,18 @@ import HistoryAccordion from './HistoryAccordion';
 import Notification from './Notification';
 import { useScanContext } from '../context/ScanContext';
 
+import SwipeView from './SwipeView';
+
 const RocketIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.82m5.84-2.56a6 6 0 01-2.56 5.84m-2.56-5.84a6 6 0 017.38-5.84m-7.38 5.84L5.937 5.937m0 0a6 6 0 015.84-7.38m-5.84 7.38a6 6 0 017.38 5.84m-7.38-5.84L14.37 15.6" />
-  </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.82m5.84-2.56a6 6 0 01-2.56 5.84m-2.56-5.84a6 6 0 017.38-5.84m-7.38 5.84L5.937 5.937m0 0a6 6 0 015.84-7.38m-5.84 7.38a6 6 0 017.38 5.84m-7.38-5.84L14.37 15.6" />
+    </svg>
 );
 
 const RefreshIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-11.664 0l3.181-3.183a8.25 8.25 0 00-11.664 0l3.181 3.183" />
-  </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-11.664 0l3.181-3.183a8.25 8.25 0 00-11.664 0l3.181 3.183" />
+    </svg>
 );
 
 interface GemFinderPageProps {
@@ -29,6 +31,7 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
     const { gemFinder, scanGemFinder } = useScanContext();
     const { tokens, sources, isLoading, error, hasScanned, history } = gemFinder;
     const [newGemsCount, setNewGemsCount] = useState(0);
+    const [viewMode, setViewMode] = useState<'grid' | 'swipe'>('grid');
 
     const handleManualScan = () => {
         setNewGemsCount(0);
@@ -64,6 +67,17 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                 </div>
             );
         }
+        if (viewMode === 'swipe') {
+            return (
+                <SwipeView
+                    tokens={tokens}
+                    onSave={onSave}
+                    onUnsave={onUnsave}
+                    savedTokenAddresses={new Set(savedTokens.map(t => t.address))}
+                />
+            );
+        }
+
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 {tokens.map((token) => {
@@ -93,22 +107,41 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                     Our AI scans Base DEXs via Google Grounding to find valid, tradeable tokens.
                 </p>
                 <div className="mt-8">
-                    <button
-                        onClick={handleManualScan}
-                        disabled={isLoading}
-                        className="inline-flex items-center justify-center px-8 py-4 bg-indigo-600 text-white font-bold text-lg rounded-full shadow-lg shadow-indigo-500/50 transform transition-all duration-300 hover:bg-indigo-500 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-300 disabled:bg-slate-700 disabled:cursor-not-allowed disabled:shadow-none disabled:scale-100"
-                    >
-                        {isLoading ? (
-                            'Scanning...'
-                        ) : hasScanned ? (
-                            <>
-                                <RefreshIcon className="w-6 h-6 mr-3 -ml-2" />
-                                Scan Again
-                            </>
-                        ) : (
-                            'Scan for Gems Now'
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+                        <button
+                            onClick={handleManualScan}
+                            disabled={isLoading}
+                            className="inline-flex items-center justify-center px-8 py-4 bg-indigo-600 text-white font-bold text-lg rounded-full shadow-lg shadow-indigo-500/50 transform transition-all duration-300 hover:bg-indigo-500 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-300 disabled:bg-slate-700 disabled:cursor-not-allowed disabled:shadow-none disabled:scale-100"
+                        >
+                            {isLoading ? (
+                                'Scanning...'
+                            ) : hasScanned ? (
+                                <>
+                                    <RefreshIcon className="w-6 h-6 mr-3 -ml-2" />
+                                    Scan Again
+                                </>
+                            ) : (
+                                'Scan for Gems Now'
+                            )}
+                        </button>
+
+                        {hasScanned && tokens.length > 0 && (
+                            <div className="bg-slate-800 p-1 rounded-full flex items-center border border-slate-700">
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-colors ${viewMode === 'grid' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                >
+                                    Grid
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('swipe')}
+                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-colors ${viewMode === 'swipe' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                                >
+                                    Swipe 🔥
+                                </button>
+                            </div>
                         )}
-                    </button>
+                    </div>
                 </div>
             </div>
 
@@ -123,7 +156,7 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                                 {sources.map((source, index) => (
                                     source.web && (
                                         <li key={index}>
-                                            <a 
+                                            <a
                                                 href={source.web.uri}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -140,7 +173,7 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                     </div>
                 )}
             </div>
-            
+
             {history.length > 0 && (
                 <div className="mt-16">
                     <div className="text-center mb-6">
