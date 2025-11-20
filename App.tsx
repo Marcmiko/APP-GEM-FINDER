@@ -23,12 +23,26 @@ const App: React.FC = () => {
       if (prev.some(t => t.address === tokenToSave.address)) {
         return prev; // Already saved
       }
-      return [...prev, tokenToSave];
+      // Store the current price as the entry price when saving
+      return [...prev, { ...tokenToSave, entryPrice: tokenToSave.priceUsd }];
     });
   };
 
   const handleUnsaveToken = (tokenToUnsave: Token) => {
     setSavedTokens(prev => prev.filter(t => t.address !== tokenToUnsave.address));
+  };
+
+  const handleUpdateTokens = (updatedTokens: Token[]) => {
+    setSavedTokens(prev => {
+      return prev.map(existing => {
+        const updated = updatedTokens.find(u => u.address === existing.address);
+        if (updated) {
+          // Preserve entryPrice from existing, update everything else
+          return { ...updated, entryPrice: existing.entryPrice };
+        }
+        return existing;
+      });
+    });
   };
 
   const savedTokenProps = {
@@ -48,7 +62,7 @@ const App: React.FC = () => {
             {activePage === 'analyst-picks' && <AnalystPicksPage {...savedTokenProps} />}
             {activePage === 'social-trends' && <SocialTrendsPage {...savedTokenProps} />}
             {activePage === 'token-analyzer' && <TokenAnalyzerPage {...savedTokenProps} />}
-            {activePage === 'saved-projects' && <SavedProjectsPage {...savedTokenProps} />}
+            {activePage === 'saved-projects' && <SavedProjectsPage {...savedTokenProps} onUpdateTokens={handleUpdateTokens} />}
           </main>
           <footer className="text-center py-6 border-t border-slate-800 mt-16">
             <p className="text-sm text-slate-500">Disclaimer: This is not financial advice. Cryptocurrency investments are highly volatile. Do your own research.</p>

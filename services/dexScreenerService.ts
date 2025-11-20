@@ -115,8 +115,13 @@ export const mapDexScreenerPairToToken = (pair: DexScreenerPair): Token => {
     liquidity: pair.liquidity?.usd || 0,
     volume24h: pair.volume?.h24 || 0,
     marketCap: pair.marketCap || pair.fdv || 0,
+    fdv: pair.fdv,
     holders: 0, // DexScreener doesn't provide holder count directly
     buyPressure: calculateBuyPressure(pair),
+    priceUsd: parseFloat(pair.priceUsd) || 0,
+    priceChange1h: pair.priceChange?.h1,
+    priceChange24h: pair.priceChange?.h24,
+    volume1h: pair.volume?.h1,
     isLiquidityLocked: false, // Not provided by DexScreener API directly
     isOwnershipRenounced: false, // Not provided
     gemScore: calculateGemScore(pair),

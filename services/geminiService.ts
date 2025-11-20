@@ -87,7 +87,7 @@ const generateWithRetry = async (ai: any, params: any, retries = 5): Promise<any
 
 const FALLBACK_TOKENS = ["BRETT", "DEGEN", "TOSHI", "AERO", "MOG", "KEYCAT", "VIRTUAL", "HIGHER"];
 
-const fetchTokensFromNames = async (names: string[], minLiquidity = 10000, minVolume = 1000): Promise<Token[]> => {
+const fetchTokensFromNames = async (names: string[], minLiquidity = 10000, minVolume = 1000, minVolume1h = 0): Promise<Token[]> => {
   const tokens: Token[] = [];
   const seenAddresses = new Set<string>();
 
@@ -99,7 +99,8 @@ const fetchTokensFromNames = async (names: string[], minLiquidity = 10000, minVo
       // Filter out garbage pairs first
       const validPairs = pairs.filter(p =>
         (p.liquidity?.usd || 0) >= minLiquidity &&
-        (p.volume?.h24 || 0) >= minVolume
+        (p.volume?.h24 || 0) >= minVolume &&
+        (minVolume1h === 0 || (p.volume?.h1 || 0) >= minVolume1h)
       );
 
       if (validPairs.length > 0) {
@@ -197,7 +198,7 @@ export const findGems = async (startDate?: string, endDate?: string, forceRefres
     const cgTrending = await getTrendingCoinGecko();
     const combinedNames = [...new Set([...names, ...cgTrending, ...FALLBACK_TOKENS])];
 
-    const tokens = await fetchTokensFromNames(combinedNames, 50000, 10000);
+    const tokens = await fetchTokensFromNames(combinedNames, 50000, 10000, 1000);
 
     const result = { tokens: tokens.slice(0, 12), sources }; // Limit to 12
     if (result.tokens.length > 0) saveToCache(cacheKey, result);

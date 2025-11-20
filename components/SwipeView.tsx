@@ -6,10 +6,12 @@ interface SwipeViewProps {
     tokens: Token[];
     onSave: (token: Token) => void;
     onUnsave: (token: Token) => void;
+    onTrade: (token: Token) => void;
+    onScanAgain?: () => void;
     savedTokenAddresses: Set<string>;
 }
 
-const SwipeView: React.FC<SwipeViewProps> = ({ tokens, onSave, onUnsave, savedTokenAddresses }) => {
+const SwipeView: React.FC<SwipeViewProps> = ({ tokens, onSave, onUnsave, onTrade, onScanAgain, savedTokenAddresses }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState<'left' | 'right' | null>(null);
     const [isAnimating, setIsAnimating] = useState(false);
@@ -29,12 +31,22 @@ const SwipeView: React.FC<SwipeViewProps> = ({ tokens, onSave, onUnsave, savedTo
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">All Caught Up!</h2>
                 <p className="text-slate-400">You've swiped through all the tokens in this list.</p>
-                <button
-                    onClick={() => setCurrentIndex(0)}
-                    className="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold transition-colors"
-                >
-                    Start Over
-                </button>
+                <div className="flex space-x-4 mt-6">
+                    <button
+                        onClick={() => setCurrentIndex(0)}
+                        className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-full font-bold transition-colors"
+                    >
+                        Review Again
+                    </button>
+                    {onScanAgain && (
+                        <button
+                            onClick={onScanAgain}
+                            className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold transition-colors shadow-lg shadow-indigo-500/30"
+                        >
+                            Scan New Gems
+                        </button>
+                    )}
+                </div>
             </div>
         );
     }
@@ -78,8 +90,8 @@ const SwipeView: React.FC<SwipeViewProps> = ({ tokens, onSave, onUnsave, savedTo
 
             {/* Active Card */}
             <div
-                className={`w-full z-10 transition-transform duration-300 ease-in-out ${direction === 'left' ? '-translate-x-[120%] rotate-[-10deg] opacity-0' :
-                        direction === 'right' ? 'translate-x-[120%] rotate-[10deg] opacity-0' : ''
+                className={`w-full z-10 transition-all duration-500 ease-out transform ${direction === 'left' ? '-translate-x-[150%] -rotate-[20deg] opacity-0' :
+                    direction === 'right' ? 'translate-x-[150%] rotate-[20deg] opacity-0' : 'hover:scale-[1.02]'
                     }`}
             >
                 <TokenCard
@@ -91,7 +103,7 @@ const SwipeView: React.FC<SwipeViewProps> = ({ tokens, onSave, onUnsave, savedTo
             </div>
 
             {/* Controls */}
-            <div className="flex items-center justify-center space-x-8 mt-8 z-20">
+            <div className="flex items-center justify-center space-x-6 mt-8 z-20">
                 <button
                     onClick={() => handleSwipe('left')}
                     className="w-16 h-16 rounded-full bg-slate-800 border-2 border-rose-500 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-lg shadow-rose-900/20 transform hover:scale-110"
@@ -99,6 +111,16 @@ const SwipeView: React.FC<SwipeViewProps> = ({ tokens, onSave, onUnsave, savedTo
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-8 h-8">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <button
+                    onClick={() => onTrade(currentToken)}
+                    className="w-12 h-12 rounded-full bg-slate-800 border-2 border-indigo-500 text-indigo-500 flex items-center justify-center hover:bg-indigo-500 hover:text-white transition-all shadow-lg shadow-indigo-900/20 transform hover:scale-110"
+                    title="Trade / Swap"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                     </svg>
                 </button>
 

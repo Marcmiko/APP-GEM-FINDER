@@ -8,6 +8,7 @@ import Notification from './Notification';
 import { useScanContext } from '../context/ScanContext';
 
 import SwipeView from './SwipeView';
+import SwapModal from './SwapModal';
 
 const RocketIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -32,6 +33,13 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
     const { tokens, sources, isLoading, error, hasScanned, history } = gemFinder;
     const [newGemsCount, setNewGemsCount] = useState(0);
     const [viewMode, setViewMode] = useState<'grid' | 'swipe'>('grid');
+    const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
+    const [swapToken, setSwapToken] = useState<Token | null>(null);
+
+    const handleTrade = (token: Token) => {
+        setSwapToken(token);
+        setIsSwapModalOpen(true);
+    };
 
     const handleManualScan = () => {
         setNewGemsCount(0);
@@ -73,6 +81,8 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                     tokens={tokens}
                     onSave={onSave}
                     onUnsave={onUnsave}
+                    onTrade={handleTrade}
+                    onScanAgain={handleManualScan}
                     savedTokenAddresses={new Set(savedTokens.map(t => t.address))}
                 />
             );
@@ -197,6 +207,13 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                     </div>
                 </div>
             )}
+
+            <SwapModal
+                isOpen={isSwapModalOpen}
+                onClose={() => setIsSwapModalOpen(false)}
+                tokenAddress={swapToken?.address || ''}
+                initialOutputTokenAddress={swapToken?.address}
+            />
         </>
     )
 }

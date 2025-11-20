@@ -433,15 +433,62 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
             <div className="mt-6">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                     <div><span className="text-slate-500">Market Cap:</span> <span className="text-white font-medium">{formatNumber(token.marketCap)}</span></div>
+                    <div><span className="text-slate-500">FDV:</span> <span className="text-white font-medium">{formatNumber(token.fdv)}</span></div>
                     <div><span className="text-slate-500">Liquidity:</span> <span className="text-white font-medium">{formatNumber(token.liquidity)}</span></div>
-                    <div><span className="text-slate-500">Volume (24h):</span> <span className="text-white font-medium">{formatNumber(token.volume24h)}</span></div>
                     <div><span className="text-slate-500">Holders:</span> <span className="text-white font-medium">{token.holders?.toLocaleString() || 'N/A'}</span></div>
-                    <div className="col-span-2"><span className="text-slate-500">Created:</span> <span className="text-white font-medium">{token.creationDate || 'N/A'}</span></div>
+
+                    <div className="col-span-2 border-t border-slate-700/50 my-2"></div>
+
+                    <div><span className="text-slate-500">Vol (24h):</span> <span className="text-white font-medium">{formatNumber(token.volume24h)}</span></div>
+                    <div><span className="text-slate-500">Vol (1h):</span> <span className="text-white font-medium">{formatNumber(token.volume1h)}</span></div>
+
+                    <div>
+                        <span className="text-slate-500">Chg (24h):</span>
+                        <span className={`font-medium ml-1 ${token.priceChange24h && token.priceChange24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {token.priceChange24h ? `${token.priceChange24h.toFixed(2)}%` : 'N/A'}
+                        </span>
+                    </div>
+                    <div>
+                        <span className="text-slate-500">Chg (1h):</span>
+                        <span className={`font-medium ml-1 ${token.priceChange1h && token.priceChange1h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {token.priceChange1h ? `${token.priceChange1h.toFixed(2)}%` : 'N/A'}
+                        </span>
+                    </div>
+
+                    <div className="col-span-2 mt-1"><span className="text-slate-500">Created:</span> <span className="text-white font-medium">{token.creationDate || 'N/A'}</span></div>
                 </div>
 
                 <div className="mt-6 border-t border-slate-700 pt-4 space-y-3">
                     <SecurityCheck label="Liquidity Locked" isSecure={!!token.isLiquidityLocked} />
                     <SecurityCheck label="Ownership Renounced" isSecure={!!token.isOwnershipRenounced} />
+
+                    {token.entryPrice && (
+                        <div className="mt-4 bg-slate-900/80 rounded-lg p-3 border border-indigo-500/30">
+                            <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Portfolio Simulator</h4>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                    <span className="text-slate-500 text-xs block">Entry Price</span>
+                                    <span className="text-slate-300 font-mono">${token.entryPrice.toFixed(6)}</span>
+                                </div>
+                                <div>
+                                    <span className="text-slate-500 text-xs block">Current Price</span>
+                                    <span className="text-white font-mono">${token.priceUsd?.toFixed(6) || 'N/A'}</span>
+                                </div>
+                                <div className="col-span-2 mt-1 pt-2 border-t border-slate-700/50 flex justify-between items-center">
+                                    <div>
+                                        <span className="text-slate-500 text-xs block">If you invested $100:</span>
+                                        <span className={`font-bold text-lg ${((token.priceUsd || 0) >= token.entryPrice) ? 'text-green-400' : 'text-rose-400'}`}>
+                                            ${((100 / token.entryPrice) * (token.priceUsd || 0)).toFixed(2)}
+                                        </span>
+                                    </div>
+                                    <div className={`px-2 py-1 rounded text-xs font-bold ${((token.priceUsd || 0) >= token.entryPrice) ? 'bg-green-500/20 text-green-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                                        {((token.priceUsd || 0) >= token.entryPrice ? '+' : '')}
+                                        {(((token.priceUsd || 0) - token.entryPrice) / token.entryPrice * 100).toFixed(2)}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-4 border-t border-slate-700 pt-4 space-y-3">
