@@ -87,7 +87,7 @@ const generateWithRetry = async (ai: any, params: any, retries = 5): Promise<any
 
 const FALLBACK_TOKENS = ["BRETT", "DEGEN", "TOSHI", "AERO", "MOG", "KEYCAT", "VIRTUAL", "HIGHER"];
 
-const fetchTokensFromNames = async (names: string[]): Promise<Token[]> => {
+const fetchTokensFromNames = async (names: string[], minLiquidity = 10000, minVolume = 1000): Promise<Token[]> => {
   const tokens: Token[] = [];
   const seenAddresses = new Set<string>();
 
@@ -96,14 +96,22 @@ const fetchTokensFromNames = async (names: string[]): Promise<Token[]> => {
     const pairs = await searchDexScreener(name);
 
     if (pairs.length > 0) {
-      // Sort by liquidity to get the "real" one
-      pairs.sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
-      const bestPair = pairs[0];
+      // Filter out garbage pairs first
+      const validPairs = pairs.filter(p =>
+        (p.liquidity?.usd || 0) >= minLiquidity &&
+        (p.volume?.h24 || 0) >= minVolume
+      );
 
-      if (!seenAddresses.has(bestPair.baseToken.address)) {
-        tokens.push(mapDexScreenerPairToToken(bestPair));
-        seenAddresses.add(bestPair.baseToken.address);
-        continue; // Found on DexScreener, move to next name
+      if (validPairs.length > 0) {
+        // Sort by liquidity to get the "real" one
+        validPairs.sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
+        const bestPair = validPairs[0];
+
+        if (!seenAddresses.has(bestPair.baseToken.address)) {
+          tokens.push(mapDexScreenerPairToToken(bestPair));
+          seenAddresses.add(bestPair.baseToken.address);
+          continue; // Found on DexScreener, move to next name
+        }
       }
     }
 
@@ -111,9 +119,13 @@ const fetchTokensFromNames = async (names: string[]): Promise<Token[]> => {
     const cgTokens = await searchCoinGecko(name);
     if (cgTokens.length > 0) {
       const bestCg = cgTokens[0];
+      // CoinGecko results are usually vetted, but we can check if we have data
       if (!seenAddresses.has(bestCg.address)) {
-        tokens.push(bestCg);
-        seenAddresses.add(bestCg.address);
+        // Basic check if we have liquidity info (might be missing from CG search result though)
+        if (bestCg.liquidity >= minLiquidity) {
+          tokens.push(bestCg);
+          seenAddresses.add(bestCg.address);
+        }
       }
     }
   }
@@ -185,7 +197,7 @@ export const findGems = async (startDate?: string, endDate?: string, forceRefres
     const cgTrending = await getTrendingCoinGecko();
     const combinedNames = [...new Set([...names, ...cgTrending, ...FALLBACK_TOKENS])];
 
-    const tokens = await fetchTokensFromNames(combinedNames);
+    const tokens = await fetchTokensFromNames(combinedNames, 50000, 10000);
 
     const result = { tokens: tokens.slice(0, 12), sources }; // Limit to 12
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
@@ -220,8 +232,8 @@ export const findNewProjects = async (forceRefresh = false): Promise<{ tokens: T
     // Fallback list must be recent-ish or generic placeholders
     const searchList = names.length > 0 ? names : ["VIRTUAL", "LUNA", "KEYCAT"];
 
-    // Fetch tokens
-    let tokens = await fetchTokensFromNames(searchList);
+    // Fetch tokens with lower thresholds for new projects but still some liquidity
+    let tokens = await fetchTokensFromNames(searchList, 2000, 500);
 
     // STRICT FILTER: Only keep tokens created in the last 72 hours
     // We need to re-fetch the raw pairs to filter by date, but fetchTokensFromNames returns Tokens.
@@ -264,7 +276,7 @@ export const getAnalystPicks = async (forceRefresh = false): Promise<{ tokens: T
     const { names, sources } = await getGeminiSuggestions(prompt);
     const searchList = names.length > 0 ? names : ["AERO", "BRETT", "PRIME"];
 
-    const tokens = await fetchTokensFromNames(searchList);
+    const tokens = await fetchTokensFromNames(searchList, 20000, 5000);
 
     const result = { tokens: tokens.slice(0, 12), sources };
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
