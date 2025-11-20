@@ -110,6 +110,7 @@ export const mapDexScreenerPairToToken = (pair: DexScreenerPair): Token => {
     name: pair.baseToken.name,
     symbol: pair.baseToken.symbol,
     address: pair.baseToken.address,
+    pairAddress: pair.pairAddress,
     creationDate: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).toISOString() : new Date().toISOString(),
     liquidity: pair.liquidity?.usd || 0,
     volume24h: pair.volume?.h24 || 0,

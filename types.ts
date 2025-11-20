@@ -23,6 +23,7 @@ export interface Token {
   name: string;
   symbol: string;
   address: string;
+  pairAddress: string;
   creationDate: string;
   liquidity: number;
   volume24h: number;

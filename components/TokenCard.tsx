@@ -229,6 +229,7 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
     const isAlerting = isAlertActive(token.address);
     const [imgError, setImgError] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
+    const [isChartVisible, setIsChartVisible] = useState(false);
     const verdictStyle = getVerdictStyle(token.analysis?.verdict || 'N/A');
     const displayName = token.name || `${token.address.substring(0, 6)}...${token.address.substring(token.address.length - 4)}`;
     const displaySymbol = token.symbol || '???';
@@ -413,6 +414,28 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
                             <span>Sell</span>
                         </button>
                     </div>
+
+                    <button
+                        onClick={() => setIsChartVisible(!isChartVisible)}
+                        className="w-full mt-3 flex items-center justify-center space-x-2 text-sm font-bold text-slate-300 bg-slate-700/50 hover:bg-slate-700 hover:text-white transition-colors rounded-lg py-2.5 border border-slate-600 hover:border-slate-500"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
+                        </svg>
+                        <span>{isChartVisible ? 'Hide Chart' : 'Show Real-time Chart'}</span>
+                    </button>
+
+                    {isChartVisible && (
+                        <div className="mt-4 h-[400px] w-full rounded-xl overflow-hidden border border-slate-700 shadow-2xl animate-fade-in">
+                            <iframe
+                                src={`https://dexscreener.com/base/${token.pairAddress}?embed=1&theme=dark&trades=0&info=0`}
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0 }}
+                                title="DexScreener Chart"
+                            ></iframe>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-4 border-t border-slate-700 pt-4 grid grid-cols-2 gap-3">
