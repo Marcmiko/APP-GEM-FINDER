@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Token, TechnicalIndicators } from '../types';
 import { useAlerts } from '../context/AlertContext';
+import { useFantasy } from '../context/FantasyContext';
 
 // --- ICONS ---
 const VerifiedIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -270,6 +271,7 @@ const formatNumber = (num?: number | null) => {
 
 const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave }) => {
     const { toggleAlert, isAlertActive } = useAlerts();
+    const { buyToken } = useFantasy();
     const isAlerting = isAlertActive(token.address);
     const [imgError, setImgError] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
@@ -301,6 +303,17 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
     const handleSell = () => {
         const url = `https://app.uniswap.org/swap?chain=base&inputCurrency=${token.address}&outputCurrency=ETH`;
         window.open(url, '_blank');
+    };
+
+    const handleFantasyBuy = () => {
+        const amount = prompt("Enter amount to buy in Fantasy Mode ($):", "1000");
+        if (amount) {
+            const val = parseFloat(amount);
+            if (!isNaN(val) && val > 0) {
+                buyToken(token, val);
+                alert(`Bought $${val} of ${token.symbol} in Fantasy Mode!`);
+            }
+        }
     };
 
     const handleSaveToggle = (e: React.MouseEvent) => {
@@ -508,6 +521,14 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
                             <span>Sell</span>
                         </button>
                     </div>
+
+                    <button
+                        onClick={handleFantasyBuy}
+                        className="w-full mt-2 flex items-center justify-center space-x-2 text-sm font-bold text-purple-300 bg-purple-900/30 hover:bg-purple-900/50 transition-colors rounded-lg py-2 border border-purple-500/30 hover:border-purple-500/50"
+                    >
+                        <FantasyIcon className="w-5 h-5" />
+                        <span>Fantasy Buy (Simulate)</span>
+                    </button>
 
                     <button
                         onClick={() => setIsChartVisible(!isChartVisible)}

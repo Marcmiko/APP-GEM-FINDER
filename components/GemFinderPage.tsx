@@ -9,6 +9,7 @@ import { useScanContext } from '../context/ScanContext';
 
 import SwipeView from './SwipeView';
 import SwapModal from './SwapModal';
+import WhaleWatch from './WhaleWatch';
 
 const RocketIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -153,6 +154,10 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                         )}
                     </div>
                 </div>
+            </div>
+
+            <div className="max-w-3xl mx-auto mt-8 mb-12">
+                <WhaleWatch />
             </div>
 
             <div className="mt-12 md:mt-16">

@@ -5,7 +5,7 @@ import { useScanContext } from '../context/ScanContext';
 
 const DiamondIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-        <path d="M12.001 2.003c.87-.002 1.66.495 2.03 1.25l7.108 14.218c.367.734.363 1.61-.01 2.34a2.122 2.122 0 01-1.84 1.189H4.713a2.122 2.122 0 01-1.84-1.189 2.124 2.124 0 01-.01-2.34L10.03 3.253a2.123 2.123 0 011.97-1.25zm0 2.27L6.08 18.75h11.84L12.001 4.273z"/>
+        <path d="M12.001 2.003c.87-.002 1.66.495 2.03 1.25l7.108 14.218c.367.734.363 1.61-.01 2.34a2.122 2.122 0 01-1.84 1.189H4.713a2.122 2.122 0 01-1.84-1.189 2.124 2.124 0 01-.01-2.34L10.03 3.253a2.123 2.123 0 011.97-1.25zm0 2.27L6.08 18.75h11.84L12.001 4.273z" />
     </svg>
 );
 
@@ -41,11 +41,10 @@ const NavItem: React.FC<{
     return (
         <button
             onClick={() => setActivePage(page)}
-            className={`relative flex items-center px-3 py-2 text-sm font-semibold rounded-md transition-all whitespace-nowrap ${
-                isActive 
-                ? 'bg-indigo-600 text-white' 
-                : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-            }`}
+            className={`relative flex items-center px-3 py-2 text-sm font-semibold rounded-md transition-all whitespace-nowrap ${isActive
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                }`}
         >
             {icon && <span className="mr-2">{icon}</span>}
             {children}
@@ -62,34 +61,35 @@ const NavItem: React.FC<{
 }
 
 const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }) => {
-  const { gemFinder, newProjects, analystPicks, socialTrends, tokenAnalyzer } = useScanContext();
+    const { gemFinder, newProjects, analystPicks, socialTrends, tokenAnalyzer } = useScanContext();
 
-  return (
-    <header className="bg-slate-900/60 backdrop-blur-sm sticky top-0 z-50 border-b border-slate-800">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-2 flex-shrink-0">
-             <DiamondIcon className="w-8 h-8 text-indigo-400"/>
-            <span className="hidden md:block text-xl font-bold text-white tracking-wider">Base Gem Finder</span>
-            <span className="md:hidden text-xl font-bold text-white tracking-wider">BGF</span>
-          </div>
-          
-          <div className="flex items-center space-x-1 p-1 bg-slate-800 rounded-lg overflow-x-auto no-scrollbar max-w-[calc(100vw-120px)]">
-            <NavItem page="gem-finder" activePage={activePage} setActivePage={setActivePage} isLoading={gemFinder.isLoading}>Gem Finder</NavItem>
-            <NavItem page="new-projects" activePage={activePage} setActivePage={setActivePage} isLoading={newProjects.isLoading}>New Listings</NavItem>
-            <NavItem page="analyst-picks" activePage={activePage} setActivePage={setActivePage} isLoading={analystPicks.isLoading}>Analyst</NavItem>
-            <NavItem page="social-trends" activePage={activePage} setActivePage={setActivePage} isLoading={socialTrends.isLoading}>Trends</NavItem>
-            <NavItem page="token-analyzer" activePage={activePage} setActivePage={setActivePage} isLoading={tokenAnalyzer.isLoading} icon={<SearchIcon className="w-4 h-4" />}>Analyzer</NavItem>
-            <NavItem page="saved-projects" activePage={activePage} setActivePage={setActivePage} badgeCount={savedCount}>Saved</NavItem>
-          </div>
-          
-          <span className="hidden lg:block text-xs font-medium text-slate-500 flex-shrink-0 ml-4">
-            Powered by Marcmiko
-          </span>
-        </div>
-      </div>
-    </header>
-  );
+    return (
+        <header className="bg-slate-900/60 backdrop-blur-sm sticky top-0 z-50 border-b border-slate-800">
+            <div className="container mx-auto px-4">
+                <div className="flex items-center justify-between h-16">
+                    <div className="flex items-center space-x-2 flex-shrink-0">
+                        <DiamondIcon className="w-8 h-8 text-indigo-400" />
+                        <span className="hidden md:block text-xl font-bold text-white tracking-wider">Base Gem Finder</span>
+                        <span className="md:hidden text-xl font-bold text-white tracking-wider">BGF</span>
+                    </div>
+
+                    <div className="flex items-center space-x-1 p-1 bg-slate-800 rounded-lg overflow-x-auto no-scrollbar max-w-[calc(100vw-120px)]">
+                        <NavItem page="gem-finder" activePage={activePage} setActivePage={setActivePage} isLoading={gemFinder.isLoading}>Gem Finder</NavItem>
+                        <NavItem page="new-projects" activePage={activePage} setActivePage={setActivePage} isLoading={newProjects.isLoading}>New Listings</NavItem>
+                        <NavItem page="analyst-picks" activePage={activePage} setActivePage={setActivePage} isLoading={analystPicks.isLoading}>Analyst</NavItem>
+                        <NavItem page="social-trends" activePage={activePage} setActivePage={setActivePage} isLoading={socialTrends.isLoading}>Trends</NavItem>
+                        <NavItem page="token-analyzer" activePage={activePage} setActivePage={setActivePage} isLoading={tokenAnalyzer.isLoading} icon={<SearchIcon className="w-4 h-4" />}>Analyzer</NavItem>
+                        <NavItem page="fantasy-dashboard" activePage={activePage} setActivePage={setActivePage}>Fantasy 🏆</NavItem>
+                        <NavItem page="saved-projects" activePage={activePage} setActivePage={setActivePage} badgeCount={savedCount}>Saved</NavItem>
+                    </div>
+
+                    <span className="hidden lg:block text-xs font-medium text-slate-500 flex-shrink-0 ml-4">
+                        Powered by Marcmiko
+                    </span>
+                </div>
+            </div>
+        </header>
+    );
 };
 
 export default Header;
