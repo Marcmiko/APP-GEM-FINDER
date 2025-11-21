@@ -90,7 +90,12 @@ export const searchCoinGecko = async (query: string): Promise<Token[]> => {
             coinMarketCapUrl: null,
             coingeckoUrl: `https://www.coingecko.com/en/coins/${details.id}`,
             iconUrl: details.image?.large || details.image?.small || null,
-            convictionScore: undefined
+            convictionScore: undefined,
+            pairAddress: "", // Not available from CoinGecko simple API
+            buyPressure: 50, // Default neutral
+            priceUsd: details.market_data?.current_price?.usd || 0,
+            telegramUrl: null,
+            discordUrl: null
         }];
 
     } catch (error) {
