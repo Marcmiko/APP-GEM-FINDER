@@ -1,11 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useFantasy } from '../context/FantasyContext';
 import Leaderboard from './Leaderboard';
+import Achievements from './Achievements';
 import { motion } from 'framer-motion';
 
 const FantasyDashboard: React.FC = () => {
     const { balance, portfolio, history, portfolioValue, totalValue, resetAccount, sellToken } = useFantasy();
+    const [sellMode, setSellMode] = useState<string | null>(null); // Track which token is in sell mode
 
     const pnl = totalValue - 10000;
     const pnlPercent = (pnl / 10000) * 100;
@@ -60,6 +62,7 @@ const FantasyDashboard: React.FC = () => {
                                     const costBasis = pos.amount * pos.entryPrice;
                                     const posPnl = currentValue - costBasis;
                                     const posPnlPercent = (posPnl / costBasis) * 100;
+                                    const isSelling = sellMode === pos.token.address;
 
                                     return (
                                         <div key={pos.token.address} className="bg-slate-900/50 rounded-xl p-4 border border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -84,12 +87,42 @@ const FantasyDashboard: React.FC = () => {
                                                         {posPnl >= 0 ? '+' : ''}{posPnlPercent.toFixed(2)}%
                                                     </p>
                                                 </div>
-                                                <button
-                                                    onClick={() => sellToken(pos.token.address, 100)}
-                                                    className="px-3 py-1.5 bg-red-500/20 text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/30 transition-colors"
-                                                >
-                                                    Sell
-                                                </button>
+
+                                                {isSelling ? (
+                                                    <div className="flex items-center gap-2 animate-fade-in">
+                                                        <button
+                                                            onClick={() => { sellToken(pos.token.address, 25); setSellMode(null); }}
+                                                            className="px-2 py-1 bg-slate-700 text-white rounded text-xs hover:bg-slate-600"
+                                                        >
+                                                            25%
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { sellToken(pos.token.address, 50); setSellMode(null); }}
+                                                            className="px-2 py-1 bg-slate-700 text-white rounded text-xs hover:bg-slate-600"
+                                                        >
+                                                            50%
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { sellToken(pos.token.address, 100); setSellMode(null); }}
+                                                            className="px-2 py-1 bg-red-500/80 text-white rounded text-xs hover:bg-red-500"
+                                                        >
+                                                            100%
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setSellMode(null)}
+                                                            className="p-1 text-slate-400 hover:text-white"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => setSellMode(pos.token.address)}
+                                                        className="px-3 py-1.5 bg-red-500/20 text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/30 transition-colors"
+                                                    >
+                                                        Sell
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -120,8 +153,9 @@ const FantasyDashboard: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Sidebar - Leaderboard */}
-                <div className="lg:col-span-1">
+                {/* Sidebar - Leaderboard & Achievements */}
+                <div className="lg:col-span-1 space-y-8">
+                    <Achievements />
                     <Leaderboard />
                 </div>
             </div>
