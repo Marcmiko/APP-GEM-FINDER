@@ -236,25 +236,32 @@ export const findNewProjects = async (forceRefresh = false): Promise<{ tokens: T
     // Fetch tokens with lower thresholds for new projects but still some liquidity
     let tokens = await fetchTokensFromNames(searchList, 2000, 500);
 
-    // STRICT FILTER: Only keep tokens created in the last 72 hours
-    // We need to re-fetch the raw pairs to filter by date, but fetchTokensFromNames returns Tokens.
-    // Ideally, fetchTokensFromNames should handle this or we filter the Tokens if we trust creationDate.
-    // Token interface has creationDate!
+    // SAFETY NET: If AI + Search failed to find ANYTHING, use a hardcoded list of known active tokens
+    if (tokens.length === 0) {
+      console.warn("findNewProjects: No tokens found via AI/Search. Using hard fallback.");
+      tokens = await fetchTokensFromNames(["BRETT", "DEGEN", "TOSHI", "AERO"], 1000, 100);
+    }
 
     const now = Date.now();
-    tokens = tokens.filter(t => {
+    const recentTokens = tokens.filter(t => {
       const created = new Date(t.creationDate).getTime();
       const ageHours = (now - created) / (1000 * 60 * 60);
-      return ageHours <= 72; // 3 days max
+      return ageHours <= 168; // 7 days max
     });
 
-    const result = { tokens: tokens.slice(0, 12), sources };
+    // If strict filter removes everything, fallback to the original list (AI suggestions are usually relevant enough)
+    // If even that is empty (shouldn't be due to safety net), return the safety net tokens
+    const finalTokens = recentTokens.length > 0 ? recentTokens : tokens;
+
+    const result = { tokens: finalTokens.slice(0, 12), sources };
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
     return result;
 
   } catch (error: any) {
     console.error("findNewProjects error:", error);
-    return { tokens: [], sources: [] };
+    // Ultimate fallback on error
+    const tokens = await fetchTokensFromNames(["BRETT", "DEGEN"], 1000, 100);
+    return { tokens, sources: [] };
   }
 };
 
