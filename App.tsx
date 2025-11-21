@@ -37,8 +37,13 @@ const App: React.FC = () => {
       return prev.map(existing => {
         const updated = updatedTokens.find(u => u.address === existing.address);
         if (updated) {
-          // Preserve entryPrice from existing, update everything else
-          return { ...updated, entryPrice: existing.entryPrice };
+          // Preserve entryPrice, holdings, and avgBuyPrice from existing, update everything else
+          return {
+            ...updated,
+            entryPrice: existing.entryPrice,
+            holdings: existing.holdings,
+            avgBuyPrice: existing.avgBuyPrice
+          };
         }
         return existing;
       });

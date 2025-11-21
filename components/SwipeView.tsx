@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Token } from '../types';
 import TokenCard from './TokenCard';
+import { motion, useMotionValue, useTransform, useAnimation, PanInfo } from 'framer-motion';
 
 interface SwipeViewProps {
     tokens: Token[];
@@ -13,13 +14,57 @@ interface SwipeViewProps {
 
 const SwipeView: React.FC<SwipeViewProps> = ({ tokens, onSave, onUnsave, onTrade, onScanAgain, savedTokenAddresses }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [direction, setDirection] = useState<'left' | 'right' | null>(null);
-    const [isAnimating, setIsAnimating] = useState(false);
+    const [exitX, setExitX] = useState<number | null>(null);
 
-    // Reset index if tokens change drastically (optional, but good for new searches)
+    const x = useMotionValue(0);
+    const rotate = useTransform(x, [-200, 200], [-25, 25]);
+    const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+    const controls = useAnimation();
+
+    // Reset index if tokens change drastically
     useEffect(() => {
         setCurrentIndex(0);
-    }, [tokens]);
+        x.set(0);
+    }, [tokens, x]);
+
+    const currentToken = tokens[currentIndex];
+
+    const handleDragEnd = async (event: any, info: PanInfo) => {
+        const threshold = 100;
+        if (info.offset.x > threshold) {
+            // Swipe Right (Save)
+            setExitX(200);
+            if (!savedTokenAddresses.has(currentToken.address)) {
+                onSave(currentToken);
+            }
+            setTimeout(() => advanceCard(), 200);
+        } else if (info.offset.x < -threshold) {
+            // Swipe Left (Pass)
+            setExitX(-200);
+            setTimeout(() => advanceCard(), 200);
+        } else {
+            // Reset
+            controls.start({ x: 0 });
+        }
+    };
+
+    const advanceCard = () => {
+        setCurrentIndex(prev => prev + 1);
+        setExitX(null);
+        x.set(0);
+    };
+
+    const handleButtonSwipe = (dir: 'left' | 'right') => {
+        if (dir === 'right') {
+            setExitX(200);
+            if (!savedTokenAddresses.has(currentToken.address)) {
+                onSave(currentToken);
+            }
+        } else {
+            setExitX(-200);
+        }
+        setTimeout(() => advanceCard(), 200);
+    };
 
     if (currentIndex >= tokens.length) {
         return (
@@ -51,29 +96,6 @@ const SwipeView: React.FC<SwipeViewProps> = ({ tokens, onSave, onUnsave, onTrade
         );
     }
 
-    const currentToken = tokens[currentIndex];
-    const isSaved = savedTokenAddresses.has(currentToken.address);
-
-    const handleSwipe = (dir: 'left' | 'right') => {
-        if (isAnimating) return;
-
-        setDirection(dir);
-        setIsAnimating(true);
-
-        // Action
-        if (dir === 'right' && !isSaved) {
-            onSave(currentToken);
-        }
-        // Left swipe just skips (or unsaves if we wanted, but usually just skip)
-
-        // Animation delay
-        setTimeout(() => {
-            setCurrentIndex(prev => prev + 1);
-            setDirection(null);
-            setIsAnimating(false);
-        }, 300); // Match CSS transition duration
-    };
-
     return (
         <div className="flex flex-col items-center justify-center min-h-[70vh] max-w-md mx-auto relative">
             {/* Stack Effect Background Cards */}
@@ -89,23 +111,27 @@ const SwipeView: React.FC<SwipeViewProps> = ({ tokens, onSave, onUnsave, onTrade
             )}
 
             {/* Active Card */}
-            <div
-                className={`w-full z-10 transition-all duration-500 ease-out transform ${direction === 'left' ? '-translate-x-[150%] -rotate-[20deg] opacity-0' :
-                    direction === 'right' ? 'translate-x-[150%] rotate-[20deg] opacity-0' : 'hover:scale-[1.02]'
-                    }`}
+            <motion.div
+                className="w-full z-10 cursor-grab active:cursor-grabbing"
+                style={{ x, rotate, opacity }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                onDragEnd={handleDragEnd}
+                animate={exitX !== null ? { x: exitX, opacity: 0 } : controls}
+                transition={{ duration: 0.2 }}
             >
                 <TokenCard
                     token={currentToken}
-                    isSaved={isSaved}
+                    isSaved={savedTokenAddresses.has(currentToken.address)}
                     onSave={onSave}
                     onUnsave={onUnsave}
                 />
-            </div>
+            </motion.div>
 
             {/* Controls */}
             <div className="flex items-center justify-center space-x-6 mt-8 z-20">
                 <button
-                    onClick={() => handleSwipe('left')}
+                    onClick={() => handleButtonSwipe('left')}
                     className="w-16 h-16 rounded-full bg-slate-800 border-2 border-rose-500 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-lg shadow-rose-900/20 transform hover:scale-110"
                     title="Pass"
                 >
@@ -125,7 +151,7 @@ const SwipeView: React.FC<SwipeViewProps> = ({ tokens, onSave, onUnsave, onTrade
                 </button>
 
                 <button
-                    onClick={() => handleSwipe('right')}
+                    onClick={() => handleButtonSwipe('right')}
                     className="w-16 h-16 rounded-full bg-slate-800 border-2 border-emerald-500 text-emerald-500 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-lg shadow-emerald-900/20 transform hover:scale-110"
                     title="Save / Like"
                 >

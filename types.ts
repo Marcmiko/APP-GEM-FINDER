@@ -36,6 +36,8 @@ export interface Token {
   priceChange24h?: number;
   volume1h?: number;
   entryPrice?: number;
+  holdings?: number;
+  avgBuyPrice?: number;
   isLiquidityLocked: boolean;
   isOwnershipRenounced: boolean;
   gemScore: number;
