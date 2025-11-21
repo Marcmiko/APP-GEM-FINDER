@@ -41,7 +41,8 @@ const NavItem: React.FC<{
     return (
         <button
             onClick={() => setActivePage(page)}
-            className={`relative flex items-center px-3 py-2 text-sm font-semibold rounded-md transition-all whitespace-nowrap ${isActive
+            className={`relative flex items-center py-2 text-sm font-semibold rounded-md transition-all whitespace-nowrap ${badgeCount ? 'pl-3 pr-9' : 'px-3'
+                } ${isActive
                     ? 'bg-indigo-600 text-white'
                     : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
                 }`}
@@ -52,7 +53,7 @@ const NavItem: React.FC<{
                 <SpinIcon className="ml-2 w-3 h-3 animate-spin text-cyan-300" />
             )}
             {badgeCount !== undefined && badgeCount > 0 && (
-                <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-pink-500 rounded-full">
+                <span className="absolute top-1.5 right-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-pink-500 rounded-full min-w-[1.25rem] shadow-sm">
                     {badgeCount}
                 </span>
             )}
