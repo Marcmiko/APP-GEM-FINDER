@@ -31,7 +31,27 @@ interface FantasyContextType {
     achievements: Achievement[];
     battleState: BattleState;
     startBattle: () => void;
+    followedWallets: string[];
+    toggleFollow: (walletId: string) => void;
 }
+
+export interface WhaleProfile {
+    id: string;
+    name: string;
+    address: string;
+    winRate: number;
+    pnl: number;
+    followers: number;
+    avatar: string;
+    tags: string[];
+}
+
+export const WHALE_PROFILES: WhaleProfile[] = [
+    { id: '1', name: 'BaseGod', address: '0x7a...3f21', winRate: 78, pnl: 450000, followers: 1200, avatar: '🧙‍♂️', tags: ['Degen', 'High Risk'] },
+    { id: '2', name: 'SmartMoney', address: '0xDe...adBe', winRate: 92, pnl: 1200000, followers: 5400, avatar: '🧠', tags: ['Safe', 'Blue Chip'] },
+    { id: '3', name: 'ChadTrader', address: '0x12...90AB', winRate: 45, pnl: -50000, followers: 300, avatar: '🗿', tags: ['Yolo', 'Meme'] },
+    { id: '4', name: 'AlphaHunter', address: '0x99...8877', winRate: 65, pnl: 150000, followers: 890, avatar: '🎯', tags: ['Sniper'] },
+];
 
 export interface Achievement {
     id: string;
@@ -197,6 +217,43 @@ export const FantasyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         return () => clearInterval(interval);
     }, [portfolio.length]); // Re-run if portfolio size changes (added/removed token)
+
+    const [followedWallets, setFollowedWallets] = useState<string[]>(() => {
+        const saved = localStorage.getItem('fantasy_followed');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    useEffect(() => {
+        localStorage.setItem('fantasy_followed', JSON.stringify(followedWallets));
+    }, [followedWallets]);
+
+    const toggleFollow = (walletId: string) => {
+        setFollowedWallets(prev =>
+            prev.includes(walletId)
+                ? prev.filter(id => id !== walletId)
+                : [...prev, walletId]
+        );
+    };
+
+    // Simulate Copy Trading Activity
+    useEffect(() => {
+        if (followedWallets.length === 0) return;
+
+        const interval = setInterval(() => {
+            if (Math.random() > 0.7) {
+                const randomWalletId = followedWallets[Math.floor(Math.random() * followedWallets.length)];
+                const whale = WHALE_PROFILES.find(w => w.id === randomWalletId);
+
+                if (whale) {
+                    const tokens = ["BRETT", "DEGEN", "TOSHI", "AERO", "MOG"];
+                    const randomToken = tokens[Math.floor(Math.random() * tokens.length)];
+                    console.log(`🔔 Copy Trade Alert: ${whale.name} just bought ${randomToken}!`);
+                }
+            }
+        }, 10000);
+
+        return () => clearInterval(interval);
+    }, [followedWallets]);
 
     const startBattle = () => {
         setBattleState({
@@ -376,7 +433,9 @@ export const FantasyProvider: React.FC<{ children: React.ReactNode }> = ({ child
             totalValue,
             achievements,
             battleState,
-            startBattle
+            startBattle,
+            followedWallets,
+            toggleFollow
         }}>
             {children}
         </FantasyContext.Provider>

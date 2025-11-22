@@ -14,8 +14,9 @@ import { AlertProvider } from './context/AlertContext';
 import { FantasyProvider } from './context/FantasyContext';
 import FantasyDashboard from './components/FantasyDashboard';
 import SentimentHeatmap from './components/SentimentHeatmap';
+import CopyTrading from './components/CopyTrading';
 
-export type Page = 'gem-finder' | 'new-projects' | 'analyst-picks' | 'social-trends' | 'saved-projects' | 'token-analyzer' | 'fantasy-dashboard' | 'heatmap';
+export type Page = 'gem-finder' | 'new-projects' | 'analyst-picks' | 'social-trends' | 'saved-projects' | 'token-analyzer' | 'fantasy-dashboard' | 'heatmap' | 'copy-trading';
 
 const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('gem-finder');
@@ -74,6 +75,7 @@ const App: React.FC = () => {
               {activePage === 'saved-projects' && <SavedProjectsPage {...savedTokenProps} onUpdateTokens={handleUpdateTokens} />}
               {activePage === 'fantasy-dashboard' && <FantasyDashboard />}
               {activePage === 'heatmap' && <SentimentHeatmap />}
+              {activePage === 'copy-trading' && <CopyTrading />}
             </main>
             <footer className="text-center py-8 border-t border-slate-800 mt-16 pb-24 md:pb-8">
               <p className="text-sm text-slate-500 mb-2">Disclaimer: This is not financial advice. Cryptocurrency investments are highly volatile. Do your own research.</p>
