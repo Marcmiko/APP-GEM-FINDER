@@ -29,6 +29,8 @@ interface FantasyContextType {
     portfolioValue: number;
     totalValue: number;
     achievements: Achievement[];
+    battleState: BattleState;
+    startBattle: () => void;
 }
 
 export interface Achievement {
@@ -39,6 +41,26 @@ export interface Achievement {
     unlocked: boolean;
     unlockedAt?: number;
 }
+
+export interface BattleState {
+    isActive: boolean;
+    opponentName: string;
+    timeLeft: number; // seconds
+    playerScore: number; // PnL %
+    opponentScore: number; // PnL %
+    opponentHistory: FantasyTransaction[];
+    startTime: number;
+}
+
+const INITIAL_BATTLE_STATE: BattleState = {
+    isActive: false,
+    opponentName: '',
+    timeLeft: 0,
+    playerScore: 0,
+    opponentScore: 0,
+    opponentHistory: [],
+    startTime: 0
+};
 
 const INITIAL_ACHIEVEMENTS: Achievement[] = [
     { id: 'first_buy', title: 'First Steps', description: 'Make your first trade.', icon: '🚀', unlocked: false },
@@ -73,6 +95,123 @@ export const FantasyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const saved = localStorage.getItem('fantasy_achievements');
         return saved ? JSON.parse(saved) : INITIAL_ACHIEVEMENTS;
     });
+
+    const [battleState, setBattleState] = useState<BattleState>(INITIAL_BATTLE_STATE);
+
+    // Battle Timer & Bot Logic
+    useEffect(() => {
+        if (!battleState.isActive) return;
+
+        const interval = setInterval(() => {
+            setBattleState(prev => {
+                if (prev.timeLeft <= 0) {
+                    clearInterval(interval);
+                    return { ...prev, isActive: false };
+                }
+
+                // Simulate Opponent Moves (Randomly gain/lose score)
+                // Bot makes a "trade" every ~10 seconds on average
+                let newOpponentScore = prev.opponentScore;
+                const shouldTrade = Math.random() > 0.9; // 10% chance per second
+                if (shouldTrade) {
+                    const change = (Math.random() * 4) - 1.5; // -1.5% to +2.5% swing
+                    newOpponentScore += change;
+                }
+
+                return {
+                    ...prev,
+                    timeLeft: prev.timeLeft - 1,
+                    opponentScore: newOpponentScore
+                };
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [battleState.isActive]);
+
+    // Calculate Player Score (PnL %) during battle
+    useEffect(() => {
+        if (!battleState.isActive) return;
+
+        const startBalance = INITIAL_BALANCE; // Simplified: Assume battle starts with fresh balance or snapshot
+        // For now, we track PnL of the *current* session relative to when battle started
+        // But since we don't have "session" PnL easily, we'll just use total PnL % of the account
+        // Ideally, we'd snapshot value at startBattle.
+
+        // Let's use a simplified metric: Total Account PnL %
+        const currentTotalValue = balance + portfolio.reduce((acc, pos) => acc + (pos.amount * (pos.token.priceUsd || 0)), 0);
+        const pnlPercent = ((currentTotalValue - INITIAL_BALANCE) / INITIAL_BALANCE) * 100;
+
+        setBattleState(prev => ({ ...prev, playerScore: pnlPercent }));
+
+    }, [balance, portfolio, battleState.isActive]);
+
+    // Update Portfolio Prices Periodically
+    useEffect(() => {
+        const fetchPrices = async () => {
+            if (portfolio.length === 0) return;
+
+            const updatedPortfolio = await Promise.all(portfolio.map(async (pos) => {
+                try {
+                    // Fetch latest price from DexScreener
+                    // Note: In a real app, we would batch this or use a more efficient endpoint
+                    const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${pos.token.address}`);
+                    const data = await response.json();
+
+                    if (data.pairs && data.pairs.length > 0) {
+                        // Find the best pair (highest liquidity)
+                        const bestPair = data.pairs.sort((a: any, b: any) => b.liquidity?.usd - a.liquidity?.usd)[0];
+                        const newPrice = parseFloat(bestPair.priceUsd);
+
+                        if (!isNaN(newPrice)) {
+                            return {
+                                ...pos,
+                                token: {
+                                    ...pos.token,
+                                    priceUsd: newPrice,
+                                    priceChange24h: bestPair.priceChange?.h24 || pos.token.priceChange24h,
+                                    priceChange1h: bestPair.priceChange?.h1 || pos.token.priceChange1h
+                                }
+                            };
+                        }
+                    }
+                    return pos;
+                } catch (error) {
+                    console.error(`Failed to update price for ${pos.token.symbol}`, error);
+                    return pos;
+                }
+            }));
+
+            // Only update state if prices actually changed to avoid unnecessary re-renders
+            // Simple check: compare total value
+            const oldTotal = portfolio.reduce((acc, p) => acc + (p.amount * (p.token.priceUsd || 0)), 0);
+            const newTotal = updatedPortfolio.reduce((acc, p) => acc + (p.amount * (p.token.priceUsd || 0)), 0);
+
+            if (Math.abs(newTotal - oldTotal) > 0.01) {
+                setPortfolio(updatedPortfolio);
+            }
+        };
+
+        const interval = setInterval(fetchPrices, 15000); // Update every 15 seconds
+        fetchPrices(); // Initial fetch
+
+        return () => clearInterval(interval);
+    }, [portfolio.length]); // Re-run if portfolio size changes (added/removed token)
+
+    const startBattle = () => {
+        setBattleState({
+            isActive: true,
+            opponentName: 'AlphaBot 9000',
+            timeLeft: 300, // 5 minutes
+            playerScore: 0,
+            opponentScore: 0,
+            opponentHistory: [],
+            startTime: Date.now()
+        });
+        // Optional: Reset account for fair battle?
+        // resetAccount(); 
+        // For now, we play with existing portfolio.
+    };
 
     useEffect(() => {
         localStorage.setItem('fantasy_balance', balance.toString());
@@ -235,7 +374,9 @@ export const FantasyProvider: React.FC<{ children: React.ReactNode }> = ({ child
             resetAccount,
             portfolioValue,
             totalValue,
-            achievements
+            achievements,
+            battleState,
+            startBattle
         }}>
             {children}
         </FantasyContext.Provider>

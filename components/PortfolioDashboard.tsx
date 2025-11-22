@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Token } from '../types';
-import AllocationChart from './AllocationChart';
+import PortfolioCharts from './PortfolioCharts';
 
 interface PortfolioDashboardProps {
     savedTokens: Token[];
@@ -89,8 +89,8 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                 </div>
             </div>
 
-            {/* Allocation Chart */}
-            <AllocationChart tokens={savedTokens} />
+            {/* Portfolio Charts (Allocation & History) */}
+            <PortfolioCharts tokens={holdings} totalValue={totalValue} />
 
             {/* Holdings List */}
             <div id="holdings-list" className="bg-slate-800/30 rounded-2xl border border-slate-700 overflow-hidden">

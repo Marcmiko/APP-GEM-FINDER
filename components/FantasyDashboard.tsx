@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useFantasy } from '../context/FantasyContext';
 import Leaderboard from './Leaderboard';
 import Achievements from './Achievements';
+import BattleArena from './BattleArena';
 import { motion } from 'framer-motion';
 
 const FantasyDashboard: React.FC = () => {
@@ -43,6 +44,8 @@ const FantasyDashboard: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            <BattleArena />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Content - Portfolio */}

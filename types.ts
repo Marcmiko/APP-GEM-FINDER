@@ -52,6 +52,14 @@ export interface Token {
   coingeckoUrl: string | null;
   iconUrl?: string | null;
   convictionScore?: number;
+  auditScore?: number; // 0-100
+  auditReport?: {
+    securityScore: number; // 0-100
+    utilityScore: number; // 0-100
+    communityScore: number; // 0-100
+    redFlags: string[];
+    greenFlags: string[];
+  };
 }
 
 export interface WebSource {

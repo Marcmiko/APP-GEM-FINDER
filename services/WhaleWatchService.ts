@@ -21,20 +21,41 @@ const generateRandomWhaleName = () => WHALE_NAMES[Math.floor(Math.random() * WHA
 
 export const getWhaleAlerts = async (): Promise<WhaleAlert[]> => {
     // 1. Fetch trending/recent pairs from DexScreener to get real data
-    // We'll use a generic search or specific tokens to seed the "alerts"
-    const pairs = await searchDexScreener("Base"); // Broad search to get some pairs
+    // Search for multiple popular tokens to ensure we get a good mix of pairs
+    // Append "Base" to ensure we get pairs on the right chain
+    const queries = ["Base", "WETH Base", "USDC Base", "BRETT", "DEGEN", "TOSHI"];
+    let pairs: DexScreenerPair[] = [];
 
-    if (!pairs || pairs.length === 0) return [];
+    for (const q of queries) {
+        const res = await searchDexScreener(q);
+        if (res) pairs = [...pairs, ...res];
+    }
+
+    // Remove duplicates
+    pairs = pairs.filter((pair, index, self) =>
+        index === self.findIndex((t) => (
+            t.pairAddress === pair.pairAddress
+        ))
+    );
+
+    console.log(`WhaleWatch: Found ${pairs.length} pairs after search and filter.`);
+
+    if (!pairs || pairs.length === 0) {
+        console.warn("WhaleWatch: No pairs found.");
+        return [];
+    }
 
     const alerts: WhaleAlert[] = [];
 
     // 2. Analyze pairs for "Whale" activity (Simulated based on real aggregate stats)
     pairs.forEach(pair => {
         // Logic: If volume is high, simulate a recent "Big Buy"
-        if (pair.volume?.h24 > 50000) {
+        // Lowered threshold to 10k for more activity
+        if (pair.volume?.h24 > 10000) {
             // Create a "Buy" alert
-            if (Math.random() > 0.5) { // Randomize so it's not every token every time
-                const amount = Math.floor(Math.random() * 50000) + 10000; // $10k - $60k
+            // Increased probability to 70%
+            if (Math.random() > 0.3) {
+                const amount = Math.floor(Math.random() * 50000) + 5000; // $5k - $55k
                 alerts.push({
                     id: Math.random().toString(36).substr(2, 9),
                     tokenName: pair.baseToken.name,
@@ -49,8 +70,9 @@ export const getWhaleAlerts = async (): Promise<WhaleAlert[]> => {
         }
 
         // Logic: If liquidity is huge, maybe a "Liquidity Add"
-        if (pair.liquidity?.usd > 200000 && Math.random() > 0.8) {
-            const amount = Math.floor(Math.random() * 100000) + 50000;
+        // Lowered threshold to 50k
+        if (pair.liquidity?.usd > 50000 && Math.random() > 0.7) {
+            const amount = Math.floor(Math.random() * 50000) + 10000;
             alerts.push({
                 id: Math.random().toString(36).substr(2, 9),
                 tokenName: pair.baseToken.name,
@@ -64,7 +86,8 @@ export const getWhaleAlerts = async (): Promise<WhaleAlert[]> => {
         }
 
         // Logic: Volume Spike
-        if (pair.volume?.h1 > 10000 && Math.random() > 0.7) {
+        // Lowered threshold to 5k
+        if (pair.volume?.h1 > 5000 && Math.random() > 0.6) {
             alerts.push({
                 id: Math.random().toString(36).substr(2, 9),
                 tokenName: pair.baseToken.name,
@@ -77,6 +100,25 @@ export const getWhaleAlerts = async (): Promise<WhaleAlert[]> => {
             });
         }
     });
+
+    // Fail-safe: If no alerts generated (e.g. API issues), add some simulated ones
+    if (alerts.length === 0) {
+        console.warn("WhaleWatch: No alerts generated from live data. Using fallback.");
+        const fallbackTokens = ["BRETT", "DEGEN", "TOSHI", "AERO"];
+        fallbackTokens.forEach(symbol => {
+            const amount = Math.floor(Math.random() * 20000) + 5000;
+            alerts.push({
+                id: Math.random().toString(36).substr(2, 9),
+                tokenName: symbol,
+                tokenSymbol: symbol,
+                type: 'BUY',
+                amountUsd: amount,
+                timestamp: Date.now() - Math.floor(Math.random() * 1000 * 60 * 30),
+                pairAddress: '0x0000000000000000000000000000000000000000',
+                message: `🐋 Whale (${generateRandomWhaleName()}) bought $${(amount / 1000).toFixed(1)}k of ${symbol}!`
+            });
+        });
+    }
 
     // Sort by timestamp descending
     return alerts.sort((a, b) => b.timestamp - a.timestamp).slice(0, 20); // Return top 20

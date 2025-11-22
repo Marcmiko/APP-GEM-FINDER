@@ -275,6 +275,65 @@ const formatNumber = (num?: number | null) => {
     return `$${num.toLocaleString()}`;
 }
 
+const AuditScorecard: React.FC<{ report: NonNullable<Token['auditReport']>, score: number }> = ({ report, score }) => {
+    const getScoreColor = (s: number) => {
+        if (s >= 80) return 'text-green-400';
+        if (s >= 50) return 'text-yellow-400';
+        return 'text-red-400';
+    };
+
+    return (
+        <div className="mt-4 bg-slate-900/80 rounded-xl p-4 border border-slate-700 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <span className="text-xl">🛡️</span> AI Audit Scorecard
+                </h4>
+                <div className={`px-3 py-1 rounded-full font-bold text-sm border ${getScoreColor(score)} border-current bg-opacity-10`}>
+                    {score}/100
+                </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="text-center p-2 bg-slate-800 rounded-lg">
+                    <div className={`text-xs font-bold ${getScoreColor(report.securityScore)}`}>{report.securityScore}</div>
+                    <div className="text-[10px] text-slate-500 uppercase mt-1">Security</div>
+                </div>
+                <div className="text-center p-2 bg-slate-800 rounded-lg">
+                    <div className={`text-xs font-bold ${getScoreColor(report.utilityScore)}`}>{report.utilityScore}</div>
+                    <div className="text-[10px] text-slate-500 uppercase mt-1">Utility</div>
+                </div>
+                <div className="text-center p-2 bg-slate-800 rounded-lg">
+                    <div className={`text-xs font-bold ${getScoreColor(report.communityScore)}`}>{report.communityScore}</div>
+                    <div className="text-[10px] text-slate-500 uppercase mt-1">Community</div>
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                {report.redFlags.length > 0 && (
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2">
+                        <h5 className="text-xs font-bold text-red-400 mb-1 flex items-center gap-1">
+                            <WarningIcon className="w-3 h-3" /> Red Flags
+                        </h5>
+                        <ul className="list-disc list-inside text-[10px] text-red-300/80 space-y-0.5">
+                            {report.redFlags.map((flag, i) => <li key={i}>{flag}</li>)}
+                        </ul>
+                    </div>
+                )}
+                {report.greenFlags.length > 0 && (
+                    <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2">
+                        <h5 className="text-xs font-bold text-green-400 mb-1 flex items-center gap-1">
+                            <VerifiedIcon className="w-3 h-3" /> Green Flags
+                        </h5>
+                        <ul className="list-disc list-inside text-[10px] text-green-300/80 space-y-0.5">
+                            {report.greenFlags.map((flag, i) => <li key={i}>{flag}</li>)}
+                        </ul>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave }) => {
     const { toggleAlert, isAlertActive } = useAlerts();
     const { buyToken } = useFantasy();
@@ -433,6 +492,9 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
                         iconClass="text-amber-400"
                         icon={<BearIcon />}
                     />
+
+                    {/* AI Audit Scorecard */}
+                    {token.auditReport && <AuditScorecard report={token.auditReport} score={token.auditScore || 0} />}
 
                     {/* Technical Analysis Section */}
                     <TechnicalSection indicators={token.technicalIndicators} />

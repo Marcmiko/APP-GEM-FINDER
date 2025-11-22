@@ -100,7 +100,7 @@ const SwipeView: React.FC<SwipeViewProps> = ({ tokens, onSave, onUnsave, onTrade
         <div className="flex flex-col items-center justify-center min-h-[70vh] max-w-md mx-auto relative">
             {/* Stack Effect Background Cards */}
             {currentIndex + 1 < tokens.length && (
-                <div className="absolute top-4 w-full scale-95 opacity-50 z-0 pointer-events-none">
+                <div className="absolute top-6 w-full scale-[0.92] opacity-30 z-0 pointer-events-none blur-[1px] brightness-50">
                     <TokenCard
                         token={tokens[currentIndex + 1]}
                         isSaved={savedTokenAddresses.has(tokens[currentIndex + 1].address)}

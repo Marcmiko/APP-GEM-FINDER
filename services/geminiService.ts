@@ -298,7 +298,7 @@ export const getAnalystPicks = async (forceRefresh = false): Promise<{ tokens: T
 };
 
 export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: Token[]; sources: GroundingChunk[] }> => {
-  const cacheKey = 'social_trends';
+  const cacheKey = 'social_trends_heatmap';
 
   if (!forceRefresh) {
     const cached = getFromCache(cacheKey);
@@ -307,16 +307,69 @@ export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: 
 
   try {
     const prompt = `
-      Find tokens on Base blockchain that are trending on Twitter/X right now.
-      Return ONLY a JSON array of strings (tickers).
+      Find 15 tokens on Base blockchain that are currently trending on Twitter/X/Farcaster.
+      For each token, estimate a "Sentiment Score" (0-100, where 100 is extreme hype/bullishness) and a "Hype Magnitude" (1-10, where 10 is viral).
+      
+      Return a JSON array of objects with this format:
+      [
+        { "symbol": "TICKER", "sentiment": 85, "magnitude": 9 },
+        ...
+      ]
+      Return ONLY the JSON array.
       `;
 
-    const { names, sources } = await getGeminiSuggestions(prompt);
-    const searchList = names.length > 0 ? names : ["DEGEN", "MOG", "TOSHI"];
+    const ai = getAiClient();
+    const response = await generateWithRetry(ai, {
+      model: "gemini-1.5-pro",
+      contents: prompt,
+      config: { responseMimeType: "application/json" }
+    });
 
+    const text = response.text || '[]';
+    let trends: { symbol: string; sentiment: number; magnitude: number }[] = [];
+
+    try {
+      trends = JSON.parse(text);
+    } catch (e) {
+      console.warn("Failed to parse social trends JSON", e);
+    }
+
+    // Fallback if parsing fails or empty
+    if (trends.length === 0) {
+      trends = [
+        { symbol: "DEGEN", sentiment: 80, magnitude: 9 },
+        { symbol: "BRETT", sentiment: 75, magnitude: 10 },
+        { symbol: "TOSHI", sentiment: 65, magnitude: 7 },
+        { symbol: "MOG", sentiment: 70, magnitude: 8 },
+        { symbol: "KEYCAT", sentiment: 60, magnitude: 5 }
+      ];
+    }
+
+    const searchList = trends.map(t => t.symbol);
     const tokens = await fetchTokensFromNames(searchList);
 
-    const result = { tokens: tokens.slice(0, 12), sources };
+    // Merge sentiment data into the tokens
+    const enrichedTokens = tokens.map(token => {
+      const trend = trends.find(t => t.symbol.toUpperCase() === token.symbol.toUpperCase());
+      if (trend) {
+        return {
+          ...token,
+          socialSentiment: {
+            ...token.socialSentiment,
+            positive: trend.sentiment,
+            negative: 100 - trend.sentiment,
+            summary: `Hype Magnitude: ${trend.magnitude}/10`
+          },
+          // We can use 'convictionScore' or a new field to store the magnitude for the heatmap
+          convictionScore: trend.magnitude
+        };
+      }
+      return token;
+    });
+
+    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
+    const result = { tokens: enrichedTokens, sources: sources as GroundingChunk[] };
+
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
     return result;
 
@@ -367,6 +420,13 @@ export const enrichTokenAnalysis = async (token: Token): Promise<Token> => {
     - strengths: A short list of key strengths (e.g. "Strong community", "High volume").
     - risks: A short list of key risks (e.g. "Low liquidity", "Anon team").
     - verdict: A short investment verdict (e.g. "High Risk / High Reward", "Safe Bet").
+    - auditScore: A number 0-100 representing overall project quality/safety.
+    - securityScore: A number 0-100 (contract safety, audit status).
+    - utilityScore: A number 0-100 (use case, product).
+    - communityScore: A number 0-100 (social activity, holders).
+    - redFlags: A list of critical warning signs (e.g. "Mintable", "Blacklist function").
+    - greenFlags: A list of positive signals (e.g. "Renounced ownership", "Doxxed team").
+    - holderCount: An estimated number of holders (integer) or 0 if unknown.
     
     Return ONLY the JSON object.
     `;
@@ -382,6 +442,15 @@ export const enrichTokenAnalysis = async (token: Token): Promise<Token> => {
 
     return {
       ...token,
+      holders: analysis.holderCount || token.holders || 0,
+      auditScore: analysis.auditScore || 50,
+      auditReport: {
+        securityScore: analysis.securityScore || 50,
+        utilityScore: analysis.utilityScore || 50,
+        communityScore: analysis.communityScore || 50,
+        redFlags: analysis.redFlags || [],
+        greenFlags: analysis.greenFlags || [],
+      },
       analysis: {
         summary: analysis.summary || token.analysis.summary,
         strengths: Array.isArray(analysis.strengths) ? analysis.strengths.join(", ") : (analysis.strengths || token.analysis.strengths),
