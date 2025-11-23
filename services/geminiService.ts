@@ -336,12 +336,28 @@ export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: 
 
     // Fallback if parsing fails or empty
     if (trends.length === 0) {
+      console.warn("AI Social Trends failed, falling back to CoinGecko trending");
+      try {
+        const cgTrending = await getTrendingCoinGecko();
+        // Map CG trending strings to the trend object format with randomized sentiment
+        trends = cgTrending.slice(0, 10).map(symbol => ({
+          symbol: symbol.toUpperCase(),
+          sentiment: 60 + Math.floor(Math.random() * 35), // Random sentiment 60-95
+          magnitude: 5 + Math.floor(Math.random() * 5)    // Random magnitude 5-10
+        }));
+      } catch (err) {
+        console.error("CoinGecko fallback failed", err);
+      }
+    }
+
+    // Ultimate fallback if both AI and CG fail
+    if (trends.length === 0) {
       trends = [
-        { symbol: "DEGEN", sentiment: 80, magnitude: 9 },
-        { symbol: "BRETT", sentiment: 75, magnitude: 10 },
-        { symbol: "TOSHI", sentiment: 65, magnitude: 7 },
-        { symbol: "MOG", sentiment: 70, magnitude: 8 },
-        { symbol: "KEYCAT", sentiment: 60, magnitude: 5 }
+        { symbol: "VIRTUAL", sentiment: 85, magnitude: 9 },
+        { symbol: "AERO", sentiment: 90, magnitude: 10 },
+        { symbol: "HIGHER", sentiment: 75, magnitude: 8 },
+        { symbol: "LUNA", sentiment: 65, magnitude: 6 },
+        { symbol: "TALENT", sentiment: 70, magnitude: 7 }
       ];
     }
 
