@@ -83,6 +83,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
 
                     <div className="flex items-center p-1.5 bg-slate-800/50 backdrop-blur-md rounded-full border border-white/5 overflow-x-auto no-scrollbar max-w-[calc(100vw-120px)] shadow-xl shadow-black/20">
                         <NavItem page="gem-finder" activePage={activePage} setActivePage={setActivePage} isLoading={gemFinder.isLoading}>Gem Finder</NavItem>
+                        <NavItem page="ai-sniper" activePage={activePage} setActivePage={setActivePage}>AI Sniper 🎯</NavItem>
                         <NavItem page="new-projects" activePage={activePage} setActivePage={setActivePage} isLoading={newProjects.isLoading}>New Listings</NavItem>
                         <NavItem page="analyst-picks" activePage={activePage} setActivePage={setActivePage} isLoading={analystPicks.isLoading}>Analyst</NavItem>
                         <NavItem page="social-trends" activePage={activePage} setActivePage={setActivePage} isLoading={socialTrends.isLoading}>Trends</NavItem>

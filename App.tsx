@@ -7,13 +7,14 @@ import AnalystPicksPage from './components/AnalystPicksPage';
 import SocialTrendsPage from './components/SocialTrendsPage';
 import SavedProjectsPage from './components/SavedProjectsPage';
 import TokenAnalyzerPage from './components/TokenAnalyzerPage';
+import SniperPage from './components/SniperPage';
 import { Token } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { ScanProvider } from './context/ScanContext';
 import { AlertProvider } from './context/AlertContext';
 import SentimentHeatmap from './components/SentimentHeatmap';
 
-export type Page = 'gem-finder' | 'new-projects' | 'analyst-picks' | 'social-trends' | 'saved-projects' | 'token-analyzer' | 'heatmap';
+export type Page = 'gem-finder' | 'ai-sniper' | 'new-projects' | 'analyst-picks' | 'social-trends' | 'saved-projects' | 'token-analyzer' | 'heatmap';
 
 const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('gem-finder');
@@ -64,6 +65,7 @@ const App: React.FC = () => {
           <Header activePage={activePage} setActivePage={setActivePage} savedCount={savedTokens.length} />
           <main className="container mx-auto px-4 py-8 flex-grow">
             {activePage === 'gem-finder' && <GemFinderPage {...savedTokenProps} />}
+            {activePage === 'ai-sniper' && <SniperPage {...savedTokenProps} />}
             {activePage === 'new-projects' && <NewProjectsPage {...savedTokenProps} />}
             {activePage === 'analyst-picks' && <AnalystPicksPage {...savedTokenProps} />}
             {activePage === 'social-trends' && <SocialTrendsPage {...savedTokenProps} />}
