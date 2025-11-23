@@ -80,11 +80,21 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
 
     // Apply filters
     const filteredTokens = sniperTokens.filter(token => {
-        const tokenAgeHours = (Date.now() - new Date(token.creationDate).getTime()) / (1000 * 60 * 60);
+        // Safety check for valid creation date
+        if (!token.creationDate) return false;
 
+        const createdTime = new Date(token.creationDate).getTime();
+        if (isNaN(createdTime)) return false;
+
+        const tokenAgeHours = (Date.now() - createdTime) / (1000 * 60 * 60);
+
+        // Strict check: must be within the max age limit
+        // Also filter out tokens with suspiciously old creation dates (e.g. > 1 year) if they somehow got here
+        // AAVE and others would fail this if their creation date is correct
         return (
             token.liquidity >= minLiquidity &&
             tokenAgeHours <= maxAgeHours &&
+            tokenAgeHours >= 0 && // Future dates check
             token.buyPressure >= minBuyPressure
         );
     });
