@@ -3,6 +3,18 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getWhaleAlerts, WhaleAlert } from '../services/WhaleWatchService';
 
+const ExternalLinkIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path fillRule="evenodd" d="M15.75 2.25H21a.75.75 0 01.75.75v5.25a.75.75 0 01-1.5 0V4.81L8.03 17.03a.75.75 0 01-1.06-1.06L19.19 3.75h-3.44a.75.75 0 010-1.5zm-10.5 4.5a1.5 1.5 0 00-1.5 1.5v10.5a1.5 1.5 0 001.5 1.5h10.5a1.5 1.5 0 001.5-1.5V10.5a.75.75 0 011.5 0v8.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V8.25a3 3 0 013-3h8.25a.75.75 0 010 1.5H5.25z" clipRule="evenodd" />
+    </svg>
+);
+
+const ShareIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path fillRule="evenodd" d="M15.75 4.5a3 3 0 11.825 2.066l-8.421 4.679a3.002 3.002 0 010 1.51l8.421 4.679a3 3 0 11-.729 1.31l-8.421-4.678a3 3 0 110-4.132l8.421-4.679a3 3 0 01-.096-.755z" clipRule="evenodd" />
+    </svg>
+);
+
 const WhaleWatch: React.FC = () => {
     const [alerts, setAlerts] = useState<WhaleAlert[]>([]);
     const [loading, setLoading] = useState(true);
@@ -19,6 +31,25 @@ const WhaleWatch: React.FC = () => {
         const interval = setInterval(fetchAlerts, 60000); // Refresh every minute
         return () => clearInterval(interval);
     }, []);
+
+    const handleShare = async (alert: WhaleAlert) => {
+        const shareData = {
+            title: `Whale Alert: ${alert.tokenSymbol} on Base!`,
+            text: `🚨 WHALE ALERT 🚨\n${alert.message}\nFound on Base Gem Finder.`,
+            url: window.location.href
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.error('Error sharing:', err);
+            }
+        } else {
+            navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`);
+            // alert('Alert copied to clipboard!'); // Optional: toast would be better but alert is fine for MVP
+        }
+    };
 
     if (loading && alerts.length === 0) {
         return (
@@ -56,9 +87,9 @@ const WhaleWatch: React.FC = () => {
                             className="p-3 rounded-xl bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60 transition-colors flex items-center gap-3 group cursor-pointer"
                         >
                             <div className={`p-2 rounded-full ${alert.type === 'BUY' ? 'bg-green-500/20 text-green-400' :
-                                    alert.type === 'SELL' ? 'bg-red-500/20 text-red-400' :
-                                        alert.type === 'LIQUIDITY_ADD' ? 'bg-blue-500/20 text-blue-400' :
-                                            'bg-purple-500/20 text-purple-400'
+                                alert.type === 'SELL' ? 'bg-red-500/20 text-red-400' :
+                                    alert.type === 'LIQUIDITY_ADD' ? 'bg-blue-500/20 text-blue-400' :
+                                        'bg-purple-500/20 text-purple-400'
                                 }`}>
                                 {alert.type === 'BUY' && '💰'}
                                 {alert.type === 'SELL' && '📉'}
@@ -74,6 +105,30 @@ const WhaleWatch: React.FC = () => {
                                 <p className="text-xs text-gray-400 mt-0.5 group-hover:text-gray-300 transition-colors">
                                     {alert.message}
                                 </p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                {alert.url && (
+                                    <a
+                                        href={alert.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-1.5 text-gray-500 hover:text-blue-400 hover:bg-blue-900/20 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                        title="View on DexScreener"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <ExternalLinkIcon className="w-4 h-4" />
+                                    </a>
+                                )}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleShare(alert);
+                                    }}
+                                    className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-700 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                    title="Share Alert"
+                                >
+                                    <ShareIcon className="w-4 h-4" />
+                                </button>
                             </div>
                         </motion.div>
                     ))}

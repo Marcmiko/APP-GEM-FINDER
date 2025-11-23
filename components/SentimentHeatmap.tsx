@@ -108,7 +108,7 @@ const SentimentHeatmap: React.FC = () => {
             {/* Token Detail Modal */}
             {selectedToken && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedToken(null)}>
-                    <div className="w-full max-w-md" onClick={e => e.stopPropagation()}>
+                    <div className="w-full max-w-md max-h-[90vh] overflow-y-auto custom-scrollbar rounded-2xl" onClick={e => e.stopPropagation()}>
                         <TokenCard
                             token={selectedToken}
                             onSave={() => { }} // Dummy

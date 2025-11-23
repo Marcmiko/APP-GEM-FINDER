@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Token, TechnicalIndicators } from '../types';
 import { useAlerts } from '../context/AlertContext';
-import { useFantasy } from '../context/FantasyContext';
+
 
 // --- ICONS ---
 const VerifiedIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -104,6 +104,12 @@ const SellIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 const FantasyIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
         <path fillRule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813a3.75 3.75 0 002.576-2.576L8.279 5.044A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z" clipRule="evenodd" />
+    </svg>
+);
+
+const ShareIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path fillRule="evenodd" d="M15.75 4.5a3 3 0 11.825 2.066l-8.421 4.679a3.002 3.002 0 010 1.51l8.421 4.679a3 3 0 11-.729 1.31l-8.421-4.678a3 3 0 110-4.132l8.421-4.679a3 3 0 01-.096-.755z" clipRule="evenodd" />
     </svg>
 );
 
@@ -336,7 +342,7 @@ const AuditScorecard: React.FC<{ report: NonNullable<Token['auditReport']>, scor
 
 const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave }) => {
     const { toggleAlert, isAlertActive } = useAlerts();
-    const { buyToken } = useFantasy();
+
     const isAlerting = isAlertActive(token.address);
     const [imgError, setImgError] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
@@ -370,16 +376,7 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
         window.open(url, '_blank');
     };
 
-    const handleFantasyBuy = () => {
-        const amount = prompt("Enter amount to buy in Fantasy Mode ($):", "1000");
-        if (amount) {
-            const val = parseFloat(amount);
-            if (!isNaN(val) && val > 0) {
-                buyToken(token, val);
-                alert(`Bought $${val} of ${token.symbol} in Fantasy Mode!`);
-            }
-        }
-    };
+
 
     const handleSaveToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -387,6 +384,25 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
             onUnsave(token);
         } else {
             onSave(token);
+        }
+    };
+
+    const handleShare = async () => {
+        const shareData = {
+            title: `Check out ${token.name} ($${token.symbol}) on Base Gem Finder!`,
+            text: `Found this gem on Base Gem Finder: ${token.name} ($${token.symbol}). AI Verdict: ${token.analysis?.verdict || 'N/A'}.`,
+            url: window.location.href // Ideally this would be a deep link like `?token=${token.address}`
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.error('Error sharing:', err);
+            }
+        } else {
+            navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`);
+            alert('Link copied to clipboard!');
         }
     };
 
@@ -406,6 +422,13 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
                     className="text-slate-500 hover:text-white transition-colors p-1"
                 >
                     <BookmarkIcon saved={isSaved} className="w-6 h-6" />
+                </button>
+                <button
+                    onClick={(e) => { e.stopPropagation(); handleShare(); }}
+                    title="Share Project"
+                    className="text-slate-500 hover:text-white transition-colors p-1"
+                >
+                    <ShareIcon className="w-6 h-6" />
                 </button>
             </div>
 
@@ -590,13 +613,7 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
                         </button>
                     </div>
 
-                    <button
-                        onClick={handleFantasyBuy}
-                        className="w-full mt-2 flex items-center justify-center space-x-2 text-sm font-bold text-purple-300 bg-purple-900/30 hover:bg-purple-900/50 transition-colors rounded-lg py-2 border border-purple-500/30 hover:border-purple-500/50"
-                    >
-                        <FantasyIcon className="w-5 h-5" />
-                        <span>Fantasy Buy (Simulate)</span>
-                    </button>
+
 
                     <button
                         onClick={() => setIsChartVisible(!isChartVisible)}
