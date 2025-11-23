@@ -47,6 +47,17 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
                 if (!analystPicks.hasScanned && !analystPicks.isLoading) scanAnalystPicks();
             }
 
+            // Immediate burst: if we have tokens, show 1-2 immediately
+            if (scannedPool.length > 0 && sniperTokens.length === 0) {
+                const availableTokens = scannedPool.filter(
+                    poolToken => !sniperTokens.some(st => st.address === poolToken.address)
+                );
+                if (availableTokens.length > 0) {
+                    const initialBatch = availableTokens.slice(0, 2); // Show 2 immediately
+                    setSniperTokens(initialBatch);
+                }
+            }
+
             interval = setInterval(() => {
                 // Find a token from the pool that isn't in our sniper list yet
                 const availableTokens = scannedPool.filter(
@@ -61,7 +72,7 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
                     // Add it to the top of the list with a "just now" effect
                     setSniperTokens(prev => [newToken, ...prev]);
                 }
-            }, 2000); // "Find" a new token every 2 seconds
+            }, 800); // "Find" a new token every 0.8 seconds (much faster)
         }
 
         return () => clearInterval(interval);
