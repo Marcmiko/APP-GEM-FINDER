@@ -63,7 +63,7 @@ const App: React.FC = () => {
       <AlertProvider>
         <div className="min-h-screen bg-slate-900 text-gray-200">
           <Header activePage={activePage} setActivePage={setActivePage} savedCount={savedTokens.length} />
-          <main className="container mx-auto px-4 py-8 flex-grow">
+          <main className="container mx-auto px-4 pt-24 pb-8 flex-grow">
             {activePage === 'gem-finder' && <GemFinderPage {...savedTokenProps} />}
             {activePage === 'ai-sniper' && <SniperPage {...savedTokenProps} />}
             {activePage === 'new-projects' && <NewProjectsPage {...savedTokenProps} />}
