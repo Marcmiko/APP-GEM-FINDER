@@ -403,7 +403,8 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
     };
 
     return (
-        <div className="relative bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between transform transition-all duration-300 hover:scale-[1.02] hover:border-indigo-500 hover:shadow-2xl hover:shadow-indigo-500/20">
+        <div className="relative bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex flex-col justify-between transform transition-all duration-500 hover:scale-[1.02] hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/20 group overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
             <div className="absolute top-4 right-4 flex space-x-2 z-10">
                 <button
                     onClick={(e) => { e.stopPropagation(); toggleAlert(token.address); }}
@@ -521,10 +522,13 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
                     {/* Buy Pressure Gauge */}
                     {token.buyPressure !== undefined && <BuyPressureGauge pressure={token.buyPressure} />}
 
-                    <div className={`p-3 rounded-lg border mt-3 ${verdictStyle.style}`}>
-                        <div className="flex items-center space-x-2">
-                            {verdictStyle.icon}
-                            <h4 className="text-sm font-bold">AI Verdict: {token.analysis?.verdict || 'Not Rated'}</h4>
+                    <div className={`p-3 rounded-xl border mt-3 ${verdictStyle.style} backdrop-blur-md`}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                                {verdictStyle.icon}
+                                <h4 className="text-sm font-bold">AI Verdict</h4>
+                            </div>
+                            <span className="font-bold text-sm uppercase tracking-wider">{token.analysis?.verdict || 'Not Rated'}</span>
                         </div>
                     </div>
                 </div>
@@ -663,7 +667,7 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave 
                             className="flex items-center justify-center space-x-2 text-sm text-sky-400 hover:text-sky-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
                         >
                             <XIcon className="w-4 h-4" />
-                            <span>Twitter</span>
+                            <span>X</span>
                         </a>
                     )}
                     {token.coinMarketCapUrl && (

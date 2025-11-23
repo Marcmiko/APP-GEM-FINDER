@@ -110,49 +110,64 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                     onClose={() => setNewGemsCount(0)}
                 />
             )}
-            <div className="text-center max-w-3xl mx-auto">
-                <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight">
-                    Discover the Next <span className="bg-gradient-to-r from-blue-400 to-indigo-600 text-transparent bg-clip-text">100x Gem</span>
-                </h1>
-                <p className="mt-4 text-lg md:text-xl text-slate-400">
-                    Our AI scans Base DEXs via Google Grounding to find valid, tradeable tokens.
-                </p>
-                <div className="mt-8">
-                    <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-                        <button
-                            onClick={handleManualScan}
-                            disabled={isLoading}
-                            className="inline-flex items-center justify-center px-8 py-4 bg-indigo-600 text-white font-bold text-lg rounded-full shadow-lg shadow-indigo-500/50 transform transition-all duration-300 hover:bg-indigo-500 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-300 disabled:bg-slate-700 disabled:cursor-not-allowed disabled:shadow-none disabled:scale-100"
-                        >
-                            {isLoading ? (
-                                'Scanning...'
-                            ) : hasScanned ? (
-                                <>
-                                    <RefreshIcon className="w-6 h-6 mr-3 -ml-2" />
-                                    Scan Again
-                                </>
-                            ) : (
-                                'Scan for Gems Now'
-                            )}
-                        </button>
+            <div className="relative text-center max-w-4xl mx-auto py-16 md:py-24">
+                {/* Dynamic Background Elements */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px] -z-10 animate-pulse-slow"></div>
+                <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-purple-600/20 rounded-full blur-[100px] -z-10"></div>
 
-                        {hasScanned && tokens.length > 0 && (
-                            <div className="bg-slate-800 p-1 rounded-full flex items-center border border-slate-700">
-                                <button
-                                    onClick={() => setViewMode('grid')}
-                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-colors ${viewMode === 'grid' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                >
-                                    Grid
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('swipe')}
-                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-colors ${viewMode === 'swipe' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
-                                >
-                                    Swipe 🔥
-                                </button>
-                            </div>
+                <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-6 drop-shadow-lg">
+                    Discover the Next <br />
+                    <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 text-transparent bg-clip-text animate-gradient-x">100x Gem</span>
+                </h1>
+                <p className="mt-6 text-xl md:text-2xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
+                    AI-powered analysis for the Base ecosystem. <br />
+                    <span className="text-indigo-400 font-semibold">Scan, Analyze, and Trade</span> with confidence.
+                </p>
+
+                <div className="mt-10 flex flex-col md:flex-row items-center justify-center gap-6">
+                    <button
+                        onClick={handleManualScan}
+                        disabled={isLoading}
+                        className="group relative inline-flex items-center justify-center px-8 py-4 bg-white text-indigo-900 font-bold text-lg rounded-full shadow-xl shadow-indigo-500/30 transform transition-all duration-300 hover:scale-105 hover:shadow-indigo-500/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/50 disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden"
+                    >
+                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-50 to-white opacity-0 group-hover:opacity-20 transition-opacity"></span>
+                        {isLoading ? (
+                            <span className="flex items-center">
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Scanning Base...
+                            </span>
+                        ) : hasScanned ? (
+                            <>
+                                <RefreshIcon className="w-6 h-6 mr-2" />
+                                Scan Again
+                            </>
+                        ) : (
+                            <>
+                                <RocketIcon className="w-6 h-6 mr-2" />
+                                Start Gem Scan
+                            </>
                         )}
-                    </div>
+                    </button>
+
+                    {hasScanned && tokens.length > 0 && (
+                        <div className="bg-slate-900/60 backdrop-blur-md p-1.5 rounded-full flex items-center border border-slate-700/50 shadow-lg">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 ${viewMode === 'grid' ? 'bg-slate-700 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+                            >
+                                Grid
+                            </button>
+                            <button
+                                onClick={() => setViewMode('swipe')}
+                                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 ${viewMode === 'swipe' ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+                            >
+                                Swipe 🔥
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
