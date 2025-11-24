@@ -85,6 +85,21 @@ export const searchCoinGecko = async (query: string): Promise<Token[]> => {
                 neutral: 0,
                 summary: `Community Score: ${details.community_score}`
             },
+            links: {
+                website: details.links?.homepage?.[0] || null,
+                twitter: details.links?.twitter_screen_name ? `https://twitter.com/${details.links.twitter_screen_name}` : null,
+                telegram: details.links?.telegram_channel_identifier ? `https://t.me/${details.links.telegram_channel_identifier}` : null,
+                discord: details.links?.chat_url?.find((u: string) => u.includes('discord')) || null,
+                coinmarketcap: null,
+                coingecko: `https://www.coingecko.com/en/coins/${details.id}`
+            },
+            securityChecks: {
+                renouncedOwnership: false, // Not available via simple API
+                liquidityLocked: false,
+                noMintFunction: false,
+                noBlacklist: false,
+                noProxy: false
+            },
             websiteUrl: details.links?.homepage?.[0] || null,
             xUrl: details.links?.twitter_screen_name ? `https://twitter.com/${details.links.twitter_screen_name}` : null,
             coinMarketCapUrl: null,

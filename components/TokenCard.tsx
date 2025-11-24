@@ -116,7 +116,226 @@ interface TokenCardProps {
     isSaved: boolean;
     onSave: (token: Token) => void;
     onUnsave: (token: Token) => void;
+    onFlashBuy?: (token: Token) => void;
 }
+
+const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave, onFlashBuy }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const { addAlert } = useAlerts();
+
+    const handleSaveToggle = () => {
+        if (isSaved) {
+            onUnsave(token);
+            addAlert('Token removed from watchlist!', 'info');
+        } else {
+            onSave(token);
+            addAlert('Token added to watchlist!', 'success');
+        }
+    };
+
+    const handleCopyAddress = () => {
+        navigator.clipboard.writeText(token.address);
+        addAlert('Token address copied!', 'success');
+    };
+
+    const { style: verdictStyle, icon: verdictIcon } = getVerdictStyle(token.verdict);
+
+    return (
+        <div className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 hover:border-indigo-500 transition-all duration-200 ease-in-out flex flex-col">
+            <div className="p-4 flex items-start justify-between">
+                <div className="flex items-center space-x-3">
+                    {token.iconUrl ? (
+                        <img src={token.iconUrl} alt={`${token.symbol} icon`} className="w-10 h-10 rounded-full flex-shrink-0" />
+                    ) : (
+                        <IconPlaceholder symbol={token.symbol} />
+                    )}
+                    <div>
+                        <h3 className="text-lg font-bold text-white flex items-center">
+                            {token.name} <span className="text-slate-400 ml-2 text-sm">({token.symbol})</span>
+                            {token.isVerified && <VerifiedIcon className="w-4 h-4 text-indigo-400 ml-2" />}
+                        </h3>
+                        <p className="text-slate-400 text-sm">${token.priceUsd.toFixed(4)}</p>
+                    </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <div className="flex space-x-2">
+                        {onFlashBuy && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onFlashBuy(token);
+                                }}
+                                className="bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 p-2 rounded-lg transition-colors border border-yellow-500/30"
+                                title="Flash Buy"
+                            >
+                                ⚡
+                            </button>
+                        )}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                isSaved ? onUnsave(token) : onSave(token);
+                            }}
+                            className={`p-2 rounded-lg transition-colors ${isSaved
+                                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30'
+                                : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'
+                                }`}
+                        >
+                            {isSaved ? '★' : '☆'}
+                        </button>
+                    </div>
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="p-2 rounded-full bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white transition-colors duration-200"
+                        title={isExpanded ? "Collapse" : "Expand"}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-5 h-5 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            {isExpanded && (
+                <div className="px-4 pb-4 border-t border-slate-700/50 pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Left Column */}
+                        <div>
+                            <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold border ${verdictStyle}`}>
+                                {verdictIcon}
+                                <span>{token.verdict}</span>
+                            </div>
+
+                            <div className="mt-4 space-y-3">
+                                <AnalysisSection
+                                    title="AI Analysis"
+                                    content={token.aiAnalysis || 'No AI analysis available.'}
+                                    icon={<BullIcon />}
+                                    iconClass="text-indigo-400"
+                                />
+                                <AnalysisSection
+                                    title="Key Drivers"
+                                    content={token.keyDrivers || 'No key drivers identified.'}
+                                    icon={<InfoIcon />}
+                                    iconClass="text-blue-400"
+                                />
+                                <AnalysisSection
+                                    title="Risks"
+                                    content={token.risks || 'No specific risks identified.'}
+                                    icon={<WarningIcon />}
+                                    iconClass="text-red-400"
+                                />
+                            </div>
+
+                            {token.technicalIndicators && <TechnicalSection indicators={token.technicalIndicators} />}
+                            {token.buyPressure !== undefined && token.buyPressure !== null && <BuyPressureGauge pressure={token.buyPressure} />}
+                        </div>
+
+                        {/* Right Column */}
+                        <div>
+                            <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
+                                        <path fillRule="evenodd" d="M10 1a9 9 0 100 18 9 9 0 000-18zM9 5a1 1 0 011-1h.008a1 1 0 011 1v3a1 1 0 01-1 1H9a1 1 0 01-1-1V5zm1 11a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                                    </svg>
+                                    Token Details
+                                </h4>
+                                <div className="space-y-2 text-sm">
+                                    <p className="flex justify-between">
+                                        <span className="text-slate-400">Market Cap:</span>
+                                        <span className="text-white font-medium">{formatNumber(token.marketCap)}</span>
+                                    </p>
+                                    <p className="flex justify-between">
+                                        <span className="text-slate-400">24h Volume:</span>
+                                        <span className="text-white font-medium">{formatNumber(token.volume24h)}</span>
+                                    </p>
+                                    <p className="flex justify-between">
+                                        <span className="text-slate-400">Circulating Supply:</span>
+                                        <span className="text-white font-medium">{formatNumber(token.circulatingSupply)}</span>
+                                    </p>
+                                    <p className="flex justify-between">
+                                        <span className="text-slate-400">Total Supply:</span>
+                                        <span className="text-white font-medium">{formatNumber(token.totalSupply)}</span>
+                                    </p>
+                                    <p className="flex justify-between items-center">
+                                        <span className="text-slate-400">Contract:</span>
+                                        <span className="flex items-center space-x-2">
+                                            <a href={`https://etherscan.io/token/${token.address}`} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline text-xs font-mono">
+                                                {token.address.substring(0, 6)}...{token.address.substring(token.address.length - 4)}
+                                            </a>
+                                            <button onClick={handleCopyAddress} className="text-slate-500 hover:text-white transition-colors">
+                                                <CopyIcon className="w-4 h-4" />
+                                            </button>
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            {token.auditReport && (
+                                <AuditScorecard report={token.auditReport} score={token.auditReport.overallScore} />
+                            )}
+
+                            <div className="mt-4 bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
+                                        <path fillRule="evenodd" d="M10 1a9 9 0 100 18 9 9 0 000-18zM9 5a1 1 0 011-1h.008a1 1 0 011 1v3a1 1 0 01-1 1H9a1 1 0 01-1-1V5zm1 11a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                                    </svg>
+                                    Security Checks
+                                </h4>
+                                <div className="space-y-2">
+                                    <SecurityCheck label="Renounced Ownership" isSecure={token.securityChecks.renouncedOwnership} />
+                                    <SecurityCheck label="Liquidity Locked" isSecure={token.securityChecks.liquidityLocked} />
+                                    <SecurityCheck label="No Mint Function" isSecure={token.securityChecks.noMintFunction} />
+                                    <SecurityCheck label="No Blacklist" isSecure={token.securityChecks.noBlacklist} />
+                                    <SecurityCheck label="No Proxy" isSecure={token.securityChecks.noProxy} />
+                                </div>
+                            </div>
+
+                            <div className="mt-4 bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center">
+                                    <ShareIcon className="w-3 h-3 mr-1" />
+                                    Links
+                                </h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {token.links.website && (
+                                        <a href={token.links.website} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 px-2 py-1 bg-slate-700 rounded-md text-xs text-slate-300 hover:bg-slate-600 transition-colors">
+                                            <WebsiteIcon className="w-4 h-4" /> <span>Website</span>
+                                        </a>
+                                    )}
+                                    {token.links.twitter && (
+                                        <a href={token.links.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 px-2 py-1 bg-slate-700 rounded-md text-xs text-slate-300 hover:bg-slate-600 transition-colors">
+                                            <XIcon className="w-4 h-4" /> <span>Twitter</span>
+                                        </a>
+                                    )}
+                                    {token.links.telegram && (
+                                        <a href={token.links.telegram} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 px-2 py-1 bg-slate-700 rounded-md text-xs text-slate-300 hover:bg-slate-600 transition-colors">
+                                            <TelegramIcon className="w-4 h-4" /> <span>Telegram</span>
+                                        </a>
+                                    )}
+                                    {token.links.discord && (
+                                        <a href={token.links.discord} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 px-2 py-1 bg-slate-700 rounded-md text-xs text-slate-300 hover:bg-slate-600 transition-colors">
+                                            <DiscordIcon className="w-4 h-4" /> <span>Discord</span>
+                                        </a>
+                                    )}
+                                    {token.links.coinmarketcap && (
+                                        <a href={token.links.coinmarketcap} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 px-2 py-1 bg-slate-700 rounded-md text-xs text-slate-300 hover:bg-slate-600 transition-colors">
+                                            <CMCIcon className="w-4 h-4" /> <span>CMC</span>
+                                        </a>
+                                    )}
+                                    {token.links.coingecko && (
+                                        <a href={token.links.coingecko} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 px-2 py-1 bg-slate-700 rounded-md text-xs text-slate-300 hover:bg-slate-600 transition-colors">
+                                            <GeckoIcon className="w-4 h-4" /> <span>CoinGecko</span>
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const getVerdictStyle = (verdict: string) => {
     switch (verdict) {
@@ -336,388 +555,6 @@ const AuditScorecard: React.FC<{ report: NonNullable<Token['auditReport']>, scor
     );
 };
 
-const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave }) => {
-    const { toggleAlert, isAlertActive } = useAlerts();
 
-    const isAlerting = isAlertActive(token.address);
-    const [imgError, setImgError] = useState(false);
-    const [isCopied, setIsCopied] = useState(false);
-    const [isChartVisible, setIsChartVisible] = useState(false);
-    const verdictStyle = getVerdictStyle(token.analysis?.verdict || 'N/A');
-    const displayName = token.name || `${token.address.substring(0, 6)}...${token.address.substring(token.address.length - 4)}`;
-    const displaySymbol = token.symbol || '???';
-
-    const hasConvictionScore = token.convictionScore && token.convictionScore > 0;
-    const score = hasConvictionScore ? token.convictionScore : token.gemScore;
-    const scoreLabel = hasConvictionScore ? 'Conviction' : 'Gem Score';
-    const scoreColorClass = hasConvictionScore ? 'text-purple-400' : 'text-indigo-400';
-
-    const handleCopyAddress = () => {
-        if (!token.address) return;
-        navigator.clipboard.writeText(token.address).then(() => {
-            setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
-        }).catch(err => {
-            console.error('Failed to copy address: ', err);
-        });
-    };
-
-    const handleBuy = () => {
-        const url = `https://app.uniswap.org/swap?chain=base&inputCurrency=ETH&outputCurrency=${token.address}`;
-        window.open(url, '_blank');
-    };
-
-    const handleSell = () => {
-        const url = `https://app.uniswap.org/swap?chain=base&inputCurrency=${token.address}&outputCurrency=ETH`;
-        window.open(url, '_blank');
-    };
-
-
-
-    const handleSaveToggle = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (isSaved) {
-            onUnsave(token);
-        } else {
-            onSave(token);
-        }
-    };
-
-    const handleShare = async () => {
-        const shareData = {
-            title: `Check out ${token.name} ($${token.symbol}) on Base Gem Finder!`,
-            text: `Found this gem on Base Gem Finder: ${token.name} ($${token.symbol}). AI Verdict: ${token.analysis?.verdict || 'N/A'}.`,
-            url: window.location.href // Ideally this would be a deep link like `?token=${token.address}`
-        };
-
-        if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-            } catch (err) {
-                console.error('Error sharing:', err);
-            }
-        } else {
-            navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`);
-            alert('Link copied to clipboard!');
-        }
-    };
-
-    return (
-        <div className="relative bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 flex flex-col justify-between transform transition-all duration-500 hover:scale-[1.02] hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/20 group overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-            <div className="absolute top-4 right-4 flex space-x-2 z-10">
-                <button
-                    onClick={(e) => { e.stopPropagation(); toggleAlert(token.address); }}
-                    title={isAlerting ? "Turn off alerts" : "Alert me on price moves"}
-                    className={`p-1 transition-colors ${isAlerting ? 'text-yellow-400 hover:text-yellow-300' : 'text-slate-500 hover:text-white'}`}
-                >
-                    <BellIcon active={isAlerting} className="w-6 h-6" />
-                </button>
-                <button
-                    onClick={handleSaveToggle}
-                    title={isSaved ? "Unsave Project" : "Save Project"}
-                    className="text-slate-500 hover:text-white transition-colors p-1"
-                >
-                    <BookmarkIcon saved={isSaved} className="w-6 h-6" />
-                </button>
-                <button
-                    onClick={(e) => { e.stopPropagation(); handleShare(); }}
-                    title="Share Project"
-                    className="text-slate-500 hover:text-white transition-colors p-1"
-                >
-                    <ShareIcon className="w-6 h-6" />
-                </button>
-            </div>
-
-            <div>
-                <div className="flex justify-between items-start gap-4">
-                    <div className="flex items-center space-x-3 min-w-0">
-                        {token.iconUrl && !imgError ? (
-                            <img
-                                src={token.iconUrl}
-                                alt={`${token.name} icon`}
-                                className="w-10 h-10 rounded-full flex-shrink-0"
-                                onError={() => setImgError(true)}
-                            />
-                        ) : (
-                            <IconPlaceholder symbol={token.symbol} />
-                        )}
-                        <div className="min-w-0">
-                            <h3 className="text-xl font-bold text-white truncate" title={token.name || token.address}>{displayName}</h3>
-                            <div className="flex items-center gap-2">
-                                <p className="text-indigo-400 font-mono text-sm">${displaySymbol}</p>
-                                <button
-                                    onClick={handleCopyAddress}
-                                    title={isCopied ? "Copied!" : "Copy Address"}
-                                    aria-label={isCopied ? "Address copied to clipboard" : "Copy token address"}
-                                    className="text-slate-500 hover:text-white transition-colors duration-200"
-                                >
-                                    {isCopied ? (
-                                        <CheckIcon className="w-4 h-4 text-green-400" />
-                                    ) : (
-                                        <CopyIcon className="w-4 h-4" />
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {score > 0 &&
-                        <div className="flex items-center space-x-2 bg-slate-700/50 px-3 py-1.5 rounded-full flex-shrink-0">
-                            <div className="relative flex items-center justify-center">
-                                <svg className="transform -rotate-90 w-10 h-10">
-                                    <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-600" />
-                                    <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="4" fill="transparent"
-                                        strokeDasharray={100.5}
-                                        strokeDashoffset={100.5 - (score / 100) * 100.5}
-                                        className={scoreColorClass} />
-                                </svg>
-                                <span className="absolute text-sm font-bold text-white">{score}</span>
-                            </div>
-                            <span className="text-xs font-semibold text-slate-300">{scoreLabel}</span>
-                        </div>
-                    }
-                </div>
-
-                <p className="mt-4 text-sm text-slate-300 italic border-l-2 border-indigo-500 pl-3">
-                    {token.analysis?.summary || "No summary provided by AI."}
-                </p>
-
-                {/* CONTRACT ADDRESS SECTION */}
-                <div className="mt-3 relative">
-                    <div className="flex items-center justify-between bg-slate-900/60 border border-slate-700/50 rounded-lg p-2">
-                        <div className="flex flex-col min-w-0 flex-1 mr-2">
-                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Contract Address (CA)</span>
-                            <code className="text-xs font-mono text-slate-300 truncate select-all">{token.address}</code>
-                        </div>
-                        <button
-                            onClick={handleCopyAddress}
-                            className="flex items-center justify-center w-8 h-8 bg-slate-800 hover:bg-indigo-600 rounded-md transition-colors group flex-shrink-0 border border-slate-700"
-                            title="Copy Address"
-                        >
-                            {isCopied ? <CheckIcon className="w-4 h-4 text-green-400" /> : <CopyIcon className="w-4 h-4 text-slate-400 group-hover:text-white" />}
-                        </button>
-                    </div>
-                </div>
-
-                <div className="mt-4 space-y-3">
-                    <AnalysisSection
-                        title="Strengths (Bull Case)"
-                        content={token.analysis?.strengths || "No strengths analysis available."}
-                        iconClass="text-green-400"
-                        icon={<BullIcon />}
-                    />
-                    <AnalysisSection
-                        title="Risks & Concerns (Bear Case)"
-                        content={token.analysis?.risks || "No risk analysis available."}
-                        iconClass="text-amber-400"
-                        icon={<BearIcon />}
-                    />
-
-                    {/* AI Audit Scorecard */}
-                    {token.auditReport && <AuditScorecard report={token.auditReport} score={token.auditScore || 0} />}
-
-                    {/* Technical Analysis Section */}
-                    <TechnicalSection indicators={token.technicalIndicators} />
-
-                    {/* Buy Pressure Gauge */}
-                    {token.buyPressure !== undefined && <BuyPressureGauge pressure={token.buyPressure} />}
-
-                    <div className={`p-3 rounded-xl border mt-3 ${verdictStyle.style} backdrop-blur-md`}>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                                {verdictStyle.icon}
-                                <h4 className="text-sm font-bold">AI Verdict</h4>
-                            </div>
-                            <span className="font-bold text-sm uppercase tracking-wider">{token.analysis?.verdict || 'Not Rated'}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="mt-6">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div><span className="text-slate-500">Market Cap:</span> <span className="text-white font-medium">{formatNumber(token.marketCap)}</span></div>
-                    <div><span className="text-slate-500">FDV:</span> <span className="text-white font-medium">{formatNumber(token.fdv)}</span></div>
-                    <div><span className="text-slate-500">Liquidity:</span> <span className="text-white font-medium">{formatNumber(token.liquidity)}</span></div>
-                    <div><span className="text-slate-500">Holders:</span> <span className="text-white font-medium">{token.holders?.toLocaleString() || 'N/A'}</span></div>
-
-                    <div className="col-span-2 border-t border-slate-700/50 my-2"></div>
-
-                    <div><span className="text-slate-500">Vol (24h):</span> <span className="text-white font-medium">{formatNumber(token.volume24h)}</span></div>
-                    <div><span className="text-slate-500">Vol (1h):</span> <span className="text-white font-medium">{formatNumber(token.volume1h)}</span></div>
-
-                    <div>
-                        <span className="text-slate-500">Chg (24h):</span>
-                        <span className={`font-medium ml-1 ${token.priceChange24h && token.priceChange24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {token.priceChange24h ? `${token.priceChange24h.toFixed(2)}%` : 'N/A'}
-                        </span>
-                    </div>
-                    <div>
-                        <span className="text-slate-500">Chg (1h):</span>
-                        <span className={`font-medium ml-1 ${token.priceChange1h && token.priceChange1h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {token.priceChange1h ? `${token.priceChange1h.toFixed(2)}%` : 'N/A'}
-                        </span>
-                    </div>
-
-                    <div className="col-span-2 mt-1"><span className="text-slate-500">Created:</span> <span className="text-white font-medium">{token.creationDate || 'N/A'}</span></div>
-                </div>
-
-                <div className="mt-6 border-t border-slate-700 pt-4 space-y-3">
-                    <SecurityCheck label="Liquidity Locked" isSecure={!!token.isLiquidityLocked} />
-                    <SecurityCheck label="Ownership Renounced" isSecure={!!token.isOwnershipRenounced} />
-
-                    {token.entryPrice && (
-                        <div className="mt-4 bg-slate-900/80 rounded-lg p-3 border border-indigo-500/30">
-                            <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Portfolio Simulator</h4>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                    <span className="text-slate-500 text-xs block">Entry Price</span>
-                                    <span className="text-slate-300 font-mono">${token.entryPrice.toFixed(6)}</span>
-                                </div>
-                                <div>
-                                    <span className="text-slate-500 text-xs block">Current Price</span>
-                                    <span className="text-white font-mono">${token.priceUsd?.toFixed(6) || 'N/A'}</span>
-                                </div>
-                                <div className="col-span-2 mt-1 pt-2 border-t border-slate-700/50 flex justify-between items-center">
-                                    <div>
-                                        <span className="text-slate-500 text-xs block">If you invested $100:</span>
-                                        <span className={`font-bold text-lg ${((token.priceUsd || 0) >= token.entryPrice) ? 'text-green-400' : 'text-rose-400'}`}>
-                                            ${((100 / token.entryPrice) * (token.priceUsd || 0)).toFixed(2)}
-                                        </span>
-                                    </div>
-                                    <div className={`px-2 py-1 rounded text-xs font-bold ${((token.priceUsd || 0) >= token.entryPrice) ? 'bg-green-500/20 text-green-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                                        {((token.priceUsd || 0) >= token.entryPrice ? '+' : '')}
-                                        {(((token.priceUsd || 0) - token.entryPrice) / token.entryPrice * 100).toFixed(2)}%
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                <div className="mt-4 border-t border-slate-700 pt-4 space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                        <button
-                            onClick={handleBuy}
-                            className="flex items-center justify-center space-x-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors rounded-lg py-2.5 px-2 shadow-lg shadow-emerald-900/20 group"
-                        >
-                            <BuyIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                            <span>Buy</span>
-                        </button>
-                        <button
-                            onClick={handleSell}
-                            className="flex items-center justify-center space-x-2 text-sm font-bold text-white bg-rose-600 hover:bg-rose-500 transition-colors rounded-lg py-2.5 px-2 shadow-lg shadow-rose-900/20 group"
-                        >
-                            <SellIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                            <span>Sell</span>
-                        </button>
-                    </div>
-
-
-
-                    <button
-                        onClick={() => setIsChartVisible(!isChartVisible)}
-                        className="w-full mt-3 flex items-center justify-center space-x-2 text-sm font-bold text-slate-300 bg-slate-700/50 hover:bg-slate-700 hover:text-white transition-colors rounded-lg py-2.5 border border-slate-600 hover:border-slate-500"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
-                        </svg>
-                        <span>{isChartVisible ? 'Hide Chart' : 'Show Real-time Chart'}</span>
-                    </button>
-
-                    {isChartVisible && (
-                        <div className="mt-4 h-[400px] w-full rounded-xl overflow-hidden border border-slate-700 shadow-2xl animate-fade-in">
-                            <iframe
-                                src={`https://dexscreener.com/base/${token.pairAddress}?embed=1&theme=dark&trades=0&info=0`}
-                                width="100%"
-                                height="100%"
-                                style={{ border: 0 }}
-                                title="DexScreener Chart"
-                            ></iframe>
-                        </div>
-                    )}
-                </div>
-
-                <div className="mt-4 border-t border-slate-700 pt-4 grid grid-cols-2 gap-3">
-                    <a
-                        href={`https://basescan.org/token/${token.address}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center space-x-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
-                    >
-                        <ExternalLinkIcon className="w-4 h-4" />
-                        <span>Basescan</span>
-                    </a>
-                    {token.websiteUrl && (
-                        <a
-                            href={token.websiteUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center space-x-2 text-sm text-slate-300 hover:text-white transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
-                        >
-                            <WebsiteIcon className="w-4 h-4" />
-                            <span>Website</span>
-                        </a>
-                    )}
-                    {token.xUrl && (
-                        <a
-                            href={token.xUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center space-x-2 text-sm text-sky-400 hover:text-sky-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
-                        >
-                            <XIcon className="w-4 h-4" />
-                            <span>X</span>
-                        </a>
-                    )}
-                    {token.coinMarketCapUrl && (
-                        <a
-                            href={token.coinMarketCapUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center space-x-2 text-sm text-orange-400 hover:text-orange-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
-                        >
-                            <CMCIcon className="w-4 h-4" />
-                            <span>CMC</span>
-                        </a>
-                    )}
-                    {token.coingeckoUrl && (
-                        <a
-                            href={token.coingeckoUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center space-x-2 text-sm text-green-400 hover:text-green-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
-                        >
-                            <GeckoIcon className="w-4 h-4" />
-                            <span>Gecko</span>
-                        </a>
-                    )}
-                    {token.telegramUrl && (
-                        <a
-                            href={token.telegramUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center space-x-2 text-sm text-sky-500 hover:text-sky-400 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
-                        >
-                            <TelegramIcon className="w-4 h-4" />
-                            <span>Telegram</span>
-                        </a>
-                    )}
-                    {token.discordUrl && (
-                        <a
-                            href={token.discordUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center space-x-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors w-full bg-slate-700/50 hover:bg-slate-700 rounded-lg py-2 px-2"
-                        >
-                            <DiscordIcon className="w-4 h-4" />
-                            <span>Discord</span>
-                        </a>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
 
 export default TokenCard;

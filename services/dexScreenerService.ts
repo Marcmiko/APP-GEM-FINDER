@@ -142,6 +142,21 @@ export const mapDexScreenerPairToToken = (pair: DexScreenerPair): Token => {
       neutral: 25,
       summary: "Social data not directly available via API."
     },
+    links: {
+      website: websites.find(w => w.label === 'Website')?.url || websites[0]?.url || null,
+      twitter: socials.find(s => s.type === 'twitter')?.url || null,
+      telegram: socials.find(s => s.type === 'telegram')?.url || null,
+      discord: socials.find(s => s.type === 'discord')?.url || null,
+      coinmarketcap: null,
+      coingecko: null
+    },
+    securityChecks: {
+      renouncedOwnership: false,
+      liquidityLocked: false,
+      noMintFunction: false,
+      noBlacklist: false,
+      noProxy: false
+    },
     websiteUrl: websites.find(w => w.label === 'Website')?.url || websites[0]?.url || null,
     xUrl: socials.find(s => s.type === 'twitter')?.url || null,
     telegramUrl: socials.find(s => s.type === 'telegram')?.url || null,

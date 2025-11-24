@@ -1,6 +1,6 @@
-
-import React from 'react';
-import { Page } from '../App';
+import React, { useState, useEffect } from 'react';
+import { Page } from '../types';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useScanContext } from '../context/ScanContext';
 
 const DiamondIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -62,6 +62,7 @@ const NavItem: React.FC<{
 }
 
 const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }) => {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { gemFinder, newProjects, analystPicks, socialTrends, tokenAnalyzer } = useScanContext();
 
     return (
@@ -80,6 +81,20 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
                         </div>
                         <span className="md:hidden text-xl font-bold text-white tracking-wider">BGF</span>
                     </div>
+
+                    {/* Wallet Connect */}
+                    <div className="ml-4 hidden md:block"> {/* Added hidden md:block to hide on mobile by default */}
+                        <ConnectButton showBalance={false} chainStatus="icon" accountStatus="avatar" />
+                    </div>
+
+                    {/* Mobile Menu Button */}
+                    <button
+                        className="md:hidden text-slate-300 hover:text-white focus:outline-none ml-4"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    >
+                        {/* You might want to add a hamburger icon here */}
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
 
                     <div className="flex items-center p-1.5 bg-slate-800/50 backdrop-blur-md rounded-full border border-white/5 overflow-x-auto no-scrollbar max-w-[calc(100vw-120px)] shadow-xl shadow-black/20">
                         <NavItem page="gem-finder" activePage={activePage} setActivePage={setActivePage} isLoading={gemFinder.isLoading}>Gem Finder</NavItem>

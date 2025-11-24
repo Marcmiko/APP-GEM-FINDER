@@ -125,6 +125,21 @@ const mapGeckoTerminalPoolToToken = (pool: GeckoTerminalPool): Token => {
             neutral: 50,
             summary: "No social data yet."
         },
+        links: {
+            website: null,
+            twitter: null,
+            telegram: null,
+            discord: null,
+            coinmarketcap: null,
+            coingecko: null
+        },
+        securityChecks: {
+            renouncedOwnership: false,
+            liquidityLocked: false,
+            noMintFunction: false,
+            noBlacklist: false,
+            noProxy: false
+        },
         websiteUrl: null,
         xUrl: null,
         telegramUrl: null,

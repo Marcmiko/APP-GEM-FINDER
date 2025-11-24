@@ -8,13 +8,20 @@ import SocialTrendsPage from './components/SocialTrendsPage';
 import SavedProjectsPage from './components/SavedProjectsPage';
 import TokenAnalyzerPage from './components/TokenAnalyzerPage';
 import SniperPage from './components/SniperPage';
-import { Token } from './types';
+import SentimentHeatmap from './components/SentimentHeatmap';
+import Footer from './components/Footer';
+import { Token, Page } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { ScanProvider } from './context/ScanContext';
 import { AlertProvider } from './context/AlertContext';
-import SentimentHeatmap from './components/SentimentHeatmap';
 
-export type Page = 'gem-finder' | 'ai-sniper' | 'new-projects' | 'analyst-picks' | 'social-trends' | 'saved-projects' | 'token-analyzer' | 'heatmap';
+// Web3 Imports
+import { WagmiProvider } from 'wagmi';
+import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { config } from './config/wagmi';
+
+const queryClient = new QueryClient();
 
 const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('gem-finder');
@@ -52,36 +59,78 @@ const App: React.FC = () => {
     });
   };
 
-  const savedTokenProps = {
-    savedTokens,
-    onSave: handleSaveToken,
-    onUnsave: handleUnsaveToken,
-  };
-
   return (
-    <ScanProvider>
-      <AlertProvider>
-        <div className="min-h-screen bg-slate-900 text-gray-200">
-          <Header activePage={activePage} setActivePage={setActivePage} savedCount={savedTokens.length} />
-          <main className="container mx-auto px-4 pt-24 pb-8 flex-grow">
-            {activePage === 'gem-finder' && <GemFinderPage {...savedTokenProps} />}
-            {activePage === 'ai-sniper' && <SniperPage {...savedTokenProps} />}
-            {activePage === 'new-projects' && <NewProjectsPage {...savedTokenProps} />}
-            {activePage === 'analyst-picks' && <AnalystPicksPage {...savedTokenProps} />}
-            {activePage === 'social-trends' && <SocialTrendsPage {...savedTokenProps} />}
-            {activePage === 'token-analyzer' && <TokenAnalyzerPage {...savedTokenProps} />}
-            {activePage === 'saved-projects' && <SavedProjectsPage {...savedTokenProps} onUpdateTokens={handleUpdateTokens} />}
-            {activePage === 'heatmap' && <SentimentHeatmap />}
-          </main>
-          <footer className="text-center py-8 border-t border-slate-800 mt-16 pb-24 md:pb-8">
-            <p className="text-sm text-slate-500 mb-2">Disclaimer: This is not financial advice. Cryptocurrency investments are highly volatile. Do your own research.</p>
-            <p className="text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-500 tracking-widest uppercase opacity-80">
-              COOKED BY MARCMIKO
-            </p>
-          </footer>
-        </div>
-      </AlertProvider>
-    </ScanProvider>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider theme={darkTheme()}>
+          <ScanProvider>
+            <AlertProvider>
+              <div className="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-indigo-500/30">
+                <Header
+                  activePage={activePage}
+                  setActivePage={setActivePage}
+                  savedCount={savedTokens.length}
+                />
+                <main className="pt-24 pb-8">
+                  {activePage === 'gem-finder' && (
+                    <GemFinderPage
+                      savedTokens={savedTokens}
+                      onSave={handleSaveToken}
+                      onUnsave={handleUnsaveToken}
+                    />
+                  )}
+                  {activePage === 'ai-sniper' && (
+                    <SniperPage
+                      savedTokens={savedTokens}
+                      onSave={handleSaveToken}
+                      onUnsave={handleUnsaveToken}
+                    />
+                  )}
+                  {activePage === 'new-projects' && (
+                    <NewProjectsPage
+                      savedTokens={savedTokens}
+                      onSave={handleSaveToken}
+                      onUnsave={handleUnsaveToken}
+                    />
+                  )}
+                  {activePage === 'analyst-picks' && (
+                    <AnalystPicksPage
+                      savedTokens={savedTokens}
+                      onSave={handleSaveToken}
+                      onUnsave={handleUnsaveToken}
+                    />
+                  )}
+                  {activePage === 'social-trends' && (
+                    <SocialTrendsPage
+                      savedTokens={savedTokens}
+                      onSave={handleSaveToken}
+                      onUnsave={handleUnsaveToken}
+                    />
+                  )}
+                  {activePage === 'token-analyzer' && (
+                    <TokenAnalyzerPage
+                      savedTokens={savedTokens}
+                      onSave={handleSaveToken}
+                      onUnsave={handleUnsaveToken}
+                    />
+                  )}
+                  {activePage === 'saved-projects' && (
+                    <SavedProjectsPage
+                      savedTokens={savedTokens}
+                      onSave={handleSaveToken}
+                      onUnsave={handleUnsaveToken}
+                      onUpdateTokens={handleUpdateTokens}
+                    />
+                  )}
+                  {activePage === 'heatmap' && <SentimentHeatmap />}
+                </main>
+                <Footer />
+              </div>
+            </AlertProvider>
+          </ScanProvider>
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 };
 

@@ -4,6 +4,7 @@ import TokenCard from './TokenCard';
 import SniperFilters from './SniperFilters';
 import { useScanContext } from '../context/ScanContext';
 import { getNewPools } from '../services/geckoTerminalService';
+import FlashTradeModal from './FlashTradeModal';
 
 interface SniperPageProps {
     savedTokens: Token[];
@@ -81,8 +82,23 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
         );
     });
 
+    const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+    const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+
+    const handleFlashBuy = (token: Token) => {
+        setSelectedToken(token);
+        setIsTradeModalOpen(true);
+    };
+
     return (
         <div className="container mx-auto px-4 py-8 mt-20">
+            {selectedToken && (
+                <FlashTradeModal
+                    token={selectedToken}
+                    isOpen={isTradeModalOpen}
+                    onClose={() => setIsTradeModalOpen(false)}
+                />
+            )}
             <div className="flex flex-col md:flex-row items-center justify-between mb-8">
                 <div>
                     <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight flex items-center">
@@ -168,6 +184,7 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
                                     isSaved={isSaved}
                                     onSave={onSave}
                                     onUnsave={onUnsave}
+                                    onFlashBuy={handleFlashBuy}
                                 />
                             </div>
                         );

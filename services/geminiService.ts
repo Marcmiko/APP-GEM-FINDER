@@ -461,11 +461,12 @@ export const enrichTokenAnalysis = async (token: Token): Promise<Token> => {
       holders: analysis.holderCount || token.holders || 0,
       auditScore: analysis.auditScore || 50,
       auditReport: {
-        securityScore: analysis.securityScore || 50,
-        utilityScore: analysis.utilityScore || 50,
-        communityScore: analysis.communityScore || 50,
-        redFlags: analysis.redFlags || [],
-        greenFlags: analysis.greenFlags || [],
+        securityScore: analysis.auditScorecard.securityScore,
+        utilityScore: analysis.auditScorecard.utilityScore,
+        communityScore: analysis.auditScorecard.communityScore,
+        overallScore: Math.round((analysis.auditScorecard.securityScore + analysis.auditScorecard.utilityScore + analysis.auditScorecard.communityScore) / 3),
+        redFlags: analysis.auditScorecard.redFlags,
+        greenFlags: analysis.auditScorecard.greenFlags
       },
       analysis: {
         summary: analysis.summary || token.analysis.summary,
