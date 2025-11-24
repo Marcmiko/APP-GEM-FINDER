@@ -18,7 +18,7 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
     const holdings = savedTokens.filter(t => (t.holdings || 0) > 0);
     const availableTokens = savedTokens.filter(t => !t.holdings || t.holdings === 0);
 
-    const totalValue = holdings.reduce((sum, t) => sum + ((t.holdings || 0) * t.priceUsd), 0);
+    const totalValue = holdings.reduce((sum, t) => sum + ((t.holdings || 0) * (t.priceUsd || 0)), 0);
     const totalCost = holdings.reduce((sum, t) => sum + ((t.holdings || 0) * (t.avgBuyPrice || 0)), 0);
     const totalPnL = totalValue - totalCost;
     const totalPnLPercent = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
@@ -121,7 +121,7 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                             ) : (
                                 holdings.map(token => {
                                     const balance = token.holdings || 0;
-                                    const value = balance * token.priceUsd;
+                                    const value = balance * (token.priceUsd || 0);
                                     const cost = balance * (token.avgBuyPrice || 0);
                                     const pnl = value - cost;
                                     const pnlPercent = cost > 0 ? (pnl / cost) * 100 : 0;
@@ -140,7 +140,7 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right text-slate-300">
-                                                ${token.priceUsd.toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                                                ${(token.priceUsd || 0).toLocaleString(undefined, { maximumFractionDigits: 6 })}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="text-white font-medium">{balance.toLocaleString()}</div>
