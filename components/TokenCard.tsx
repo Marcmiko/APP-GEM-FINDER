@@ -118,10 +118,11 @@ interface TokenCardProps {
     onUnsave: (token: Token) => void;
     onFlashBuy?: (token: Token) => void;
     isLive?: boolean;
+    onViewDetails?: (token: Token) => void;
 }
 
-const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave, onFlashBuy, isLive }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave, onFlashBuy, isLive, onViewDetails }) => {
+    // const [isExpanded, setIsExpanded] = useState(false); // Removed inline expansion state
     const { addAlert } = useAlerts();
 
     const handleSaveToggle = () => {
@@ -217,116 +218,23 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
                             {isSaved ? <BookmarkIcon saved={true} className="w-5 h-5" /> : <BookmarkIcon saved={false} className="w-5 h-5" />}
                         </button>
                         <button
-                            onClick={() => setIsExpanded(!isExpanded)}
-                            className="p-2 rounded-xl bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700 transition-all duration-300 border border-white/5"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (onViewDetails) onViewDetails(token);
+                            }}
+                            className="p-2 rounded-xl bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700 transition-all duration-300 border border-white/5 flex items-center gap-2"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={`w-5 h-5 transform transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                            <span className="text-xs font-bold hidden sm:inline">Details</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0L15 15M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9" />
                             </svg>
                         </button>
                     </div>
                 </div>
             </div>
 
-            {isExpanded && (
-                <div className="px-5 pb-5 border-t border-white/5 pt-5 bg-slate-900/30">
-                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                        {/* Left Column - Analysis (7 cols) */}
-                        <div className="xl:col-span-7 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="md:col-span-2">
-                                    <AnalysisSection
-                                        title="AI Analysis"
-                                        content={token.aiAnalysis || 'No AI analysis available.'}
-                                        icon={<BullIcon />}
-                                        iconClass="text-indigo-400"
-                                        bgClass="bg-indigo-500/5 border-indigo-500/10"
-                                    />
-                                </div>
-                                <AnalysisSection
-                                    title="Key Drivers"
-                                    content={token.keyDrivers || 'No key drivers identified.'}
-                                    icon={<InfoIcon />}
-                                    iconClass="text-sky-400"
-                                    bgClass="bg-sky-500/5 border-sky-500/10"
-                                />
-                                <AnalysisSection
-                                    title="Risks"
-                                    content={token.risks || 'No specific risks identified.'}
-                                    icon={<WarningIcon />}
-                                    iconClass="text-rose-400"
-                                    bgClass="bg-rose-500/5 border-rose-500/10"
-                                />
-                            </div>
-
-                            {token.technicalIndicators && <TechnicalSection indicators={token.technicalIndicators} />}
-                            {token.buyPressure !== undefined && token.buyPressure !== null && <BuyPressureGauge pressure={token.buyPressure} />}
-                        </div>
-
-                        {/* Right Column - Stats & Security (5 cols) */}
-                        <div className="xl:col-span-5 space-y-4">
-                            <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-2"></span>
-                                    Token Metrics
-                                </h4>
-                                <div className="space-y-3 text-sm">
-                                    <MetricRow label="Market Cap" value={formatNumber(token.marketCap)} />
-                                    <MetricRow label="24h Volume" value={formatNumber(token.volume24h)} />
-                                    <MetricRow label="Circulating" value={formatNumber(token.circulatingSupply)} />
-                                    <MetricRow label="Total Supply" value={formatNumber(token.totalSupply)} />
-                                    <MetricRow label="Launch Date" value={new Date(token.creationDate).toLocaleDateString()} />
-                                    <div className="flex justify-between items-center pt-2 mt-2">
-                                        <span className="text-slate-500 text-xs">Contract</span>
-                                        <div className="flex items-center space-x-2 bg-slate-900/50 px-2 py-1 rounded-lg border border-white/5 max-w-[150px]">
-                                            <a href={`https://etherscan.io/token/${token.address}`} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-xs font-mono truncate block">
-                                                {token.address}
-                                            </a>
-                                            <button onClick={handleCopyAddress} className="text-slate-500 hover:text-white transition-colors flex-shrink-0">
-                                                <CopyIcon className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {token.auditReport ? (
-                                <AuditScorecard report={token.auditReport} score={token.auditReport.overallScore} />
-                            ) : (
-                                <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2"></span>
-                                        Security Checks
-                                    </h4>
-                                    <div className="space-y-2">
-                                        <SecurityCheck label="Renounced Ownership" isSecure={token.securityChecks.renouncedOwnership} />
-                                        <SecurityCheck label="Liquidity Locked" isSecure={token.securityChecks.liquidityLocked} />
-                                        <SecurityCheck label="No Mint Function" isSecure={token.securityChecks.noMintFunction} />
-                                        <SecurityCheck label="No Blacklist" isSecure={token.securityChecks.noBlacklist} />
-                                        <SecurityCheck label="No Proxy" isSecure={token.securityChecks.noProxy} />
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center">
-                                    <ShareIcon className="w-3 h-3 mr-2" />
-                                    Links
-                                </h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {token.links.website && <LinkButton href={token.links.website} icon={<WebsiteIcon className="w-3.5 h-3.5" />} label="Web" />}
-                                    {token.links.twitter && <LinkButton href={token.links.twitter} icon={<XIcon className="w-3.5 h-3.5" />} label="X" />}
-                                    {token.links.telegram && <LinkButton href={token.links.telegram} icon={<TelegramIcon className="w-3.5 h-3.5" />} label="TG" />}
-                                    {token.links.discord && <LinkButton href={token.links.discord} icon={<DiscordIcon className="w-3.5 h-3.5" />} label="Discord" />}
-                                    {token.links.coinmarketcap && <LinkButton href={token.links.coinmarketcap} icon={<CMCIcon className="w-3.5 h-3.5" />} label="CMC" />}
-                                    {token.links.coingecko && <LinkButton href={token.links.coingecko} icon={<GeckoIcon className="w-3.5 h-3.5" />} label="Gecko" />}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
+        </div >
     );
 };
 
@@ -347,220 +255,5 @@ const IconPlaceholder: React.FC<{ symbol?: string }> = ({ symbol }) => (
         {symbol ? symbol.charAt(0).toUpperCase() : '?'}
     </div>
 );
-
-const AnalysisSection: React.FC<{ title: string; content: string; icon: React.ReactNode; iconClass: string; bgClass?: string }> = ({ title, content, icon, iconClass, bgClass }) => {
-    if (content === 'N/A') return null;
-    return (
-        <div className={`rounded-xl p-4 border ${bgClass || 'bg-slate-800/50 border-white/5'}`}>
-            <div className="flex items-center space-x-2 mb-2">
-                <div className={`w-5 h-5 ${iconClass}`}>{icon}</div>
-                <h4 className="text-sm font-bold text-white">{title}</h4>
-            </div>
-            <p className="text-sm text-slate-300 leading-relaxed">{content}</p>
-        </div>
-    );
-}
-
-const MetricRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-    <div className="flex justify-between items-center py-1 border-b border-white/5 last:border-0">
-        <span className="text-slate-400 text-sm">{label}</span>
-        <span className="text-white font-medium font-mono text-sm text-right truncate ml-4">{value}</span>
-    </div>
-);
-
-const LinkButton: React.FC<{ href: string; icon: React.ReactNode; label: string }> = ({ href, icon, label }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all border border-white/5 hover:border-white/10">
-        {icon} <span>{label}</span>
-    </a>
-);
-
-const TechnicalSection: React.FC<{ indicators?: TechnicalIndicators }> = ({ indicators }) => {
-    if (!indicators || (!indicators.rsi && !indicators.macd)) return null;
-
-    // RSI Color Logic
-    const getRsiColor = (rsi: number) => {
-        if (rsi >= 70) return 'bg-red-500'; // Overbought
-        if (rsi <= 30) return 'bg-green-500'; // Oversold
-        return 'bg-indigo-500'; // Neutral
-    };
-
-    // RSI Value Display Color
-    const getRsiTextColor = (rsi: number) => {
-        if (rsi >= 70) return 'text-red-400';
-        if (rsi <= 30) return 'text-green-400';
-        return 'text-indigo-400';
-    }
-
-    return (
-        <div className="mt-4 bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
-                    <path d="M15.5 2A1.5 1.5 0 0014 3.5v8a1.5 1.5 0 001.5 1.5h1a1.5 1.5 0 001.5-1.5v-8A1.5 1.5 0 0016.5 2h-1zM9.5 6A1.5 1.5 0 008 7.5v4a1.5 1.5 0 001.5 1.5h1a1.5 1.5 0 001.5-1.5v-4A1.5 1.5 0 0010.5 6h-1zM3.5 10a1.5 1.5 0 00-1.5 1.5v.5a1.5 1.5 0 001.5 1.5h1a1.5 1.5 0 001.5-1.5v-.5a1.5 1.5 0 00-1.5-1.5h-1z" />
-                </svg>
-                Technical Indicators
-            </h4>
-            <div className="grid grid-cols-1 gap-3">
-                {indicators.rsi !== null && (
-                    <div>
-                        <div className="flex justify-between text-xs mb-1">
-                            <span className="text-slate-400 font-medium">RSI (14)</span>
-                            <span className={`font-mono font-bold ${getRsiTextColor(indicators.rsi)}`}>{indicators.rsi}</span>
-                        </div>
-                        <div className="w-full bg-slate-700 rounded-full h-1.5">
-                            <div
-                                className={`h-1.5 rounded-full transition-all duration-500 ${getRsiColor(indicators.rsi)}`}
-                                style={{ width: `${Math.min(Math.max(indicators.rsi, 0), 100)}%` }}
-                            ></div>
-                        </div>
-                        <div className="flex justify-between text-[10px] text-slate-500 mt-0.5">
-                            <span>Oversold (Buy)</span>
-                            <span>Overbought (Sell)</span>
-                        </div>
-                    </div>
-                )}
-
-                {(indicators.macd || indicators.movingAverages) && (
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                        {indicators.macd && (
-                            <div className="bg-slate-800 rounded px-2 py-1.5">
-                                <span className="block text-[10px] text-slate-500 uppercase">MACD</span>
-                                <span className="text-xs font-medium text-white truncate" title={indicators.macd}>{indicators.macd}</span>
-                            </div>
-                        )}
-                        {indicators.movingAverages && (
-                            <div className="bg-slate-800 rounded px-2 py-1.5">
-                                <span className="block text-[10px] text-slate-500 uppercase">Trend (MA)</span>
-                                <span className="text-xs font-medium text-white truncate" title={indicators.movingAverages}>{indicators.movingAverages}</span>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-        </div>
-    )
-}
-
-const BuyPressureGauge: React.FC<{ pressure: number }> = ({ pressure }) => {
-    // Pressure is 0-100 (percentage of buys)
-    // 0 = All Sells (Red), 100 = All Buys (Green), 50 = Neutral
-    const isBullish = pressure > 50;
-    const colorClass = isBullish ? 'bg-emerald-500' : 'bg-rose-500';
-    const textColor = isBullish ? 'text-emerald-400' : 'text-rose-400';
-    const label = isBullish ? 'Buy Pressure' : 'Sell Pressure';
-
-    return (
-        <div className="mt-4 bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
-            <div className="flex justify-between items-center mb-2">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
-                        <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
-                    </svg>
-                    24h Buy Pressure
-                </h4>
-                <span className={`text-sm font-bold ${textColor}`}>{pressure}% Buys</span>
-            </div>
-
-            <div className="relative h-4 bg-slate-800 rounded-full overflow-hidden flex">
-                {/* Sells Part (Red) */}
-                <div
-                    className="h-full bg-rose-500/80 transition-all duration-1000"
-                    style={{ width: `${100 - pressure}%` }}
-                ></div>
-                {/* Buys Part (Green) */}
-                <div
-                    className="h-full bg-emerald-500/80 transition-all duration-1000"
-                    style={{ width: `${pressure}%` }}
-                ></div>
-
-                {/* Center Marker */}
-                <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/30 transform -translate-x-1/2"></div>
-            </div>
-
-            <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-                <span>Sellers Dominating</span>
-                <span>Buyers Dominating</span>
-            </div>
-        </div>
-    );
-};
-
-const SecurityCheck: React.FC<{ label: string; isSecure: boolean }> = ({ label, isSecure }) => {
-    const Icon = isSecure ? VerifiedIcon : WarningIcon;
-    const color = isSecure ? 'text-green-400' : 'text-amber-400';
-    return (
-        <div className="flex items-center space-x-2">
-            <Icon className={`w-5 h-5 ${color}`} />
-            <span className="text-sm text-slate-300">{label}</span>
-        </div>
-    );
-};
-
-const formatNumber = (num?: number | null) => {
-    if (num === null || num === undefined) return 'N/A';
-    if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(2)}M`;
-    if (num >= 1_000) return `$${(num / 1_000).toFixed(2)}K`;
-    return `$${num.toLocaleString()}`;
-}
-
-const AuditScorecard: React.FC<{ report: NonNullable<Token['auditReport']>, score: number }> = ({ report, score }) => {
-    const getScoreColor = (s: number) => {
-        if (s >= 80) return 'text-green-400';
-        if (s >= 50) return 'text-yellow-400';
-        return 'text-red-400';
-    };
-
-    return (
-        <div className="mt-4 bg-slate-900/80 rounded-xl p-4 border border-slate-700 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-                <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    <span className="text-xl">🛡️</span> AI Audit Scorecard
-                </h4>
-                <div className={`px-3 py-1 rounded-full font-bold text-sm border ${getScoreColor(score)} border-current bg-opacity-10`}>
-                    {score}/100
-                </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 mb-4">
-                <div className="text-center p-2 bg-slate-800 rounded-lg">
-                    <div className={`text-xs font-bold ${getScoreColor(report.securityScore)}`}>{report.securityScore}</div>
-                    <div className="text-[10px] text-slate-500 uppercase mt-1">Security</div>
-                </div>
-                <div className="text-center p-2 bg-slate-800 rounded-lg">
-                    <div className={`text-xs font-bold ${getScoreColor(report.utilityScore)}`}>{report.utilityScore}</div>
-                    <div className="text-[10px] text-slate-500 uppercase mt-1">Utility</div>
-                </div>
-                <div className="text-center p-2 bg-slate-800 rounded-lg">
-                    <div className={`text-xs font-bold ${getScoreColor(report.communityScore)}`}>{report.communityScore}</div>
-                    <div className="text-[10px] text-slate-500 uppercase mt-1">Community</div>
-                </div>
-            </div>
-
-            <div className="space-y-2">
-                {report.redFlags.length > 0 && (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2">
-                        <h5 className="text-xs font-bold text-red-400 mb-1 flex items-center gap-1">
-                            <WarningIcon className="w-3 h-3" /> Red Flags
-                        </h5>
-                        <ul className="list-disc list-inside text-[10px] text-red-300/80 space-y-0.5">
-                            {report.redFlags.map((flag, i) => <li key={i}>{flag}</li>)}
-                        </ul>
-                    </div>
-                )}
-                {report.greenFlags.length > 0 && (
-                    <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2">
-                        <h5 className="text-xs font-bold text-green-400 mb-1 flex items-center gap-1">
-                            <VerifiedIcon className="w-3 h-3" /> Green Flags
-                        </h5>
-                        <ul className="list-disc list-inside text-[10px] text-green-300/80 space-y-0.5">
-                            {report.greenFlags.map((flag, i) => <li key={i}>{flag}</li>)}
-                        </ul>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
-
-
 
 export default TokenCard;

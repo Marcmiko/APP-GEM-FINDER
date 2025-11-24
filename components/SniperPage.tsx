@@ -171,7 +171,7 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
                     )}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {filteredTokens.map((token, index) => {
                         const isSaved = savedTokens.some(saved => saved.address === token.address);
                         return (
@@ -183,14 +183,30 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
                                     onUnsave={onUnsave}
                                     onFlashBuy={handleFlashBuy}
                                     isLive={true}
+                                    onViewDetails={() => {
+                                        setSelectedToken(token);
+                                        // We need a separate state for Detail Modal vs Trade Modal
+                                        // Let's add one.
+                                    }}
                                 />
                             </div>
                         );
                     })}
                 </div>
             )}
+
+            {/* Detail Modal */}
+            {selectedToken && !isTradeModalOpen && (
+                <TokenDetailModal
+                    token={selectedToken}
+                    isOpen={!!selectedToken}
+                    onClose={() => setSelectedToken(null)}
+                />
+            )}
         </div>
     );
 };
+
+import TokenDetailModal from './TokenDetailModal'; // Add import
 
 export default SniperPage;
