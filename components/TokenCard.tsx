@@ -234,7 +234,6 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
             </div>
 
         </div>
-        </div >
     );
 };
 
