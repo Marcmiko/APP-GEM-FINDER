@@ -109,11 +109,11 @@ const TokenDetailModal: React.FC<TokenDetailModalProps> = ({ token, isOpen, onCl
                                 🛡️ Security Audit
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
-                                <SecurityItem label="Renounced Ownership" isSecure={token.securityChecks.renouncedOwnership} />
-                                <SecurityItem label="Liquidity Locked" isSecure={token.securityChecks.liquidityLocked} />
-                                <SecurityItem label="No Mint Function" isSecure={token.securityChecks.noMintFunction} />
-                                <SecurityItem label="No Blacklist" isSecure={token.securityChecks.noBlacklist} />
-                                <SecurityItem label="No Proxy" isSecure={token.securityChecks.noProxy} />
+                                <SecurityItem label="Renounced Ownership" isSecure={token.securityChecks?.renouncedOwnership ?? false} />
+                                <SecurityItem label="Liquidity Locked" isSecure={token.securityChecks?.liquidityLocked ?? false} />
+                                <SecurityItem label="No Mint Function" isSecure={token.securityChecks?.noMintFunction ?? false} />
+                                <SecurityItem label="No Blacklist" isSecure={token.securityChecks?.noBlacklist ?? false} />
+                                <SecurityItem label="No Proxy" isSecure={token.securityChecks?.noProxy ?? false} />
                             </div>
                             {token.auditReport && (
                                 <div className="mt-4 pt-4 border-t border-white/5">
