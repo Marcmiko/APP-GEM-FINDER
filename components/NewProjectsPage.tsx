@@ -13,9 +13,9 @@ const SearchIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 
 const RefreshIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-11.664 0l3.181-3.183a8.25 8.25 0 00-11.664 0l3.181 3.183" />
-  </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-11.664 0l3.181-3.183a8.25 8.25 0 00-11.664 0l3.181 3.183" />
+    </svg>
 );
 
 interface NewProjectsPageProps {
@@ -24,9 +24,12 @@ interface NewProjectsPageProps {
     onUnsave: (token: Token) => void;
 }
 
+import TokenDetailModal from './TokenDetailModal';
+
 const NewProjectsPage: React.FC<NewProjectsPageProps> = ({ savedTokens, onSave, onUnsave }) => {
     const { newProjects, scanNewProjects } = useScanContext();
     const { tokens, sources, isLoading, error, hasScanned, history } = newProjects;
+    const [selectedToken, setSelectedToken] = React.useState<Token | null>(null);
 
     const handleFetch = () => {
         scanNewProjects(true);
@@ -61,7 +64,16 @@ const NewProjectsPage: React.FC<NewProjectsPageProps> = ({ savedTokens, onSave, 
                 {tokens.map((token) => {
                     if (!token) return null;
                     const isSaved = savedTokens.some(saved => saved.address === token.address);
-                    return <TokenCard key={token.address} token={token} isSaved={isSaved} onSave={onSave} onUnsave={onUnsave} />;
+                    return (
+                        <TokenCard
+                            key={token.address}
+                            token={token}
+                            isSaved={isSaved}
+                            onSave={onSave}
+                            onUnsave={onUnsave}
+                            onViewDetails={() => setSelectedToken(token)}
+                        />
+                    );
                 })}
             </div>
         );
@@ -124,7 +136,7 @@ const NewProjectsPage: React.FC<NewProjectsPageProps> = ({ savedTokens, onSave, 
                     </div>
                 )}
             </div>
-            
+
             {history.length > 0 && (
                 <div className="mt-16">
                     <div className="text-center mb-6">
@@ -140,13 +152,31 @@ const NewProjectsPage: React.FC<NewProjectsPageProps> = ({ savedTokens, onSave, 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                                     {scan.tokens.map((token) => {
                                         const isSaved = savedTokens.some(saved => saved.address === token.address);
-                                        return <TokenCard key={`${scan.timestamp.toISOString()}-${token.address}`} token={token} isSaved={isSaved} onSave={onSave} onUnsave={onUnsave} />;
+                                        return (
+                                            <TokenCard
+                                                key={`${scan.timestamp.toISOString()}-${token.address}`}
+                                                token={token}
+                                                isSaved={isSaved}
+                                                onSave={onSave}
+                                                onUnsave={onUnsave}
+                                                onViewDetails={() => setSelectedToken(token)}
+                                            />
+                                        );
                                     })}
                                 </div>
                             </HistoryAccordion>
                         ))}
                     </div>
                 </div>
+            )}
+
+            {/* Detail Modal */}
+            {selectedToken && (
+                <TokenDetailModal
+                    token={selectedToken}
+                    isOpen={!!selectedToken}
+                    onClose={() => setSelectedToken(null)}
+                />
             )}
         </>
     );

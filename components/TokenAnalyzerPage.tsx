@@ -17,10 +17,13 @@ interface TokenAnalyzerPageProps {
     onUnsave: (token: Token) => void;
 }
 
+import TokenDetailModal from './TokenDetailModal';
+
 const TokenAnalyzerPage: React.FC<TokenAnalyzerPageProps> = ({ savedTokens, onSave, onUnsave }) => {
     const { tokenAnalyzer, analyzeToken } = useScanContext();
     const { tokens, sources, isLoading, error } = tokenAnalyzer;
     const [query, setQuery] = useState('');
+    const [selectedToken, setSelectedToken] = useState<Token | null>(null);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -74,10 +77,19 @@ const TokenAnalyzerPage: React.FC<TokenAnalyzerPageProps> = ({ savedTokens, onSa
                     <div className="grid grid-cols-1 gap-6">
                         {tokens.map((token) => {
                             const isSaved = savedTokens.some(saved => saved.address === token.address);
-                            return <TokenCard key={token.address} token={token} isSaved={isSaved} onSave={onSave} onUnsave={onUnsave} />;
+                            return (
+                                <TokenCard
+                                    key={token.address}
+                                    token={token}
+                                    isSaved={isSaved}
+                                    onSave={onSave}
+                                    onUnsave={onUnsave}
+                                    onViewDetails={() => setSelectedToken(token)}
+                                />
+                            );
                         })}
                     </div>
-                    
+
                     {sources.length > 0 && (
                         <div className="bg-slate-800/30 border border-slate-700 rounded-lg p-4">
                             <h4 className="text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Sources Verified</h4>
@@ -85,7 +97,7 @@ const TokenAnalyzerPage: React.FC<TokenAnalyzerPageProps> = ({ savedTokens, onSa
                                 {sources.map((source, index) => (
                                     source.web && (
                                         <li key={index}>
-                                            <a 
+                                            <a
                                                 href={source.web.uri}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -104,6 +116,15 @@ const TokenAnalyzerPage: React.FC<TokenAnalyzerPageProps> = ({ savedTokens, onSa
                 <div className="text-center py-12 text-slate-500">
                     <p>Ready to audit. Enter a token above.</p>
                 </div>
+            )}
+
+            {/* Detail Modal */}
+            {selectedToken && (
+                <TokenDetailModal
+                    token={selectedToken}
+                    isOpen={!!selectedToken}
+                    onClose={() => setSelectedToken(null)}
+                />
             )}
         </div>
     );

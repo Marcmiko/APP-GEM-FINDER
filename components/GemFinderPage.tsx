@@ -29,6 +29,8 @@ interface GemFinderPageProps {
     onUnsave: (token: Token) => void;
 }
 
+import TokenDetailModal from './TokenDetailModal';
+
 const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUnsave }) => {
     const { gemFinder, scanGemFinder } = useScanContext();
     const { tokens, sources, isLoading, error, hasScanned, history } = gemFinder;
@@ -36,6 +38,7 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
     const [viewMode, setViewMode] = useState<'grid' | 'swipe'>('grid');
     const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
     const [swapToken, setSwapToken] = useState<Token | null>(null);
+    const [selectedToken, setSelectedToken] = useState<Token | null>(null);
 
     const handleTrade = (token: Token) => {
         setSwapToken(token);
@@ -94,7 +97,16 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                 {tokens.map((token) => {
                     if (!token) return null;
                     const isSaved = savedTokens.some(saved => saved.address === token.address);
-                    return <TokenCard key={token.address} token={token} isSaved={isSaved} onSave={onSave} onUnsave={onUnsave} />;
+                    return (
+                        <TokenCard
+                            key={token.address}
+                            token={token}
+                            isSaved={isSaved}
+                            onSave={onSave}
+                            onUnsave={onUnsave}
+                            onViewDetails={() => setSelectedToken(token)}
+                        />
+                    );
                 })}
             </div>
         );
@@ -217,7 +229,16 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                                     {scan.tokens.map((token) => {
                                         const isSaved = savedTokens.some(saved => saved.address === token.address);
-                                        return <TokenCard key={`${scan.timestamp.toISOString()}-${token.address}`} token={token} isSaved={isSaved} onSave={onSave} onUnsave={onUnsave} />;
+                                        return (
+                                            <TokenCard
+                                                key={`${scan.timestamp.toISOString()}-${token.address}`}
+                                                token={token}
+                                                isSaved={isSaved}
+                                                onSave={onSave}
+                                                onUnsave={onUnsave}
+                                                onViewDetails={() => setSelectedToken(token)}
+                                            />
+                                        );
                                     })}
                                 </div>
                             </HistoryAccordion>
@@ -232,6 +253,15 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                 tokenAddress={swapToken?.address || ''}
                 initialOutputTokenAddress={swapToken?.address}
             />
+
+            {/* Detail Modal */}
+            {selectedToken && (
+                <TokenDetailModal
+                    token={selectedToken}
+                    isOpen={!!selectedToken}
+                    onClose={() => setSelectedToken(null)}
+                />
+            )}
         </>
     )
 }

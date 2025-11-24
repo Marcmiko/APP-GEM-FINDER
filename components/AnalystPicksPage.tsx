@@ -7,18 +7,18 @@ import HistoryAccordion from './HistoryAccordion';
 import { useScanContext } from '../context/ScanContext';
 
 const CrystalBallIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-    <path d="M11.25 3.255a2.25 2.25 0 013.5 0 2.25 2.25 0 012.25 2.25c0 .546-.225 1.055-.598 1.43l-1.45 1.45a.75.75 0 01-1.06-1.06l1.22-1.22a.75.75 0 00-.53-1.28h-2.552a.75.75 0 00-.532 1.28l1.222 1.22a.75.75 0 01-1.06 1.06l-1.45-1.45A2.25 2.25 0 019 5.505a2.25 2.25 0 012.25-2.25z" />
-    <path fillRule="evenodd" d="M12.96 11.41a3.375 3.375 0 10-5.92 1.487 3.374 3.374 0 005.92-1.487zm-1.474 3.75a.75.75 0 001.06-1.06l-1.05-1.05a.75.75 0 111.06-1.06l1.05 1.05a.75.75 0 001.06-1.06l-1.05-1.05a.75.75 0 111.06-1.06l1.05 1.05a.75.75 0 001.06-1.06l-1.05-1.05a3.375 3.375 0 10-5.908 1.517.75.75 0 001.06-1.06l-1.05-1.05a.75.75 0 111.06-1.06l1.05 1.05a.75.75 0 001.06-1.06l-1.05-1.05a.75.75 0 111.06-1.06l1.05 1.05a.75.75 0 001.06-1.06L14.48 9.34a3.375 3.375 0 00-4.028-4.028l-1.05 1.05a.75.75 0 001.06 1.06L11.52 6.36a.75.75 0 00-1.06 1.06l-1.05 1.05a.75.75 0 001.06 1.06l1.05-1.05a.75.75 0 001.06 1.06l-1.05 1.05a.75.75 0 001.06 1.06l1.05-1.05a.75.75 0 001.06 1.06l-1.05 1.05a.75.75 0 001.06 1.06l1.05-1.05a.75.75 0 001.06 1.06l-2.12 2.12a.75.75 0 000 1.06l2.12 2.12a.75.75 0 001.06 0l2.12-2.12a.75.75 0 000-1.06l-2.12-2.12a.75.75 0 00-1.06 0L12 12.02l.53.53a.75.75 0 001.06-1.06L12.02 10l.53.53a.75.75 0 001.06-1.06L12.02 8.94l.53.53a.75.75 0 101.06-1.06l-2.12-2.12a.75.75 0 00-1.06 0L9.36 7.41a.75.75 0 000 1.06l2.12 2.12a.75.75 0 001.06 0l.53-.53z" clipRule="evenodd" />
-    <path d="M6 18a.75.75 0 00.75.75h10.5a.75.75 0 000-1.5H6.75a.75.75 0 00-.75.75z" />
-  </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path d="M11.25 3.255a2.25 2.25 0 013.5 0 2.25 2.25 0 012.25 2.25c0 .546-.225 1.055-.598 1.43l-1.45 1.45a.75.75 0 01-1.06-1.06l1.22-1.22a.75.75 0 00-.53-1.28h-2.552a.75.75 0 00-.532 1.28l1.222 1.22a.75.75 0 01-1.06 1.06l-1.45-1.45A2.25 2.25 0 019 5.505a2.25 2.25 0 012.25-2.25z" />
+        <path fillRule="evenodd" d="M12.96 11.41a3.375 3.375 0 10-5.92 1.487 3.374 3.374 0 005.92-1.487zm-1.474 3.75a.75.75 0 001.06-1.06l-1.05-1.05a.75.75 0 111.06-1.06l1.05 1.05a.75.75 0 001.06-1.06l-1.05-1.05a.75.75 0 111.06-1.06l1.05 1.05a.75.75 0 001.06-1.06l-1.05-1.05a3.375 3.375 0 10-5.908 1.517.75.75 0 001.06-1.06l-1.05-1.05a.75.75 0 111.06-1.06l1.05 1.05a.75.75 0 001.06-1.06l-1.05-1.05a.75.75 0 111.06-1.06l1.05 1.05a.75.75 0 001.06-1.06L14.48 9.34a3.375 3.375 0 00-4.028-4.028l-1.05 1.05a.75.75 0 001.06 1.06L11.52 6.36a.75.75 0 00-1.06 1.06l-1.05 1.05a.75.75 0 001.06 1.06l1.05-1.05a.75.75 0 001.06 1.06l-1.05 1.05a.75.75 0 001.06 1.06l1.05-1.05a.75.75 0 001.06 1.06l-1.05 1.05a.75.75 0 001.06 1.06l1.05-1.05a.75.75 0 001.06 1.06l-2.12 2.12a.75.75 0 000 1.06l2.12 2.12a.75.75 0 001.06 0l2.12-2.12a.75.75 0 000-1.06l-2.12-2.12a.75.75 0 00-1.06 0L12 12.02l.53.53a.75.75 0 001.06-1.06L12.02 10l.53.53a.75.75 0 001.06-1.06L12.02 8.94l.53.53a.75.75 0 101.06-1.06l-2.12-2.12a.75.75 0 00-1.06 0L9.36 7.41a.75.75 0 000 1.06l2.12 2.12a.75.75 0 001.06 0l.53-.53z" clipRule="evenodd" />
+        <path d="M6 18a.75.75 0 00.75.75h10.5a.75.75 0 000-1.5H6.75a.75.75 0 00-.75.75z" />
+    </svg>
 );
 
 const RefreshIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-11.664 0l3.181-3.183a8.25 8.25 0 00-11.664 0l3.181 3.183" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-11.664 0l3.181-3.183a8.25 8.25 0 00-11.664 0l3.181 3.183" />
     </svg>
-  );
+);
 
 interface AnalystPicksPageProps {
     savedTokens: Token[];
@@ -26,9 +26,12 @@ interface AnalystPicksPageProps {
     onUnsave: (token: Token) => void;
 }
 
+import TokenDetailModal from './TokenDetailModal';
+
 const AnalystPicksPage: React.FC<AnalystPicksPageProps> = ({ savedTokens, onSave, onUnsave }) => {
     const { analystPicks, scanAnalystPicks } = useScanContext();
     const { tokens, sources, isLoading, error, hasScanned, history } = analystPicks;
+    const [selectedToken, setSelectedToken] = React.useState<Token | null>(null);
 
     const handleScan = () => {
         scanAnalystPicks(true);
@@ -63,7 +66,16 @@ const AnalystPicksPage: React.FC<AnalystPicksPageProps> = ({ savedTokens, onSave
                 {tokens.map((token) => {
                     if (!token) return null;
                     const isSaved = savedTokens.some(saved => saved.address === token.address);
-                    return <TokenCard key={token.address} token={token} isSaved={isSaved} onSave={onSave} onUnsave={onUnsave} />;
+                    return (
+                        <TokenCard
+                            key={token.address}
+                            token={token}
+                            isSaved={isSaved}
+                            onSave={onSave}
+                            onUnsave={onUnsave}
+                            onViewDetails={() => setSelectedToken(token)}
+                        />
+                    );
                 })}
             </div>
         );
@@ -109,7 +121,7 @@ const AnalystPicksPage: React.FC<AnalystPicksPageProps> = ({ savedTokens, onSave
                                 {sources.map((source, index) => (
                                     source.web && (
                                         <li key={index}>
-                                            <a 
+                                            <a
                                                 href={source.web.uri}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -126,10 +138,10 @@ const AnalystPicksPage: React.FC<AnalystPicksPageProps> = ({ savedTokens, onSave
                     </div>
                 )}
             </div>
-            
+
             {history.length > 0 && (
                 <div className="mt-16">
-                     <div className="text-center mb-6">
+                    <div className="text-center mb-6">
                         <h2 className="text-3xl font-bold text-white">Pick History</h2>
                         <p className="text-slate-400">Previous analyst picks from this session.</p>
                     </div>
@@ -142,13 +154,31 @@ const AnalystPicksPage: React.FC<AnalystPicksPageProps> = ({ savedTokens, onSave
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                                     {scan.tokens.map((token) => {
                                         const isSaved = savedTokens.some(saved => saved.address === token.address);
-                                        return <TokenCard key={`${scan.timestamp.toISOString()}-${token.address}`} token={token} isSaved={isSaved} onSave={onSave} onUnsave={onUnsave} />;
+                                        return (
+                                            <TokenCard
+                                                key={`${scan.timestamp.toISOString()}-${token.address}`}
+                                                token={token}
+                                                isSaved={isSaved}
+                                                onSave={onSave}
+                                                onUnsave={onUnsave}
+                                                onViewDetails={() => setSelectedToken(token)}
+                                            />
+                                        );
                                     })}
                                 </div>
                             </HistoryAccordion>
                         ))}
                     </div>
                 </div>
+            )}
+
+            {/* Detail Modal */}
+            {selectedToken && (
+                <TokenDetailModal
+                    token={selectedToken}
+                    isOpen={!!selectedToken}
+                    onClose={() => setSelectedToken(null)}
+                />
             )}
         </>
     )
