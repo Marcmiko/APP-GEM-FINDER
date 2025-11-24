@@ -267,6 +267,7 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
                                     <MetricRow label="24h Volume" value={formatNumber(token.volume24h)} />
                                     <MetricRow label="Circulating" value={formatNumber(token.circulatingSupply)} />
                                     <MetricRow label="Total Supply" value={formatNumber(token.totalSupply)} />
+                                    <MetricRow label="Launch Date" value={new Date(token.creationDate).toLocaleDateString()} />
                                     <div className="flex justify-between items-center pt-2 border-t border-white/5 mt-2">
                                         <span className="text-slate-500 text-xs">Contract</span>
                                         <div className="flex items-center space-x-2 bg-slate-900/50 px-2 py-1 rounded-lg border border-white/5">
