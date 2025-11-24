@@ -141,31 +141,56 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
     const { style: verdictStyle, icon: verdictIcon } = getVerdictStyle(token.verdict);
 
     return (
-        <div className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 hover:border-indigo-500 transition-all duration-200 ease-in-out flex flex-col">
-            <div className="p-4 flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                    {token.iconUrl ? (
-                        <img src={token.iconUrl} alt={`${token.symbol} icon`} className="w-10 h-10 rounded-full flex-shrink-0" />
-                    ) : (
-                        <IconPlaceholder symbol={token.symbol} />
-                    )}
+        <div className="glass-card rounded-2xl shadow-lg hover:shadow-indigo-500/20 transition-all duration-300 border border-white/5 hover:border-indigo-500/30 flex flex-col overflow-hidden group">
+            <div className="p-5 flex items-start justify-between relative">
+                {/* Background Gradient Effect */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-3xl rounded-full -mr-10 -mt-10 pointer-events-none"></div>
+
+                <div className="flex items-center space-x-4 z-10">
+                    <div className="relative">
+                        {token.iconUrl ? (
+                            <img src={token.iconUrl} alt={`${token.symbol} icon`} className="w-12 h-12 rounded-full shadow-lg ring-2 ring-white/10" />
+                        ) : (
+                            <IconPlaceholder symbol={token.symbol} />
+                        )}
+                        {token.isVerified && (
+                            <div className="absolute -bottom-1 -right-1 bg-slate-900 rounded-full p-0.5">
+                                <VerifiedIcon className="w-4 h-4 text-indigo-400" />
+                            </div>
+                        )}
+                    </div>
                     <div>
-                        <h3 className="text-lg font-bold text-white flex items-center">
-                            {token.name} <span className="text-slate-400 ml-2 text-sm">({token.symbol})</span>
-                            {token.isVerified && <VerifiedIcon className="w-4 h-4 text-indigo-400 ml-2" />}
+                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                            {token.name}
+                            <span className="text-slate-500 text-sm font-medium">({token.symbol})</span>
                         </h3>
-                        <p className="text-slate-400 text-sm">${token.priceUsd.toFixed(4)}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                            <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">
+                                ${token.priceUsd < 0.01 ? token.priceUsd.toFixed(6) : token.priceUsd.toFixed(4)}
+                            </span>
+                            {token.priceChange24h !== undefined && (
+                                <span className={`px-2 py-0.5 rounded-lg text-xs font-bold ${token.priceChange24h >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                                    {token.priceChange24h >= 0 ? '+' : ''}{token.priceChange24h.toFixed(2)}%
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <div className="flex space-x-2">
+
+                <div className="flex flex-col items-end gap-2 z-10">
+                    <div className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold border backdrop-blur-md ${verdictStyle}`}>
+                        {verdictIcon}
+                        <span>{token.verdict}</span>
+                    </div>
+
+                    <div className="flex items-center space-x-1">
                         {onFlashBuy && (
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onFlashBuy(token);
                                 }}
-                                className="bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 p-2 rounded-lg transition-colors border border-yellow-500/30"
+                                className="p-2 rounded-xl bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-all duration-300 border border-amber-500/20"
                                 title="Flash Buy"
                             >
                                 ⚡
@@ -176,54 +201,53 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
                                 e.stopPropagation();
                                 isSaved ? onUnsave(token) : onSave(token);
                             }}
-                            className={`p-2 rounded-lg transition-colors ${isSaved
-                                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30'
-                                : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'
+                            className={`p-2 rounded-xl transition-all duration-300 border ${isSaved
+                                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 border-indigo-400'
+                                : 'bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700 border-white/5'
                                 }`}
                         >
-                            {isSaved ? '★' : '☆'}
+                            {isSaved ? <BookmarkIcon saved={true} className="w-5 h-5" /> : <BookmarkIcon saved={false} className="w-5 h-5" />}
+                        </button>
+                        <button
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className="p-2 rounded-xl bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700 transition-all duration-300 border border-white/5"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={`w-5 h-5 transform transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                            </svg>
                         </button>
                     </div>
-                    <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="p-2 rounded-full bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white transition-colors duration-200"
-                        title={isExpanded ? "Collapse" : "Expand"}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-5 h-5 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                        </svg>
-                    </button>
                 </div>
             </div>
 
             {isExpanded && (
-                <div className="px-4 pb-4 border-t border-slate-700/50 pt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Left Column */}
-                        <div>
-                            <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold border ${verdictStyle}`}>
-                                {verdictIcon}
-                                <span>{token.verdict}</span>
-                            </div>
-
-                            <div className="mt-4 space-y-3">
-                                <AnalysisSection
-                                    title="AI Analysis"
-                                    content={token.aiAnalysis || 'No AI analysis available.'}
-                                    icon={<BullIcon />}
-                                    iconClass="text-indigo-400"
-                                />
+                <div className="px-5 pb-5 border-t border-white/5 pt-5 bg-slate-900/30">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        {/* Left Column - Analysis (7 cols) */}
+                        <div className="lg:col-span-7 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="md:col-span-2">
+                                    <AnalysisSection
+                                        title="AI Analysis"
+                                        content={token.aiAnalysis || 'No AI analysis available.'}
+                                        icon={<BullIcon />}
+                                        iconClass="text-indigo-400"
+                                        bgClass="bg-indigo-500/5 border-indigo-500/10"
+                                    />
+                                </div>
                                 <AnalysisSection
                                     title="Key Drivers"
                                     content={token.keyDrivers || 'No key drivers identified.'}
                                     icon={<InfoIcon />}
-                                    iconClass="text-blue-400"
+                                    iconClass="text-sky-400"
+                                    bgClass="bg-sky-500/5 border-sky-500/10"
                                 />
                                 <AnalysisSection
                                     title="Risks"
                                     content={token.risks || 'No specific risks identified.'}
                                     icon={<WarningIcon />}
-                                    iconClass="text-red-400"
+                                    iconClass="text-rose-400"
+                                    bgClass="bg-rose-500/5 border-rose-500/10"
                                 />
                             </div>
 
@@ -231,102 +255,62 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
                             {token.buyPressure !== undefined && token.buyPressure !== null && <BuyPressureGauge pressure={token.buyPressure} />}
                         </div>
 
-                        {/* Right Column */}
-                        <div>
-                            <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
-                                        <path fillRule="evenodd" d="M10 1a9 9 0 100 18 9 9 0 000-18zM9 5a1 1 0 011-1h.008a1 1 0 011 1v3a1 1 0 01-1 1H9a1 1 0 01-1-1V5zm1 11a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                                    </svg>
-                                    Token Details
+                        {/* Right Column - Stats & Security (5 cols) */}
+                        <div className="lg:col-span-5 space-y-4">
+                            <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-2"></span>
+                                    Token Metrics
                                 </h4>
-                                <div className="space-y-2 text-sm">
-                                    <p className="flex justify-between">
-                                        <span className="text-slate-400">Market Cap:</span>
-                                        <span className="text-white font-medium">{formatNumber(token.marketCap)}</span>
-                                    </p>
-                                    <p className="flex justify-between">
-                                        <span className="text-slate-400">24h Volume:</span>
-                                        <span className="text-white font-medium">{formatNumber(token.volume24h)}</span>
-                                    </p>
-                                    <p className="flex justify-between">
-                                        <span className="text-slate-400">Circulating Supply:</span>
-                                        <span className="text-white font-medium">{formatNumber(token.circulatingSupply)}</span>
-                                    </p>
-                                    <p className="flex justify-between">
-                                        <span className="text-slate-400">Total Supply:</span>
-                                        <span className="text-white font-medium">{formatNumber(token.totalSupply)}</span>
-                                    </p>
-                                    <p className="flex justify-between items-center">
-                                        <span className="text-slate-400">Contract:</span>
-                                        <span className="flex items-center space-x-2">
-                                            <a href={`https://etherscan.io/token/${token.address}`} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline text-xs font-mono">
+                                <div className="space-y-3 text-sm">
+                                    <MetricRow label="Market Cap" value={formatNumber(token.marketCap)} />
+                                    <MetricRow label="24h Volume" value={formatNumber(token.volume24h)} />
+                                    <MetricRow label="Circulating" value={formatNumber(token.circulatingSupply)} />
+                                    <MetricRow label="Total Supply" value={formatNumber(token.totalSupply)} />
+                                    <div className="flex justify-between items-center pt-2 border-t border-white/5 mt-2">
+                                        <span className="text-slate-500 text-xs">Contract</span>
+                                        <div className="flex items-center space-x-2 bg-slate-900/50 px-2 py-1 rounded-lg border border-white/5">
+                                            <a href={`https://etherscan.io/token/${token.address}`} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-xs font-mono">
                                                 {token.address.substring(0, 6)}...{token.address.substring(token.address.length - 4)}
                                             </a>
                                             <button onClick={handleCopyAddress} className="text-slate-500 hover:text-white transition-colors">
-                                                <CopyIcon className="w-4 h-4" />
+                                                <CopyIcon className="w-3.5 h-3.5" />
                                             </button>
-                                        </span>
-                                    </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            {token.auditReport && (
+                            {token.auditReport ? (
                                 <AuditScorecard report={token.auditReport} score={token.auditReport.overallScore} />
+                            ) : (
+                                <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2"></span>
+                                        Security Checks
+                                    </h4>
+                                    <div className="space-y-2">
+                                        <SecurityCheck label="Renounced Ownership" isSecure={token.securityChecks.renouncedOwnership} />
+                                        <SecurityCheck label="Liquidity Locked" isSecure={token.securityChecks.liquidityLocked} />
+                                        <SecurityCheck label="No Mint Function" isSecure={token.securityChecks.noMintFunction} />
+                                        <SecurityCheck label="No Blacklist" isSecure={token.securityChecks.noBlacklist} />
+                                        <SecurityCheck label="No Proxy" isSecure={token.securityChecks.noProxy} />
+                                    </div>
+                                </div>
                             )}
 
-                            <div className="mt-4 bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
-                                        <path fillRule="evenodd" d="M10 1a9 9 0 100 18 9 9 0 000-18zM9 5a1 1 0 011-1h.008a1 1 0 011 1v3a1 1 0 01-1 1H9a1 1 0 01-1-1V5zm1 11a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                                    </svg>
-                                    Security Checks
-                                </h4>
-                                <div className="space-y-2">
-                                    <SecurityCheck label="Renounced Ownership" isSecure={token.securityChecks.renouncedOwnership} />
-                                    <SecurityCheck label="Liquidity Locked" isSecure={token.securityChecks.liquidityLocked} />
-                                    <SecurityCheck label="No Mint Function" isSecure={token.securityChecks.noMintFunction} />
-                                    <SecurityCheck label="No Blacklist" isSecure={token.securityChecks.noBlacklist} />
-                                    <SecurityCheck label="No Proxy" isSecure={token.securityChecks.noProxy} />
-                                </div>
-                            </div>
-
-                            <div className="mt-4 bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center">
-                                    <ShareIcon className="w-3 h-3 mr-1" />
+                            <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center">
+                                    <ShareIcon className="w-3 h-3 mr-2" />
                                     Links
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {token.links.website && (
-                                        <a href={token.links.website} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 px-2 py-1 bg-slate-700 rounded-md text-xs text-slate-300 hover:bg-slate-600 transition-colors">
-                                            <WebsiteIcon className="w-4 h-4" /> <span>Website</span>
-                                        </a>
-                                    )}
-                                    {token.links.twitter && (
-                                        <a href={token.links.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 px-2 py-1 bg-slate-700 rounded-md text-xs text-slate-300 hover:bg-slate-600 transition-colors">
-                                            <XIcon className="w-4 h-4" /> <span>Twitter</span>
-                                        </a>
-                                    )}
-                                    {token.links.telegram && (
-                                        <a href={token.links.telegram} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 px-2 py-1 bg-slate-700 rounded-md text-xs text-slate-300 hover:bg-slate-600 transition-colors">
-                                            <TelegramIcon className="w-4 h-4" /> <span>Telegram</span>
-                                        </a>
-                                    )}
-                                    {token.links.discord && (
-                                        <a href={token.links.discord} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 px-2 py-1 bg-slate-700 rounded-md text-xs text-slate-300 hover:bg-slate-600 transition-colors">
-                                            <DiscordIcon className="w-4 h-4" /> <span>Discord</span>
-                                        </a>
-                                    )}
-                                    {token.links.coinmarketcap && (
-                                        <a href={token.links.coinmarketcap} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 px-2 py-1 bg-slate-700 rounded-md text-xs text-slate-300 hover:bg-slate-600 transition-colors">
-                                            <CMCIcon className="w-4 h-4" /> <span>CMC</span>
-                                        </a>
-                                    )}
-                                    {token.links.coingecko && (
-                                        <a href={token.links.coingecko} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 px-2 py-1 bg-slate-700 rounded-md text-xs text-slate-300 hover:bg-slate-600 transition-colors">
-                                            <GeckoIcon className="w-4 h-4" /> <span>CoinGecko</span>
-                                        </a>
-                                    )}
+                                    {token.links.website && <LinkButton href={token.links.website} icon={<WebsiteIcon className="w-3.5 h-3.5" />} label="Web" />}
+                                    {token.links.twitter && <LinkButton href={token.links.twitter} icon={<XIcon className="w-3.5 h-3.5" />} label="X" />}
+                                    {token.links.telegram && <LinkButton href={token.links.telegram} icon={<TelegramIcon className="w-3.5 h-3.5" />} label="TG" />}
+                                    {token.links.discord && <LinkButton href={token.links.discord} icon={<DiscordIcon className="w-3.5 h-3.5" />} label="Discord" />}
+                                    {token.links.coinmarketcap && <LinkButton href={token.links.coinmarketcap} icon={<CMCIcon className="w-3.5 h-3.5" />} label="CMC" />}
+                                    {token.links.coingecko && <LinkButton href={token.links.coingecko} icon={<GeckoIcon className="w-3.5 h-3.5" />} label="Gecko" />}
                                 </div>
                             </div>
                         </div>
@@ -350,23 +334,36 @@ const getVerdictStyle = (verdict: string) => {
 }
 
 const IconPlaceholder: React.FC<{ symbol?: string }> = ({ symbol }) => (
-    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-indigo-400 text-lg flex-shrink-0">
+    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center font-bold text-indigo-400 text-xl flex-shrink-0 shadow-inner ring-1 ring-white/5">
         {symbol ? symbol.charAt(0).toUpperCase() : '?'}
     </div>
 );
 
-const AnalysisSection: React.FC<{ title: string; content: string; icon: React.ReactNode; iconClass: string; }> = ({ title, content, icon, iconClass }) => {
+const AnalysisSection: React.FC<{ title: string; content: string; icon: React.ReactNode; iconClass: string; bgClass?: string }> = ({ title, content, icon, iconClass, bgClass }) => {
     if (content === 'N/A') return null;
     return (
-        <div>
-            <div className="flex items-center space-x-2">
+        <div className={`rounded-xl p-4 border ${bgClass || 'bg-slate-800/50 border-white/5'}`}>
+            <div className="flex items-center space-x-2 mb-2">
                 <div className={`w-5 h-5 ${iconClass}`}>{icon}</div>
-                <h4 className="text-sm font-semibold text-slate-300">{title}</h4>
+                <h4 className="text-sm font-bold text-white">{title}</h4>
             </div>
-            <p className="mt-1 pl-7 text-sm text-slate-400">{content}</p>
+            <p className="text-sm text-slate-300 leading-relaxed">{content}</p>
         </div>
     );
 }
+
+const MetricRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+    <div className="flex justify-between items-center">
+        <span className="text-slate-400">{label}</span>
+        <span className="text-white font-medium font-mono">{value}</span>
+    </div>
+);
+
+const LinkButton: React.FC<{ href: string; icon: React.ReactNode; label: string }> = ({ href, icon, label }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition-all border border-white/5 hover:border-white/10">
+        {icon} <span>{label}</span>
+    </a>
+);
 
 const TechnicalSection: React.FC<{ indicators?: TechnicalIndicators }> = ({ indicators }) => {
     if (!indicators || (!indicators.rsi && !indicators.macd)) return null;

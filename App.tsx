@@ -8,6 +8,7 @@ import SocialTrendsPage from './components/SocialTrendsPage';
 import SavedProjectsPage from './components/SavedProjectsPage';
 import TokenAnalyzerPage from './components/TokenAnalyzerPage';
 import SniperPage from './components/SniperPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import Footer from './components/Footer';
 import { Token, Page } from './types';
@@ -59,6 +60,9 @@ const App: React.FC = () => {
     });
   };
 
+  // Ensure savedTokens is always an array to prevent crashes
+  const safeSavedTokens = Array.isArray(savedTokens) ? savedTokens : [];
+
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
@@ -69,60 +73,61 @@ const App: React.FC = () => {
                 <Header
                   activePage={activePage}
                   setActivePage={setActivePage}
-                  savedCount={savedTokens.length}
+                  savedCount={safeSavedTokens.length}
                 />
-                <main className="pt-24 pb-8">
-                  {activePage === 'gem-finder' && (
-                    <GemFinderPage
-                      savedTokens={savedTokens}
-                      onSave={handleSaveToken}
-                      onUnsave={handleUnsaveToken}
-                    />
-                  )}
-                  {activePage === 'ai-sniper' && (
-                    <SniperPage
-                      savedTokens={savedTokens}
-                      onSave={handleSaveToken}
-                      onUnsave={handleUnsaveToken}
-                    />
-                  )}
-                  {activePage === 'new-projects' && (
-                    <NewProjectsPage
-                      savedTokens={savedTokens}
-                      onSave={handleSaveToken}
-                      onUnsave={handleUnsaveToken}
-                    />
-                  )}
-                  {activePage === 'analyst-picks' && (
-                    <AnalystPicksPage
-                      savedTokens={savedTokens}
-                      onSave={handleSaveToken}
-                      onUnsave={handleUnsaveToken}
-                    />
-                  )}
-                  {activePage === 'social-trends' && (
-                    <SocialTrendsPage
-                      savedTokens={savedTokens}
-                      onSave={handleSaveToken}
-                      onUnsave={handleUnsaveToken}
-                    />
-                  )}
-                  {activePage === 'token-analyzer' && (
-                    <TokenAnalyzerPage
-                      savedTokens={savedTokens}
-                      onSave={handleSaveToken}
-                      onUnsave={handleUnsaveToken}
-                    />
-                  )}
-                  {activePage === 'saved-projects' && (
-                    <SavedProjectsPage
-                      savedTokens={savedTokens}
-                      onSave={handleSaveToken}
-                      onUnsave={handleUnsaveToken}
-                      onUpdateTokens={handleUpdateTokens}
-                    />
-                  )}
-
+                <main className="pt-24 pb-8 container mx-auto px-4">
+                  <ErrorBoundary>
+                    {activePage === 'gem-finder' && (
+                      <GemFinderPage
+                        savedTokens={safeSavedTokens}
+                        onSave={handleSaveToken}
+                        onUnsave={handleUnsaveToken}
+                      />
+                    )}
+                    {activePage === 'ai-sniper' && (
+                      <SniperPage
+                        savedTokens={safeSavedTokens}
+                        onSave={handleSaveToken}
+                        onUnsave={handleUnsaveToken}
+                      />
+                    )}
+                    {activePage === 'new-projects' && (
+                      <NewProjectsPage
+                        savedTokens={safeSavedTokens}
+                        onSave={handleSaveToken}
+                        onUnsave={handleUnsaveToken}
+                      />
+                    )}
+                    {activePage === 'analyst-picks' && (
+                      <AnalystPicksPage
+                        savedTokens={safeSavedTokens}
+                        onSave={handleSaveToken}
+                        onUnsave={handleUnsaveToken}
+                      />
+                    )}
+                    {activePage === 'social-trends' && (
+                      <SocialTrendsPage
+                        savedTokens={safeSavedTokens}
+                        onSave={handleSaveToken}
+                        onUnsave={handleUnsaveToken}
+                      />
+                    )}
+                    {activePage === 'token-analyzer' && (
+                      <TokenAnalyzerPage
+                        savedTokens={safeSavedTokens}
+                        onSave={handleSaveToken}
+                        onUnsave={handleUnsaveToken}
+                      />
+                    )}
+                    {activePage === 'saved-projects' && (
+                      <SavedProjectsPage
+                        savedTokens={safeSavedTokens}
+                        onSave={handleSaveToken}
+                        onUnsave={handleUnsaveToken}
+                        onUpdateTokens={handleUpdateTokens}
+                      />
+                    )}
+                  </ErrorBoundary>
                 </main>
                 <Footer />
               </div>
