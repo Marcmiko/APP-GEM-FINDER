@@ -30,10 +30,10 @@ const PortfolioCharts: React.FC<PortfolioChartsProps> = ({ tokens, totalValue })
                         <svg viewBox="0 0 100 100" className="transform -rotate-90 w-full h-full">
                             {allocationData.map((item, index) => {
                                 const total = allocationData.reduce((acc, curr) => acc + curr.value, 0);
-                                const percentage = (item.value / total) * 100;
+                                const percentage = total > 0 ? (item.value / total) * 100 : 0;
                                 const dashArray = 2 * Math.PI * 40; // r=40
                                 const dashOffset = dashArray - (dashArray * percentage) / 100;
-                                const rotation = allocationData.slice(0, index).reduce((acc, curr) => acc + (curr.value / total) * 360, 0);
+                                const rotation = allocationData.slice(0, index).reduce((acc, curr) => acc + (total > 0 ? (curr.value / total) * 360 : 0), 0);
 
                                 return (
                                     <circle
@@ -154,7 +154,7 @@ const createLinePath = (data: number[], width: number, height: number) => {
     // Map points to 0-100 coordinate space
     const points = data.map((val, i) => {
         const x = (i / (data.length - 1)) * 100;
-        const y = 100 - ((val - min) / range) * 100;
+        const y = range > 0 ? 100 - ((val - min) / range) * 100 : 50;
         return `${x},${y}`;
     });
 

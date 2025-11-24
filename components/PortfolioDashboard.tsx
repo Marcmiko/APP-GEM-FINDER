@@ -90,7 +90,9 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
             </div>
 
             {/* Portfolio Charts (Allocation & History) */}
-            <PortfolioCharts tokens={holdings} totalValue={totalValue} />
+            {holdings.length > 0 && (
+                <PortfolioCharts tokens={holdings} totalValue={totalValue} />
+            )}
 
             {/* Holdings List */}
             <div id="holdings-list" className="bg-slate-800/30 rounded-2xl border border-slate-700 overflow-hidden">
