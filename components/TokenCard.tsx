@@ -172,7 +172,7 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
                                     ? `$${token.priceUsd < 0.01 ? token.priceUsd.toFixed(6) : token.priceUsd.toFixed(4)}`
                                     : 'N/A'}
                             </span>
-                            {token.priceChange24h !== undefined && (
+                            {token.priceChange24h !== undefined && token.priceChange24h !== null && (
                                 <span className={`px-2 py-0.5 rounded-lg text-xs font-bold ${token.priceChange24h >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                                     {token.priceChange24h >= 0 ? '+' : ''}{token.priceChange24h.toFixed(2)}%
                                 </span>
