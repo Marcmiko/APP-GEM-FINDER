@@ -117,9 +117,10 @@ interface TokenCardProps {
     onSave: (token: Token) => void;
     onUnsave: (token: Token) => void;
     onFlashBuy?: (token: Token) => void;
+    isLive?: boolean;
 }
 
-const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave, onFlashBuy }) => {
+const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave, onFlashBuy, isLive }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const { addAlert } = useAlerts();
 
@@ -141,7 +142,14 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
     const { style: verdictStyle, icon: verdictIcon } = getVerdictStyle(token.verdict);
 
     return (
-        <div className="glass-card rounded-2xl shadow-lg hover:shadow-indigo-500/20 transition-all duration-300 border border-white/5 hover:border-indigo-500/30 flex flex-col overflow-hidden group">
+        <div className="glass-card rounded-2xl shadow-lg hover:shadow-indigo-500/20 transition-all duration-300 border border-white/5 hover:border-indigo-500/30 flex flex-col overflow-hidden group relative">
+            {isLive && (
+                <div className="absolute top-0 right-0 z-20">
+                    <div className="bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-lg animate-pulse">
+                        LIVE
+                    </div>
+                </div>
+            )}
             <div className="p-5 flex items-start justify-between relative">
                 {/* Background Gradient Effect */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-3xl rounded-full -mr-10 -mt-10 pointer-events-none"></div>

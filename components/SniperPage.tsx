@@ -175,16 +175,14 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
                     {filteredTokens.map((token, index) => {
                         const isSaved = savedTokens.some(saved => saved.address === token.address);
                         return (
-                            <div key={`${token.address}-${index}`} className="relative animate-fade-in-up">
-                                <div className="absolute -top-3 -right-3 z-20 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border-2 border-slate-900 animate-bounce">
-                                    LIVE
-                                </div>
+                            <div key={`${token.address}-${index}`} className="animate-fade-in-up">
                                 <TokenCard
                                     token={token}
                                     isSaved={isSaved}
                                     onSave={onSave}
                                     onUnsave={onUnsave}
                                     onFlashBuy={handleFlashBuy}
+                                    isLive={true}
                                 />
                             </div>
                         );
