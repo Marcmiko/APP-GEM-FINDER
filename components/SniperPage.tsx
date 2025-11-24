@@ -38,6 +38,8 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
                     const uniqueNewTokens = newTokens.filter(t => !existingAddresses.has(t.address));
 
                     if (uniqueNewTokens.length > 0) {
+                        // Sort new tokens by gem score (highest first)
+                        uniqueNewTokens.sort((a, b) => (b.gemScore || 0) - (a.gemScore || 0));
                         return [...uniqueNewTokens, ...prev].slice(0, 50); // Keep last 50
                     }
                     return prev;
