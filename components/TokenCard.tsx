@@ -230,9 +230,9 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
 
             {isExpanded && (
                 <div className="px-5 pb-5 border-t border-white/5 pt-5 bg-slate-900/30">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                         {/* Left Column - Analysis (7 cols) */}
-                        <div className="lg:col-span-7 space-y-4">
+                        <div className="xl:col-span-7 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
                                     <AnalysisSection
@@ -264,7 +264,7 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
                         </div>
 
                         {/* Right Column - Stats & Security (5 cols) */}
-                        <div className="lg:col-span-5 space-y-4">
+                        <div className="xl:col-span-5 space-y-4">
                             <div className="bg-slate-800/50 rounded-xl p-4 border border-white/5">
                                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center">
                                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-2"></span>
@@ -276,13 +276,13 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
                                     <MetricRow label="Circulating" value={formatNumber(token.circulatingSupply)} />
                                     <MetricRow label="Total Supply" value={formatNumber(token.totalSupply)} />
                                     <MetricRow label="Launch Date" value={new Date(token.creationDate).toLocaleDateString()} />
-                                    <div className="flex justify-between items-center pt-2 border-t border-white/5 mt-2">
+                                    <div className="flex justify-between items-center pt-2 mt-2">
                                         <span className="text-slate-500 text-xs">Contract</span>
-                                        <div className="flex items-center space-x-2 bg-slate-900/50 px-2 py-1 rounded-lg border border-white/5">
-                                            <a href={`https://etherscan.io/token/${token.address}`} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-xs font-mono">
-                                                {token.address.substring(0, 6)}...{token.address.substring(token.address.length - 4)}
+                                        <div className="flex items-center space-x-2 bg-slate-900/50 px-2 py-1 rounded-lg border border-white/5 max-w-[150px]">
+                                            <a href={`https://etherscan.io/token/${token.address}`} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 text-xs font-mono truncate block">
+                                                {token.address}
                                             </a>
-                                            <button onClick={handleCopyAddress} className="text-slate-500 hover:text-white transition-colors">
+                                            <button onClick={handleCopyAddress} className="text-slate-500 hover:text-white transition-colors flex-shrink-0">
                                                 <CopyIcon className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
@@ -362,9 +362,9 @@ const AnalysisSection: React.FC<{ title: string; content: string; icon: React.Re
 }
 
 const MetricRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-    <div className="flex justify-between items-center">
-        <span className="text-slate-400">{label}</span>
-        <span className="text-white font-medium font-mono">{value}</span>
+    <div className="flex justify-between items-center py-1 border-b border-white/5 last:border-0">
+        <span className="text-slate-400 text-sm">{label}</span>
+        <span className="text-white font-medium font-mono text-sm text-right truncate ml-4">{value}</span>
     </div>
 );
 
