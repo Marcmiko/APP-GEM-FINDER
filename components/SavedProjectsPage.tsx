@@ -2,6 +2,7 @@ import React from 'react';
 import { Token } from '../types';
 import TokenCard from './TokenCard';
 import PortfolioDashboard from './PortfolioDashboard';
+import TokenDetailModal from './TokenDetailModal';
 
 const BookmarkIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -21,6 +22,7 @@ const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({ savedTokens, onSa
     // Filter tokens for the watchlist (only those with 0 holdings)
     // Tokens with holdings are shown in the PortfolioDashboard
     const watchlistTokens = savedTokens.filter(t => !t.holdings || t.holdings === 0);
+    const [selectedToken, setSelectedToken] = React.useState<Token | null>(null);
 
     return (
         <>
@@ -63,18 +65,29 @@ const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({ savedTokens, onSa
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                        {watchlistTokens.map((token) => (
-                            <TokenCard
-                                key={token.address}
-                                token={token}
-                                isSaved={true}
-                                onSave={onSave}
-                                onUnsave={onUnsave}
-                            />
+                        {watchlistTokens.map((token, index) => (
+                            <div key={`${token.address}-${index}`} className="animate-fade-in-up">
+                                <TokenCard
+                                    token={token}
+                                    isSaved={true}
+                                    onSave={onSave}
+                                    onUnsave={onUnsave}
+                                    onViewDetails={() => setSelectedToken(token)}
+                                />
+                            </div>
                         ))}
                     </div>
                 )}
             </div>
+
+            {/* Detail Modal */}
+            {selectedToken && (
+                <TokenDetailModal
+                    token={selectedToken}
+                    isOpen={!!selectedToken}
+                    onClose={() => setSelectedToken(null)}
+                />
+            )}
         </>
     );
 };
