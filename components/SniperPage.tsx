@@ -3,6 +3,7 @@ import { Token } from '../types';
 import TokenCard from './TokenCard';
 import SniperFilters from './SniperFilters';
 import { useScanContext } from '../context/ScanContext';
+import { getNewPools } from '../services/geckoTerminalService';
 
 interface SniperPageProps {
     savedTokens: Token[];
@@ -14,69 +15,48 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
     const { gemFinder, newProjects, analystPicks, scanGemFinder, scanNewProjects, scanAnalystPicks } = useScanContext();
     const [isSniping, setIsSniping] = useState(false);
     const [sniperTokens, setSniperTokens] = useState<Token[]>([]);
-    const [scannedPool, setScannedPool] = useState<Token[]>([]);
-
     // Filter States
     const [minLiquidity, setMinLiquidity] = useState(5000);
     const [maxAgeHours, setMaxAgeHours] = useState(24);
     const [minBuyPressure, setMinBuyPressure] = useState(60);
     const [honeypotCheck, setHoneypotCheck] = useState(true);
 
-    // Aggregate all available tokens into a pool
-    useEffect(() => {
-        const allTokens = [
-            ...gemFinder.tokens,
-            ...newProjects.tokens,
-            ...analystPicks.tokens
-        ];
-
-        // Remove duplicates based on address
-        const uniqueTokens = Array.from(new Map(allTokens.map(token => [token.address, token])).values());
-        setScannedPool(uniqueTokens);
-    }, [gemFinder.tokens, newProjects.tokens, analystPicks.tokens]);
-
-    // Simulate finding new tokens when sniping is active
+    // Real-time sniping logic
     useEffect(() => {
         let interval: NodeJS.Timeout;
 
+        const fetchNewTokens = async () => {
+            try {
+                const newTokens = await getNewPools();
+
+                // Filter out tokens we already have to avoid duplicates/re-renders
+                // But since this is a "feed", maybe we just want to update the list?
+                // Let's prepend new ones.
+
+                setSniperTokens(prev => {
+                    const existingAddresses = new Set(prev.map(t => t.address));
+                    const uniqueNewTokens = newTokens.filter(t => !existingAddresses.has(t.address));
+
+                    if (uniqueNewTokens.length > 0) {
+                        return [...uniqueNewTokens, ...prev].slice(0, 50); // Keep last 50
+                    }
+                    return prev;
+                });
+            } catch (error) {
+                console.error("Sniper error:", error);
+            }
+        };
+
         if (isSniping) {
-            // If we have no tokens in the pool, trigger scans to get data
-            if (scannedPool.length === 0) {
-                if (!gemFinder.hasScanned && !gemFinder.isLoading) scanGemFinder();
-                if (!newProjects.hasScanned && !newProjects.isLoading) scanNewProjects();
-                if (!analystPicks.hasScanned && !analystPicks.isLoading) scanAnalystPicks();
-            }
+            // Initial fetch
+            fetchNewTokens();
 
-            // Immediate burst: if we have tokens, show 1-2 immediately
-            if (scannedPool.length > 0 && sniperTokens.length === 0) {
-                const availableTokens = scannedPool.filter(
-                    poolToken => !sniperTokens.some(st => st.address === poolToken.address)
-                );
-                if (availableTokens.length > 0) {
-                    const initialBatch = availableTokens.slice(0, 2); // Show 2 immediately
-                    setSniperTokens(initialBatch);
-                }
-            }
-
-            interval = setInterval(() => {
-                // Find a token from the pool that isn't in our sniper list yet
-                const availableTokens = scannedPool.filter(
-                    poolToken => !sniperTokens.some(st => st.address === poolToken.address)
-                );
-
-                if (availableTokens.length > 0) {
-                    // Pick a random token to "discover"
-                    const randomIndex = Math.floor(Math.random() * availableTokens.length);
-                    const newToken = availableTokens[randomIndex];
-
-                    // Add it to the top of the list with a "just now" effect
-                    setSniperTokens(prev => [newToken, ...prev]);
-                }
-            }, 800); // "Find" a new token every 0.8 seconds (much faster)
+            // Poll every 15 seconds (GeckoTerminal rate limit is 30/min, so 15s is safe)
+            interval = setInterval(fetchNewTokens, 15000);
         }
 
         return () => clearInterval(interval);
-    }, [isSniping, scannedPool, sniperTokens, gemFinder, newProjects, analystPicks, scanGemFinder, scanNewProjects, scanAnalystPicks]);
+    }, [isSniping]);
 
     // Apply filters
     const filteredTokens = sniperTokens.filter(token => {
