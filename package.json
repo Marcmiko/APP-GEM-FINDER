@@ -20,7 +20,7 @@
     "react-redux": "^9.2.0",
     "redux": "^5.0.1",
     "viem": "^2.40.0",
-    "wagmi": "^3.0.1"
+    "wagmi": "^2.19.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

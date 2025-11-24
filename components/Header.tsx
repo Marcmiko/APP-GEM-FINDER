@@ -103,7 +103,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
                         <NavItem page="analyst-picks" activePage={activePage} setActivePage={setActivePage} isLoading={analystPicks.isLoading}>Analyst</NavItem>
                         <NavItem page="social-trends" activePage={activePage} setActivePage={setActivePage} isLoading={socialTrends.isLoading}>Trends</NavItem>
                         <NavItem page="token-analyzer" activePage={activePage} setActivePage={setActivePage} isLoading={tokenAnalyzer.isLoading} icon={<SearchIcon className="w-4 h-4" />}>Analyzer</NavItem>
-                        <NavItem page="heatmap" activePage={activePage} setActivePage={setActivePage}>Heatmap 🔥</NavItem>
+
                         <NavItem page="saved-projects" activePage={activePage} setActivePage={setActivePage} badgeCount={savedCount}>Saved</NavItem>
                     </div>
 

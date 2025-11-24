@@ -8,7 +8,7 @@ import SocialTrendsPage from './components/SocialTrendsPage';
 import SavedProjectsPage from './components/SavedProjectsPage';
 import TokenAnalyzerPage from './components/TokenAnalyzerPage';
 import SniperPage from './components/SniperPage';
-import SentimentHeatmap from './components/SentimentHeatmap';
+
 import Footer from './components/Footer';
 import { Token, Page } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -122,7 +122,7 @@ const App: React.FC = () => {
                       onUpdateTokens={handleUpdateTokens}
                     />
                   )}
-                  {activePage === 'heatmap' && <SentimentHeatmap />}
+
                 </main>
                 <Footer />
               </div>
