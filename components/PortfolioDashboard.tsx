@@ -145,28 +145,51 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
 
             setSyncProgress(80);
 
-            // 4. Fetch Prices from GeckoTerminal + CoinGecko
+            // 4. Fetch Prices from DexScreener (more reliable for Base tokens)
             if (addressesToFetchPrice.length > 0) {
                 try {
-                    console.log('📊 Fetching prices for addresses:', addressesToFetchPrice);
-                    const prices = await getTokenPrices(addressesToFetchPrice);
-                    console.log('💰 Prices received:', prices);
+                    console.log('📊 Fetching prices for', addressesToFetchPrice.length, 'tokens from DexScreener...');
+
+                    // Import DexScreener service dynamically
+                    const { getPairsByAddress } = await import('../services/dexScreenerService');
+                    const pairs = await getPairsByAddress(addressesToFetchPrice);
+
+                    console.log('💰 DexScreener returned', pairs.length, 'pairs');
+
+                    // Create a map of address -> price from DexScreener pairs
+                    const priceMap: Record<string, number> = {};
+                    pairs.forEach(pair => {
+                        if (pair.baseToken?.address && pair.priceUsd) {
+                            const addr = pair.baseToken.address.toLowerCase();
+                            const price = parseFloat(pair.priceUsd);
+                            if (!priceMap[addr] || price > 0) {
+                                priceMap[addr] = price;
+                            }
+                        }
+                    });
+
+                    console.log('💵 Price map created with', Object.keys(priceMap).length, 'entries');
 
                     // Update prices in heldTokens
                     let pricesUpdated = 0;
                     heldTokens.forEach(t => {
-                        if (t.address && prices[t.address.toLowerCase()]) {
-                            t.priceUsd = prices[t.address.toLowerCase()];
+                        const addr = t.address?.toLowerCase();
+                        if (addr && priceMap[addr]) {
+                            t.priceUsd = priceMap[addr];
                             pricesUpdated++;
-                            console.log(`✅ Price for ${t.symbol}: $${t.priceUsd}`);
+                            console.log(`✅ Price for ${t.symbol}: $${t.priceUsd.toFixed(6)}`);
                         } else {
                             console.warn(`❌ No price found for ${t.symbol} (${t.address})`);
                         }
                     });
 
-                    console.log(`📈 Updated ${pricesUpdated}/${heldTokens.length} token prices`);
+                    console.log(`📈 Updated ${pricesUpdated}/${heldTokens.length} token prices via DexScreener`);
+
+                    if (pricesUpdated < heldTokens.length) {
+                        addAlert(`Synced ${heldTokens.length} tokens. Prices found for ${pricesUpdated} tokens.`, 'info');
+                    }
                 } catch (priceError) {
-                    console.error('❌ Failed to fetch prices:', priceError);
+                    console.error('❌ Failed to fetch prices from DexScreener:', priceError);
                     addAlert('Warning: Unable to fetch token prices', 'warning');
                 }
             }
