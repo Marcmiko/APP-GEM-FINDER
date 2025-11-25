@@ -127,7 +127,12 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                                 socialSentiment: { positive: 0, negative: 0, neutral: 100, summary: '' },
                                 links: { website: null, twitter: null, telegram: null, discord: null, coinmarketcap: null, coingecko: null },
                                 securityChecks: { renouncedOwnership: false, liquidityLocked: false, noMintFunction: false, noBlacklist: false, noProxy: false },
-                                websiteUrl: null, xUrl: null, telegramUrl: null, discordUrl: null, coinMarketCapUrl: null, coingeckoUrl: null, iconUrl: null,
+                                websiteUrl: null,
+                                xUrl: null,
+                                telegramUrl: null,
+                                discordUrl: null,
+                                coinMarketCapUrl: null,
+                                coingeckoUrl: null,
                                 iconUrl: token.icon_url || null
                             } as Token);
 
