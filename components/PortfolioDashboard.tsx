@@ -33,63 +33,37 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
 
         setIsSyncing(true);
         setSyncProgress(10);
-        addAlert('Scanning wallet for assets...', 'info');
+        addAlert('Scanning wallet for all tokens...', 'info');
 
         try {
-            // 1. Combine Saved Tokens + Popular Tokens (deduplicate by address)
-            const tokenMap = new Map<string, Partial<Token>>();
+            // 1. Fetch ALL tokens from Blockscout API
+            setSyncProgress(20);
+            const blockscoutResponse = await fetch(`https://base.blockscout.com/api/v2/addresses/${address}/tokens?type=ERC-20`);
 
-            // Add saved tokens first
-            savedTokens.forEach(t => {
-                if (t.address) tokenMap.set(t.address.toLowerCase(), t);
-            });
+            if (!blockscoutResponse.ok) {
+                throw new Error('Failed to fetch tokens from Blockscout');
+            }
 
-            // Add popular tokens if not present
-            POPULAR_BASE_TOKENS.forEach(t => {
-                if (t.address && !tokenMap.has(t.address.toLowerCase())) {
-                    tokenMap.set(t.address.toLowerCase(), t);
-                }
-            });
-
-            const allTokensToScan = Array.from(tokenMap.values()) as Token[]; // Cast to Token[] as we expect them to have basic fields
-            setSyncProgress(30);
+            const blockscoutData = await blockscoutResponse.json();
+            setSyncProgress(40);
 
             // 2. Fetch ETH Balance
             const ethBalance = await publicClient.getBalance({ address });
             const ethBalanceFormatted = parseFloat(formatUnits(ethBalance, 18));
 
-            // 3. Fetch Token Balances (Multicall)
-            // Filter out ETH placeholder if it exists in scan list to avoid double counting or error
-            const erc20Tokens = allTokensToScan.filter(t => t.symbol !== 'ETH' && t.address);
-
-            const calls = erc20Tokens.map(token => ({
-                address: token.address as `0x${string}`,
-                abi: parseAbi(['function balanceOf(address) view returns (uint256)']),
-                functionName: 'balanceOf',
-                args: [address]
-            }));
-
-            const results = await publicClient.multicall({ contracts: calls } as any);
-            setSyncProgress(60);
-
-            // 4. Process Balances & Identify Held Tokens
+            // 3. Process discovered tokens
             const heldTokens: Token[] = [];
             const addressesToFetchPrice: string[] = [];
 
             // Add ETH if balance > 0
             if (ethBalanceFormatted > 0) {
-                const ethToken = tokenMap.get('0x4200000000000000000000000000000000000006'.toLowerCase()) || {
+                heldTokens.push({
                     name: 'Ethereum',
                     symbol: 'ETH',
                     address: '0x4200000000000000000000000000000000000006',
-                    decimals: 18
-                };
-
-                heldTokens.push({
-                    ...ethToken,
                     holdings: ethBalanceFormatted,
-                    priceUsd: ethToken.priceUsd || 0, // Will fetch update
-                    // Defaults for required Token fields
+                    priceUsd: 0,
+                    decimals: 18,
                     chainId: 8453,
                     pairAddress: '',
                     creationDate: new Date().toISOString(),
@@ -113,73 +87,78 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                     websiteUrl: null, xUrl: null, telegramUrl: null, discordUrl: null, coinMarketCapUrl: null, coingeckoUrl: null, iconUrl: null
                 } as Token);
 
-                addressesToFetchPrice.push(ethToken.address!);
+                addressesToFetchPrice.push('0x4200000000000000000000000000000000000006');
             }
 
-            // Process ERC20s
-            results.forEach((result, index) => {
-                if (result.status === 'success') {
-                    const token = erc20Tokens[index];
-                    const balance = parseFloat(formatUnits(result.result as bigint, token.decimals || 18));
+            setSyncProgress(60);
 
-                    if (balance > 0) {
-                        heldTokens.push({
-                            ...token,
-                            holdings: balance,
-                            priceUsd: token.priceUsd || 0, // Will fetch update
-                            // Defaults
-                            chainId: 8453,
-                            pairAddress: '',
-                            creationDate: new Date().toISOString(),
-                            liquidity: 0,
-                            volume24h: 0,
-                            marketCap: 0,
-                            fdv: 0,
-                            holders: 0,
-                            buyPressure: 50,
-                            priceChange1h: 0,
-                            priceChange24h: 0,
-                            volume1h: 0,
-                            isLiquidityLocked: false,
-                            isOwnershipRenounced: false,
-                            gemScore: 0,
-                            analysis: { summary: 'Wallet Asset', strengths: '', risks: '', verdict: 'Hold' },
-                            technicalIndicators: { rsi: null, macd: null, movingAverages: null },
-                            socialSentiment: { positive: 0, negative: 0, neutral: 100, summary: '' },
-                            links: { website: null, twitter: null, telegram: null, discord: null, coinmarketcap: null, coingecko: null },
-                            securityChecks: { renouncedOwnership: false, liquidityLocked: false, noMintFunction: false, noBlacklist: false, noProxy: false },
-                            websiteUrl: null, xUrl: null, telegramUrl: null, discordUrl: null, coinMarketCapUrl: null, coingeckoUrl: null, iconUrl: null
-                        } as Token);
+            // Process ERC20 tokens from Blockscout
+            if (blockscoutData.items && Array.isArray(blockscoutData.items)) {
+                blockscoutData.items.forEach((item: any) => {
+                    if (item.token && item.value && parseFloat(item.value) > 0) {
+                        const token = item.token;
+                        const balance = parseFloat(formatUnits(BigInt(item.value), parseInt(token.decimals) || 18));
 
-                        if (token.address) addressesToFetchPrice.push(token.address);
-                    }
-                }
-            });
+                        if (balance > 0) {
+                            heldTokens.push({
+                                name: token.name || token.symbol || 'Unknown',
+                                symbol: token.symbol || '???',
+                                address: token.address,
+                                holdings: balance,
+                                priceUsd: 0,
+                                decimals: parseInt(token.decimals) || 18,
+                                chainId: 8453,
+                                pairAddress: '',
+                                creationDate: new Date().toISOString(),
+                                liquidity: 0,
+                                volume24h: 0,
+                                marketCap: 0,
+                                fdv: 0,
+                                holders: 0,
+                                buyPressure: 50,
+                                priceChange1h: 0,
+                                priceChange24h: 0,
+                                volume1h: 0,
+                                isLiquidityLocked: false,
+                                isOwnershipRenounced: false,
+                                gemScore: 0,
+                                analysis: { summary: 'Wallet Asset', strengths: '', risks: '', verdict: 'Hold' },
+                                technicalIndicators: { rsi: null, macd: null, movingAverages: null },
+                                socialSentiment: { positive: 0, negative: 0, neutral: 100, summary: '' },
+                                links: { website: null, twitter: null, telegram: null, discord: null, coinmarketcap: null, coingecko: null },
+                                securityChecks: { renouncedOwnership: false, liquidityLocked: false, noMintFunction: false, noBlacklist: false, noProxy: false },
+                                websiteUrl: null, xUrl: null, telegramUrl: null, discordUrl: null, coinMarketCapUrl: null, coingeckoUrl: null, iconUrl: null,
+                                iconUrl: token.icon_url || null
+                            } as Token);
 
-            setSyncProgress(80);
-
-            // 5. Fetch Prices
-            if (addressesToFetchPrice.length > 0) {
-                const prices = await getTokenPrices(addressesToFetchPrice);
-
-                // Update prices in heldTokens
-                heldTokens.forEach(t => {
-                    if (t.address && prices[t.address.toLowerCase()]) {
-                        t.priceUsd = prices[t.address.toLowerCase()];
-                    } else if (t.symbol === 'ETH' && prices['0x4200000000000000000000000000000000000006']) {
-                        // Special case for ETH if address casing mismatch
-                        t.priceUsd = prices['0x4200000000000000000000000000000000000006'];
+                            addressesToFetchPrice.push(token.address);
+                        }
                     }
                 });
             }
 
-            // 6. Merge with existing saved tokens (preserve existing data if not in heldTokens, update if in heldTokens)
-            // Actually, we want to SHOW what's in the wallet.
-            // But we also want to keep "watched" tokens (0 balance).
+            setSyncProgress(80);
 
+            // 4. Fetch Prices from GeckoTerminal
+            if (addressesToFetchPrice.length > 0) {
+                try {
+                    const prices = await getTokenPrices(addressesToFetchPrice);
+
+                    // Update prices in heldTokens
+                    heldTokens.forEach(t => {
+                        if (t.address && prices[t.address.toLowerCase()]) {
+                            t.priceUsd = prices[t.address.toLowerCase()];
+                        }
+                    });
+                } catch (priceError) {
+                    console.warn('Failed to fetch prices, using 0 as default', priceError);
+                }
+            }
+
+            // 5. Update saved tokens
             const newSavedTokens = [...savedTokens];
 
-            // Update existing tokens with new holdings/prices
+            // Update existing tokens with new holdings/prices, or add new ones
             heldTokens.forEach(heldToken => {
                 const existingIndex = newSavedTokens.findIndex(t => t.address?.toLowerCase() === heldToken.address?.toLowerCase());
                 if (existingIndex >= 0) {
@@ -194,27 +173,13 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                 }
             });
 
-            // Reset holdings for tokens NOT found in wallet (but were previously saved)?
-            // If we did a full scan, yes. But we only scanned "popular" + "saved".
-            // So if a token was saved and we scanned it and found 0, we should set 0.
-            // Our 'erc20Tokens' list included ALL saved tokens. So if it's not in 'heldTokens' (and was in saved), it means balance is 0.
-
-            newSavedTokens.forEach(t => {
-                const wasScanned = erc20Tokens.some(s => s.address?.toLowerCase() === t.address?.toLowerCase());
-                const isHeld = heldTokens.some(h => h.address?.toLowerCase() === t.address?.toLowerCase());
-
-                if (wasScanned && !isHeld && t.symbol !== 'ETH') {
-                    t.holdings = 0;
-                }
-            });
-
             onUpdateTokens(newSavedTokens);
             setSyncProgress(100);
             addAlert(`Wallet synced! Found ${heldTokens.length} assets.`, 'success');
 
         } catch (error) {
             console.error('Error syncing wallet:', error);
-            addAlert('Failed to sync wallet.', 'error');
+            addAlert(`Failed to sync wallet: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
         } finally {
             setIsSyncing(false);
             setTimeout(() => setSyncProgress(0), 1000);
