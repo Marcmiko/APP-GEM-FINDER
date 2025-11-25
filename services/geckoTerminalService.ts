@@ -71,6 +71,35 @@ export const getNewPools = async (): Promise<Token[]> => {
     }
 };
 
+export const getTokenPrices = async (addresses: string[]): Promise<Record<string, number>> => {
+    if (addresses.length === 0) return {};
+
+    try {
+        // GeckoTerminal allows up to 30 addresses per request usually, so we might need to chunk if list is huge
+        // For now, let's assume < 30 or handle simple batching if needed later.
+        const addressesStr = addresses.join(',');
+        const response = await fetch(`${BASE_API_URL}/simple/networks/base/token_price/${addressesStr}`);
+
+        if (!response.ok) {
+            throw new Error(`GeckoTerminal API error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        // Response format: { data: { attributes: { token_prices: { "0x...": "1.23" } } } }
+        const prices: Record<string, number> = {};
+        const rawPrices = data.data.attributes.token_prices;
+
+        for (const [addr, price] of Object.entries(rawPrices)) {
+            prices[addr] = parseFloat(price as string);
+        }
+
+        return prices;
+    } catch (error) {
+        console.error("Error fetching token prices:", error);
+        return {};
+    }
+};
+
 const mapGeckoTerminalPoolToToken = (pool: GeckoTerminalPool): Token => {
     const attr = pool.attributes;
     const baseTokenId = pool.relationships.base_token.data.id;

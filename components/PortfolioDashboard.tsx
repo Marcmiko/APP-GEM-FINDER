@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Token } from '../types';
 import PortfolioCharts from './PortfolioCharts';
 import { useAccount } from 'wagmi';
 import { usePublicClient } from 'wagmi';
 import { formatUnits, parseAbi } from 'viem';
 import { useAlerts } from '../context/AlertContext';
+import { POPULAR_BASE_TOKENS } from '../data/popularTokens';
+import { getTokenPrices } from '../services/geckoTerminalService';
 
 interface PortfolioDashboardProps {
     savedTokens: Token[];
@@ -12,25 +14,16 @@ interface PortfolioDashboardProps {
 }
 
 const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, onUpdateTokens }) => {
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [editingToken, setEditingToken] = useState<Token | null>(null);
-    const [selectedTokenAddress, setSelectedTokenAddress] = useState<string>('');
-    const [holdingsInput, setHoldingsInput] = useState('');
-    const [avgPriceInput, setAvgPriceInput] = useState('');
     const [isSyncing, setIsSyncing] = useState(false);
-
+    const [syncProgress, setSyncProgress] = useState(0);
     const { address, isConnected } = useAccount();
     const publicClient = usePublicClient();
     const { addAlert } = useAlerts();
 
+    // Filter out tokens with 0 holdings for display
     const holdings = savedTokens.filter(t => (t.holdings || 0) > 0);
-    const availableTokens = savedTokens.filter(t => !t.holdings || t.holdings === 0);
 
     const totalValue = holdings.reduce((sum, t) => sum + ((t.holdings || 0) * (t.priceUsd || 0)), 0);
-    const totalCost = holdings.reduce((sum, t) => sum + ((t.holdings || 0) * (t.avgBuyPrice || 0)), 0);
-    const totalPnL = totalValue - totalCost;
-    const totalPnLPercent = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
 
     const handleSyncWallet = async () => {
         if (!isConnected || !address || !publicClient) {
@@ -39,25 +32,37 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
         }
 
         setIsSyncing(true);
-        addAlert('Syncing wallet balances...', 'info');
+        setSyncProgress(10);
+        addAlert('Scanning wallet for assets...', 'info');
 
         try {
-            // Filter tokens that have an address (exclude ETH if it's treated specially, but here tokens usually have addresses)
-            // Assuming all savedTokens are ERC20s for now. If ETH is in the list, it needs special handling.
-            const tokensToSync = savedTokens.filter(t => t.address && t.address.startsWith('0x'));
+            // 1. Combine Saved Tokens + Popular Tokens (deduplicate by address)
+            const tokenMap = new Map<string, Partial<Token>>();
 
-            if (tokensToSync.length === 0) {
-                addAlert('No tokens to sync.', 'info');
-                setIsSyncing(false);
-                return;
-            }
+            // Add saved tokens first
+            savedTokens.forEach(t => {
+                if (t.address) tokenMap.set(t.address.toLowerCase(), t);
+            });
 
-            // Fetch ETH Balance
+            // Add popular tokens if not present
+            POPULAR_BASE_TOKENS.forEach(t => {
+                if (t.address && !tokenMap.has(t.address.toLowerCase())) {
+                    tokenMap.set(t.address.toLowerCase(), t);
+                }
+            });
+
+            const allTokensToScan = Array.from(tokenMap.values()) as Token[]; // Cast to Token[] as we expect them to have basic fields
+            setSyncProgress(30);
+
+            // 2. Fetch ETH Balance
             const ethBalance = await publicClient.getBalance({ address });
-            const ethBalanceFormatted = formatUnits(ethBalance, 18);
+            const ethBalanceFormatted = parseFloat(formatUnits(ethBalance, 18));
 
-            // Fetch Token Balances
-            const calls = tokensToSync.map(token => ({
+            // 3. Fetch Token Balances (Multicall)
+            // Filter out ETH placeholder if it exists in scan list to avoid double counting or error
+            const erc20Tokens = allTokensToScan.filter(t => t.symbol !== 'ETH' && t.address);
+
+            const calls = erc20Tokens.map(token => ({
                 address: token.address as `0x${string}`,
                 abi: parseAbi(['function balanceOf(address) view returns (uint256)']),
                 functionName: 'balanceOf',
@@ -65,42 +70,26 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
             }));
 
             const results = await publicClient.multicall({ contracts: calls } as any);
+            setSyncProgress(60);
 
-            let updatedTokens = savedTokens.map((token, index) => {
-                // Find the result for this token
-                const syncIndex = tokensToSync.findIndex(t => t.address === token.address);
-                if (syncIndex === -1) return token;
+            // 4. Process Balances & Identify Held Tokens
+            const heldTokens: Token[] = [];
+            const addressesToFetchPrice: string[] = [];
 
-                const result = results[syncIndex];
-                if (result.status === 'success') {
-                    const balance = formatUnits(result.result as bigint, 18);
-                    const newBalance = parseFloat(balance);
-                    return {
-                        ...token,
-                        holdings: newBalance
-                    };
-                }
-                return token;
-            });
-
-            // Add or Update ETH in the list
-            const ethIndex = updatedTokens.findIndex(t => t.symbol === 'ETH');
-            const ethValue = parseFloat(ethBalanceFormatted);
-
-            if (ethIndex >= 0) {
-                updatedTokens[ethIndex] = {
-                    ...updatedTokens[ethIndex],
-                    holdings: ethValue
-                };
-            } else if (ethValue > 0) {
-                // Add ETH if it doesn't exist and we have a balance
-                updatedTokens.unshift({
+            // Add ETH if balance > 0
+            if (ethBalanceFormatted > 0) {
+                const ethToken = tokenMap.get('0x4200000000000000000000000000000000000006'.toLowerCase()) || {
                     name: 'Ethereum',
                     symbol: 'ETH',
-                    address: '0x4200000000000000000000000000000000000006', // WETH on Base or placeholder
-                    priceUsd: 3500, // Placeholder, ideally fetch price
-                    holdings: ethValue,
-                    decimals: 18,
+                    address: '0x4200000000000000000000000000000000000006',
+                    decimals: 18
+                };
+
+                heldTokens.push({
+                    ...ethToken,
+                    holdings: ethBalanceFormatted,
+                    priceUsd: ethToken.priceUsd || 0, // Will fetch update
+                    // Defaults for required Token fields
                     chainId: 8453,
                     pairAddress: '',
                     creationDate: new Date().toISOString(),
@@ -116,229 +105,225 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                     isLiquidityLocked: false,
                     isOwnershipRenounced: false,
                     gemScore: 0,
-                    analysis: {
-                        summary: 'Native Token',
-                        strengths: '',
-                        risks: '',
-                        verdict: 'Hold'
-                    },
-                    technicalIndicators: {
-                        rsi: null,
-                        macd: null,
-                        movingAverages: null
-                    },
-                    socialSentiment: {
-                        positive: 0,
-                        negative: 0,
-                        neutral: 100,
-                        summary: ''
-                    },
-                    links: {
-                        website: null,
-                        twitter: null,
-                        telegram: null,
-                        discord: null,
-                        coinmarketcap: null,
-                        coingecko: null
-                    },
-                    securityChecks: {
-                        renouncedOwnership: false,
-                        liquidityLocked: false,
-                        noMintFunction: false,
-                        noBlacklist: false,
-                        noProxy: false
-                    },
-                    websiteUrl: null,
-                    xUrl: null,
-                    telegramUrl: null,
-                    discordUrl: null,
-                    coinMarketCapUrl: null,
-                    coingeckoUrl: null,
-                    iconUrl: null
+                    analysis: { summary: 'Native Token', strengths: '', risks: '', verdict: 'Hold' },
+                    technicalIndicators: { rsi: null, macd: null, movingAverages: null },
+                    socialSentiment: { positive: 0, negative: 0, neutral: 100, summary: '' },
+                    links: { website: null, twitter: null, telegram: null, discord: null, coinmarketcap: null, coingecko: null },
+                    securityChecks: { renouncedOwnership: false, liquidityLocked: false, noMintFunction: false, noBlacklist: false, noProxy: false },
+                    websiteUrl: null, xUrl: null, telegramUrl: null, discordUrl: null, coinMarketCapUrl: null, coingeckoUrl: null, iconUrl: null
                 } as Token);
+
+                addressesToFetchPrice.push(ethToken.address!);
             }
 
-            onUpdateTokens(updatedTokens);
-            addAlert(`Synced! ETH: ${parseFloat(ethBalanceFormatted).toFixed(4)}`, 'success');
+            // Process ERC20s
+            results.forEach((result, index) => {
+                if (result.status === 'success') {
+                    const token = erc20Tokens[index];
+                    const balance = parseFloat(formatUnits(result.result as bigint, token.decimals || 18));
+
+                    if (balance > 0) {
+                        heldTokens.push({
+                            ...token,
+                            holdings: balance,
+                            priceUsd: token.priceUsd || 0, // Will fetch update
+                            // Defaults
+                            chainId: 8453,
+                            pairAddress: '',
+                            creationDate: new Date().toISOString(),
+                            liquidity: 0,
+                            volume24h: 0,
+                            marketCap: 0,
+                            fdv: 0,
+                            holders: 0,
+                            buyPressure: 50,
+                            priceChange1h: 0,
+                            priceChange24h: 0,
+                            volume1h: 0,
+                            isLiquidityLocked: false,
+                            isOwnershipRenounced: false,
+                            gemScore: 0,
+                            analysis: { summary: 'Wallet Asset', strengths: '', risks: '', verdict: 'Hold' },
+                            technicalIndicators: { rsi: null, macd: null, movingAverages: null },
+                            socialSentiment: { positive: 0, negative: 0, neutral: 100, summary: '' },
+                            links: { website: null, twitter: null, telegram: null, discord: null, coinmarketcap: null, coingecko: null },
+                            securityChecks: { renouncedOwnership: false, liquidityLocked: false, noMintFunction: false, noBlacklist: false, noProxy: false },
+                            websiteUrl: null, xUrl: null, telegramUrl: null, discordUrl: null, coinMarketCapUrl: null, coingeckoUrl: null, iconUrl: null
+                        } as Token);
+
+                        if (token.address) addressesToFetchPrice.push(token.address);
+                    }
+                }
+            });
+
+            setSyncProgress(80);
+
+            // 5. Fetch Prices
+            if (addressesToFetchPrice.length > 0) {
+                const prices = await getTokenPrices(addressesToFetchPrice);
+
+                // Update prices in heldTokens
+                heldTokens.forEach(t => {
+                    if (t.address && prices[t.address.toLowerCase()]) {
+                        t.priceUsd = prices[t.address.toLowerCase()];
+                    } else if (t.symbol === 'ETH' && prices['0x4200000000000000000000000000000000000006']) {
+                        // Special case for ETH if address casing mismatch
+                        t.priceUsd = prices['0x4200000000000000000000000000000000000006'];
+                    }
+                });
+            }
+
+            // 6. Merge with existing saved tokens (preserve existing data if not in heldTokens, update if in heldTokens)
+            // Actually, we want to SHOW what's in the wallet.
+            // But we also want to keep "watched" tokens (0 balance).
+
+            const newSavedTokens = [...savedTokens];
+
+            // Update existing tokens with new holdings/prices
+            heldTokens.forEach(heldToken => {
+                const existingIndex = newSavedTokens.findIndex(t => t.address?.toLowerCase() === heldToken.address?.toLowerCase());
+                if (existingIndex >= 0) {
+                    newSavedTokens[existingIndex] = {
+                        ...newSavedTokens[existingIndex],
+                        holdings: heldToken.holdings,
+                        priceUsd: heldToken.priceUsd
+                    };
+                } else {
+                    // Add new token found in wallet
+                    newSavedTokens.push(heldToken);
+                }
+            });
+
+            // Reset holdings for tokens NOT found in wallet (but were previously saved)?
+            // If we did a full scan, yes. But we only scanned "popular" + "saved".
+            // So if a token was saved and we scanned it and found 0, we should set 0.
+            // Our 'erc20Tokens' list included ALL saved tokens. So if it's not in 'heldTokens' (and was in saved), it means balance is 0.
+
+            newSavedTokens.forEach(t => {
+                const wasScanned = erc20Tokens.some(s => s.address?.toLowerCase() === t.address?.toLowerCase());
+                const isHeld = heldTokens.some(h => h.address?.toLowerCase() === t.address?.toLowerCase());
+
+                if (wasScanned && !isHeld && t.symbol !== 'ETH') {
+                    t.holdings = 0;
+                }
+            });
+
+            onUpdateTokens(newSavedTokens);
+            setSyncProgress(100);
+            addAlert(`Wallet synced! Found ${heldTokens.length} assets.`, 'success');
 
         } catch (error) {
             console.error('Error syncing wallet:', error);
             addAlert('Failed to sync wallet.', 'error');
         } finally {
             setIsSyncing(false);
+            setTimeout(() => setSyncProgress(0), 1000);
         }
-    };
-
-    const handleEditClick = (token: Token) => {
-        setEditingToken(token);
-        setHoldingsInput(token.holdings?.toString() || '');
-        setAvgPriceInput(token.avgBuyPrice?.toString() || '');
-        setIsEditModalOpen(true);
-    };
-
-    const handleAddClick = () => {
-        setSelectedTokenAddress(availableTokens[0]?.address || '');
-        setHoldingsInput('');
-        setAvgPriceInput('');
-        setIsAddModalOpen(true);
-    };
-
-    const handleSaveHolding = () => {
-        const targetAddress = editingToken ? editingToken.address : selectedTokenAddress;
-        if (!targetAddress) return;
-
-        const updatedTokens = savedTokens.map(t => {
-            if (t.address === targetAddress) {
-                return {
-                    ...t,
-                    holdings: parseFloat(holdingsInput) || 0,
-                    avgBuyPrice: parseFloat(avgPriceInput) || 0
-                };
-            }
-            return t;
-        });
-
-        onUpdateTokens(updatedTokens);
-        setIsEditModalOpen(false);
-        setIsAddModalOpen(false);
-        setEditingToken(null);
-        setSelectedTokenAddress('');
     };
 
     return (
         <div className="space-y-8">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
-                    <h3 className="text-slate-400 text-sm font-medium mb-1">Total Balance</h3>
-                    <div className="text-3xl font-bold text-white">
-                        ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {/* Header Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-gradient-to-br from-indigo-900/50 to-slate-900/50 p-6 rounded-2xl border border-indigo-500/20 shadow-lg relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-24 h-24 text-indigo-400">
+                            <path d="M12 7.5a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5z" />
+                            <path fillRule="evenodd" d="M1.5 4.875C1.5 3.839 2.34 3 3.375 3h17.25c1.035 0 1.875.84 1.875 1.875v9.75c0 1.036-.84 1.875-1.875 1.875H3.375A1.875 1.875 0 011.5 14.625v-9.75zM8.25 9.75a3.75 3.75 0 117.5 0 3.75 3.75 0 01-7.5 0zM18.75 9a.75.75 0 00-.75.75v.008c0 .414.336.75.75.75h.008a.75.75 0 00.75-.75V9.75a.75.75 0 00-.75-.75h-.008zM4.5 9.75A.75.75 0 015.25 9h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H5.25a.75.75 0 01-.75-.75V9.75z" clipRule="evenodd" />
+                            <path d="M2.25 18a.75.75 0 000 1.5c5.4 0 10.63.722 15.6 2.075 1.19.324 2.4-.558 2.4-1.82V18.75a.75.75 0 00-.75-.75H2.25z" />
+                        </svg>
                     </div>
-                </div>
-                <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
-                    <h3 className="text-slate-400 text-sm font-medium mb-1">Total Profit / Loss</h3>
-                    <div className={`text-3xl font-bold ${totalPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {totalPnL >= 0 ? '+' : ''}${Math.abs(totalPnL).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        <span className="text-lg ml-2 opacity-80">
-                            ({totalPnLPercent >= 0 ? '+' : ''}{totalPnLPercent.toFixed(2)}%)
+                    <h3 className="text-slate-400 text-sm font-medium uppercase tracking-wider">Total Balance</h3>
+                    <div className="mt-2 flex items-baseline gap-2">
+                        <span className="text-4xl font-black text-white">
+                            ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                     </div>
+                    <div className="mt-4">
+                        <button
+                            onClick={handleSyncWallet}
+                            disabled={isSyncing || !isConnected}
+                            className={`w-full py-2 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2
+                                ${isConnected
+                                    ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
+                                    : 'bg-slate-700 text-slate-400 cursor-not-allowed'}`}
+                        >
+                            {isSyncing ? (
+                                <>
+                                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Scanning... {syncProgress}%
+                                </>
+                            ) : (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                                        <path fillRule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 100 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0015.059-4.035.75.75 0 00-.53-.918z" clipRule="evenodd" />
+                                    </svg>
+                                    Sync Wallet
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
-                <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 flex flex-col items-center justify-center gap-3">
-                    <button
-                        onClick={handleAddClick}
-                        disabled={availableTokens.length === 0}
-                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-xl font-bold transition-colors w-full"
-                    >
-                        Add Asset
-                    </button>
-                    <button
-                        onClick={handleSyncWallet}
-                        disabled={isSyncing || !isConnected}
-                        className={`px-6 py-3 w-full rounded-xl font-bold transition-colors flex items-center justify-center gap-2
-                            ${isConnected
-                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                                : 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                            }`}
-                    >
-                        {isSyncing ? (
-                            <>
-                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Syncing...
-                            </>
-                        ) : (
-                            <>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                                    <path fillRule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 100 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0015.059-4.035.75.75 0 00-.53-.918z" clipRule="evenodd" />
-                                </svg>
-                                Sync Wallet
-                            </>
-                        )}
-                    </button>
-                    {!isConnected && (
-                        <span className="text-xs text-slate-500">Connect wallet to sync</span>
-                    )}
+
+                <div className="md:col-span-2 bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
+                    <PortfolioCharts tokens={savedTokens} totalValue={totalValue} />
                 </div>
             </div>
 
-            {/* Portfolio Charts (Allocation & History) */}
-            {holdings.length > 0 && (
-                <PortfolioCharts tokens={holdings} totalValue={totalValue} />
-            )}
-
-            {/* Holdings List */}
-            <div id="holdings-list" className="bg-slate-800/30 rounded-2xl border border-slate-700 overflow-hidden">
+            {/* Assets Table */}
+            <div className="bg-slate-800/50 rounded-2xl border border-slate-700 overflow-hidden">
                 <div className="p-6 border-b border-slate-700 flex justify-between items-center">
                     <h3 className="text-xl font-bold text-white">Your Assets</h3>
+                    <span className="text-sm text-slate-400">{holdings.length} tokens found</span>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-800/50 text-slate-400 text-sm uppercase tracking-wider">
-                            <tr>
-                                <th className="px-6 py-4 font-medium">Asset</th>
-                                <th className="px-6 py-4 font-medium text-right">Price</th>
-                                <th className="px-6 py-4 font-medium text-right">Balance</th>
-                                <th className="px-6 py-4 font-medium text-right">Value</th>
-                                <th className="px-6 py-4 font-medium text-right">PnL</th>
-                                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                    <table className="w-full">
+                        <thead>
+                            <tr className="bg-slate-900/50 text-left">
+                                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Asset</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Price</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Balance</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Value</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-700/50">
+                        <tbody className="divide-y divide-slate-700">
                             {holdings.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
-                                        No assets in portfolio. Click "Add Asset" to start tracking.
+                                    <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                                        {isSyncing ? 'Scanning blockchain...' : 'No assets found. Connect wallet and sync.'}
                                     </td>
                                 </tr>
                             ) : (
-                                holdings.map(token => {
-                                    const balance = token.holdings || 0;
-                                    const value = balance * (token.priceUsd || 0);
-                                    const cost = balance * (token.avgBuyPrice || 0);
-                                    const pnl = value - cost;
-                                    const pnlPercent = cost > 0 ? (pnl / cost) * 100 : 0;
-
+                                holdings.map((token, idx) => {
+                                    const value = (token.holdings || 0) * (token.priceUsd || 0);
                                     return (
-                                        <tr key={token.address} className="hover:bg-slate-700/20 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-xs">
-                                                        {token.symbol[0]}
+                                        <tr key={token.address || idx} className="hover:bg-slate-700/30 transition-colors group">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center">
+                                                    <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold mr-3 border border-indigo-500/30">
+                                                        {token.iconUrl ? (
+                                                            <img src={token.iconUrl} alt={token.symbol} className="w-full h-full rounded-full object-cover" />
+                                                        ) : (
+                                                            token.symbol?.substring(0, 2)
+                                                        )}
                                                     </div>
                                                     <div>
                                                         <div className="font-bold text-white">{token.name}</div>
-                                                        <div className="text-xs text-slate-500">{token.symbol}</div>
+                                                        <div className="text-xs text-slate-400">{token.symbol}</div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-right text-slate-300">
-                                                ${(token.priceUsd || 0).toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-slate-300">
+                                                ${token.priceUsd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                                             </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="text-white font-medium">{balance.toLocaleString()}</div>
-                                                {token.avgBuyPrice && (
-                                                    <div className="text-xs text-slate-500">Avg: ${token.avgBuyPrice}</div>
-                                                )}
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-slate-300 font-mono">
+                                                {token.holdings?.toLocaleString()} {token.symbol}
                                             </td>
-                                            <td className="px-6 py-4 text-right text-white font-bold">
-                                                ${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className={pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                                                    {pnl >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%
-                                                    <div className="text-xs opacity-70">${Math.abs(pnl).toFixed(2)}</div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() => handleEditClick(token)}
-                                                    className="text-indigo-400 hover:text-indigo-300 font-medium text-sm"
-                                                >
-                                                    Edit
-                                                </button>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right font-bold text-white">
+                                                ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                         </tr>
                                     );
@@ -348,75 +333,6 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                     </table>
                 </div>
             </div>
-
-            {/* Edit/Add Modal */}
-            {(isEditModalOpen || isAddModalOpen) && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="bg-slate-800 rounded-2xl border border-slate-700 w-full max-w-md p-6 shadow-2xl animate-fade-in-up">
-                        <h3 className="text-xl font-bold text-white mb-4">
-                            {isEditModalOpen ? `Edit Holdings: ${editingToken?.symbol}` : 'Add Asset to Portfolio'}
-                        </h3>
-
-                        <div className="space-y-4">
-                            {isAddModalOpen && (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-1">Select Token</label>
-                                    <select
-                                        value={selectedTokenAddress}
-                                        onChange={(e) => setSelectedTokenAddress(e.target.value)}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                    >
-                                        {availableTokens.map(t => (
-                                            <option key={t.address} value={t.address}>
-                                                {t.symbol} - {t.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1">Quantity Owned</label>
-                                <input
-                                    type="number"
-                                    value={holdingsInput}
-                                    onChange={(e) => setHoldingsInput(e.target.value)}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                    placeholder="0.0"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1">Average Buy Price ($)</label>
-                                <input
-                                    type="number"
-                                    value={avgPriceInput}
-                                    onChange={(e) => setAvgPriceInput(e.target.value)}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                    placeholder="0.0"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex space-x-3 mt-8">
-                            <button
-                                onClick={() => {
-                                    setIsEditModalOpen(false);
-                                    setIsAddModalOpen(false);
-                                }}
-                                className="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSaveHolding}
-                                className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-colors"
-                            >
-                                Save Changes
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

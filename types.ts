@@ -41,6 +41,8 @@ export interface Token {
   symbol: string;
   address: string;
   pairAddress: string;
+  decimals?: number;
+  chainId?: number;
   creationDate: string;
   liquidity: number;
   volume24h: number;
