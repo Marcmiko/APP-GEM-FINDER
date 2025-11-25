@@ -145,33 +145,40 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
 
             setSyncProgress(80);
 
-            // 4. Multi-tier price fetching
+            // 4. Multi-tier price fetching with aggressive fallbacks
             if (addressesToFetchPrice.length > 0) {
                 try {
                     console.log('📊 Fetching prices for', addressesToFetchPrice.length, 'tokens...');
 
-                    // Import DexScreener service
-                    const { getPairsByAddress, searchDexScreener } = await import('../services/dexScreenerService');
-
-                    // TIER 1: Try DexScreener by address
-                    const pairs = await getPairsByAddress(addressesToFetchPrice);
-                    console.log('💰 DexScreener returned', pairs.length, 'pairs by address');
-
-                    // Create price map from DexScreener pairs
                     const priceMap: Record<string, number> = {};
-                    pairs.forEach(pair => {
-                        if (pair.baseToken?.address && pair.priceUsd) {
-                            const addr = pair.baseToken.address.toLowerCase();
-                            const price = parseFloat(pair.priceUsd);
-                            if (price > 0) {
-                                priceMap[addr] = price;
+
+                    // TIER 1: Try multi-source price aggregator (1inch, CMC, Birdeye)
+                    console.log('🌐 Trying multi-source APIs (1inch, CMC, Birdeye)...');
+                    const { getMultiSourcePrices } = await import('../services/multiPriceService');
+                    const multiPrices = await getMultiSourcePrices(addressesToFetchPrice);
+                    Object.assign(priceMap, multiPrices);
+                    console.log('🌐 Multi-source found', Object.keys(multiPrices).length, 'prices');
+
+                    // TIER 2: DexScreener by address for missing tokens
+                    const stillMissing1 = addressesToFetchPrice.filter(addr => !priceMap[addr.toLowerCase()]);
+                    if (stillMissing1.length > 0) {
+                        console.log('💎 Trying DexScreener for', stillMissing1.length, 'tokens...');
+                        const { getPairsByAddress } = await import('../services/dexScreenerService');
+                        const pairs = await getPairsByAddress(stillMissing1);
+                        console.log('💎 DexScreener returned', pairs.length, 'pairs');
+
+                        pairs.forEach(pair => {
+                            if (pair.baseToken?.address && pair.priceUsd) {
+                                const addr = pair.baseToken.address.toLowerCase();
+                                const price = parseFloat(pair.priceUsd);
+                                if (price > 0 && !priceMap[addr]) {
+                                    priceMap[addr] = price;
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
 
-                    console.log('💵 Price map from addresses:', Object.keys(priceMap).length, 'entries');
-
-                    // TIER 2: Try GeckoTerminal/CoinGecko for missing tokens
+                    // TIER 3: GeckoTerminal/CoinGecko for remaining missing tokens
                     const tokensWithoutPrice = heldTokens.filter(t => {
                         const addr = t.address?.toLowerCase();
                         return addr && !priceMap[addr];
@@ -184,14 +191,14 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                         const geckoPrice = await getTokenPrices(missingAddresses);
 
                         Object.keys(geckoPrice).forEach(addr => {
-                            if (geckoPrice[addr] > 0) {
+                            if (geckoPrice[addr] > 0 && !priceMap[addr.toLowerCase()]) {
                                 priceMap[addr.toLowerCase()] = geckoPrice[addr];
-                                console.log(`🦎 GeckoTerminal found price for ${addr}: $${geckoPrice[addr]}`);
+                                console.log(`🦎 GeckoTerminal price for ${addr}: $${geckoPrice[addr]}`);
                             }
                         });
                     }
 
-                    // TIER 3: For remaining tokens, search by symbol on DexScreener
+                    // TIER 4: Search by symbol on DexScreener
                     const stillMissingPrice = heldTokens.filter(t => {
                         const addr = t.address?.toLowerCase();
                         return addr && !priceMap[addr];
@@ -199,12 +206,12 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
 
                     if (stillMissingPrice.length > 0) {
                         console.log('🔍 Searching by symbol for', stillMissingPrice.length, 'tokens...');
+                        const { searchDexScreener } = await import('../services/dexScreenerService');
 
                         for (const token of stillMissingPrice) {
                             try {
                                 const searchResults = await searchDexScreener(token.symbol);
                                 if (searchResults.length > 0) {
-                                    // Take the first result (usually most liquid)
                                     const firstPair = searchResults[0];
                                     const price = parseFloat(firstPair.priceUsd);
                                     if (price > 0) {
@@ -213,12 +220,12 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                                     }
                                 }
                             } catch (err) {
-                                // Ignore individual search errors
+                                // Ignore
                             }
                         }
                     }
 
-                    // TIER 4: Hardcoded fallback for ETH
+                    // TIER 5: ETH fallback
                     const ethToken = heldTokens.find(t => t.symbol === 'ETH' || t.name === 'Ethereum');
                     if (ethToken && !priceMap[ethToken.address?.toLowerCase()]) {
                         try {
