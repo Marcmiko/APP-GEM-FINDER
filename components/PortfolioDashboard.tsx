@@ -220,7 +220,30 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                         console.warn('DexScreener failed:', err);
                     }
 
-                    // STEP 4: Update token prices
+                    // STEP 4: Try Basescan Scraper (User Request)
+                    // Only for tokens that still don't have a price
+                    const missingPrice = addressesToFetchPrice.filter(addr => !priceMap[addr.toLowerCase()]);
+                    if (missingPrice.length > 0) {
+                        try {
+                            console.log('🔍 Scraping Basescan for', missingPrice.length, 'missing tokens...');
+                            const { getBasescanPrices } = await import('../services/basescanService');
+
+                            // Only try for a few to avoid long waits/blocks
+                            const tokensToScrape = missingPrice.slice(0, 5);
+                            const scrapedPrices = await getBasescanPrices(tokensToScrape);
+
+                            Object.entries(scrapedPrices).forEach(([addr, price]) => {
+                                if (price > 0) {
+                                    priceMap[addr.toLowerCase()] = price;
+                                    console.log(`🔍 Basescan found price for ${addr}: $${price}`);
+                                }
+                            });
+                        } catch (err) {
+                            console.warn('Basescan scrape failed:', err);
+                        }
+                    }
+
+                    // STEP 5: Update token prices
                     let pricesUpdated = 0;
                     heldTokens.forEach(t => {
                         const addr = t.address?.toLowerCase();
