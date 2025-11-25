@@ -199,117 +199,135 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
     };
 
     return (
-        <div className="space-y-8">
-            {/* Header Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-indigo-900/50 to-slate-900/50 p-6 rounded-2xl border border-indigo-500/20 shadow-lg relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-24 h-24 text-indigo-400">
+        <div className="space-y-6 max-w-4xl mx-auto">
+            {/* Total Balance Card */}
+            <div className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-8 rounded-3xl shadow-2xl overflow-hidden">
+                <div className="absolute inset-0 bg-black/10"></div>
+                <div className="relative z-10 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white/80">
                             <path d="M12 7.5a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5z" />
                             <path fillRule="evenodd" d="M1.5 4.875C1.5 3.839 2.34 3 3.375 3h17.25c1.035 0 1.875.84 1.875 1.875v9.75c0 1.036-.84 1.875-1.875 1.875H3.375A1.875 1.875 0 011.5 14.625v-9.75zM8.25 9.75a3.75 3.75 0 117.5 0 3.75 3.75 0 01-7.5 0zM18.75 9a.75.75 0 00-.75.75v.008c0 .414.336.75.75.75h.008a.75.75 0 00.75-.75V9.75a.75.75 0 00-.75-.75h-.008zM4.5 9.75A.75.75 0 015.25 9h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H5.25a.75.75 0 01-.75-.75V9.75z" clipRule="evenodd" />
-                            <path d="M2.25 18a.75.75 0 000 1.5c5.4 0 10.63.722 15.6 2.075 1.19.324 2.4-.558 2.4-1.82V18.75a.75.75 0 00-.75-.75H2.25z" />
                         </svg>
+                        <span className="text-white/80 text-sm font-medium uppercase tracking-wider">Total Balance</span>
                     </div>
-                    <h3 className="text-slate-400 text-sm font-medium uppercase tracking-wider">Total Balance</h3>
-                    <div className="mt-2 flex items-baseline gap-2">
-                        <span className="text-4xl font-black text-white">
-                            ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </span>
+                    <div className="text-5xl font-black text-white mb-4">
+                        ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
-                    <div className="mt-4">
-                        <button
-                            onClick={handleSyncWallet}
-                            disabled={isSyncing || !isConnected}
-                            className={`w-full py-2 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2
-                                ${isConnected
-                                    ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
-                                    : 'bg-slate-700 text-slate-400 cursor-not-allowed'}`}
-                        >
-                            {isSyncing ? (
-                                <>
-                                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Scanning... {syncProgress}%
-                                </>
-                            ) : (
-                                <>
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                                        <path fillRule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 100 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0015.059-4.035.75.75 0 00-.53-.918z" clipRule="evenodd" />
-                                    </svg>
-                                    Sync Wallet
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </div>
-
-                <div className="md:col-span-2 bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
-                    <PortfolioCharts tokens={savedTokens} totalValue={totalValue} />
+                    <button
+                        onClick={handleSyncWallet}
+                        disabled={isSyncing || !isConnected}
+                        className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all ${isConnected
+                                ? 'bg-white text-purple-600 hover:bg-white/90 shadow-lg'
+                                : 'bg-white/20 text-white/50 cursor-not-allowed'
+                            }`}
+                    >
+                        {isSyncing ? (
+                            <>
+                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Syncing... {syncProgress}%
+                            </>
+                        ) : (
+                            <>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                                    <path fillRule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 100 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0015.059-4.035.75.75 0 00-.53-.918z" clipRule="evenodd" />
+                                </svg>
+                                Sync Wallet
+                            </>
+                        )}
+                    </button>
                 </div>
             </div>
 
-            {/* Assets Table */}
-            <div className="bg-slate-800/50 rounded-2xl border border-slate-700 overflow-hidden">
-                <div className="p-6 border-b border-slate-700 flex justify-between items-center">
+            {/* Assets List */}
+            <div className="bg-slate-800/50 rounded-3xl border border-slate-700/50 overflow-hidden backdrop-blur-xl">
+                <div className="p-6 border-b border-slate-700/50 flex justify-between items-center">
                     <h3 className="text-xl font-bold text-white">Your Assets</h3>
-                    <span className="text-sm text-slate-400">{holdings.length} tokens found</span>
+                    <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
+                        {holdings.length} {holdings.length === 1 ? 'token' : 'tokens'}
+                    </span>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="bg-slate-900/50 text-left">
-                                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Asset</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Price</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Balance</th>
-                                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Value</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-700">
-                            {holdings.length === 0 ? (
-                                <tr>
-                                    <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
-                                        {isSyncing ? 'Scanning blockchain...' : 'No assets found. Connect wallet and sync.'}
-                                    </td>
-                                </tr>
-                            ) : (
-                                holdings.map((token, idx) => {
-                                    const value = (token.holdings || 0) * (token.priceUsd || 0);
-                                    return (
-                                        <tr key={token.address || idx} className="hover:bg-slate-700/30 transition-colors group">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center">
-                                                    <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold mr-3 border border-indigo-500/30">
-                                                        {token.iconUrl ? (
-                                                            <img src={token.iconUrl} alt={token.symbol} className="w-full h-full rounded-full object-cover" />
-                                                        ) : (
-                                                            token.symbol?.substring(0, 2)
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-bold text-white">{token.name}</div>
-                                                        <div className="text-xs text-slate-400">{token.symbol}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-slate-300">
-                                                ${token.priceUsd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-slate-300 font-mono">
-                                                {token.holdings?.toLocaleString()} {token.symbol}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right font-bold text-white">
+
+                <div className="divide-y divide-slate-700/30">
+                    {holdings.length === 0 ? (
+                        <div className="p-12 text-center">
+                            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-slate-700/30 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-slate-500">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
+                                </svg>
+                            </div>
+                            <p className="text-slate-400 font-medium mb-2">
+                                {isSyncing ? 'Scanning blockchain...' : 'No assets found'}
+                            </p>
+                            <p className="text-slate-500 text-sm">
+                                {!isConnected ? 'Connect your wallet to get started' : 'Click "Sync Wallet" to scan your assets'}
+                            </p>
+                        </div>
+                    ) : (
+                        holdings.map((token, idx) => {
+                            const value = (token.holdings || 0) * (token.priceUsd || 0);
+                            const priceChange = token.priceChange24h || 0;
+                            const isPositive = priceChange >= 0;
+
+                            return (
+                                <div
+                                    key={token.address || idx}
+                                    className="p-4 hover:bg-slate-700/20 transition-all duration-200 group cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        {/* Token Icon */}
+                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform">
+                                            {token.iconUrl ? (
+                                                <img src={token.iconUrl} alt={token.symbol} className="w-full h-full rounded-full object-cover" />
+                                            ) : (
+                                                <span>{token.symbol?.substring(0, 2)}</span>
+                                            )}
+                                        </div>
+
+                                        {/* Token Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-baseline gap-2 mb-1">
+                                                <h4 className="text-white font-bold text-lg">{token.symbol}</h4>
+                                                <span className="text-slate-500 text-sm truncate">{token.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-slate-400 text-sm">
+                                                    ${token.priceUsd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                                                </span>
+                                                {priceChange !== 0 && (
+                                                    <span className={`text-xs font-bold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                        {isPositive ? '↗' : '↘'} {Math.abs(priceChange).toFixed(2)}%
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Holdings */}
+                                        <div className="text-right">
+                                            <div className="text-white font-bold text-lg mb-1">
+                                                {token.holdings?.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                                            </div>
+                                            <div className="text-slate-400 text-sm">
                                                 ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
             </div>
+
+            {/* Charts Section (if there are holdings) */}
+            {holdings.length > 0 && (
+                <div className="bg-slate-800/50 rounded-3xl border border-slate-700/50 p-6 backdrop-blur-xl">
+                    <PortfolioCharts tokens={holdings} totalValue={totalValue} />
+                </div>
+            )}
         </div>
     );
 };
