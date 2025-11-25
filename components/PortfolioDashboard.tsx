@@ -9,11 +9,11 @@ import { POPULAR_BASE_TOKENS } from '../data/popularTokens';
 import { getTokenPrices } from '../services/geckoTerminalService';
 
 interface PortfolioDashboardProps {
-    savedTokens: Token[];
-    onUpdateTokens: (tokens: Token[]) => void;
+    walletTokens: Token[];
+    onWalletSync: (tokens: Token[]) => void;
 }
 
-const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, onUpdateTokens }) => {
+const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, onWalletSync }) => {
     const [isSyncing, setIsSyncing] = useState(false);
     const [syncProgress, setSyncProgress] = useState(0);
     const { address, isConnected } = useAccount();
@@ -21,7 +21,7 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
     const { addAlert } = useAlerts();
 
     // Filter out tokens with 0 holdings for display
-    const holdings = savedTokens.filter(t => (t.holdings || 0) > 0);
+    const holdings = walletTokens.filter(t => (t.holdings || 0) > 0);
 
     const totalValue = holdings.reduce((sum, t) => sum + ((t.holdings || 0) * (t.priceUsd || 0)), 0);
 
@@ -160,32 +160,13 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                 }
             }
 
-            // 5. Update saved tokens
-            const newSavedTokens = [...savedTokens];
-
-            // Update existing tokens with new holdings/prices, or add new ones
-            heldTokens.forEach(heldToken => {
-                const existingIndex = newSavedTokens.findIndex(t => t.address?.toLowerCase() === heldToken.address?.toLowerCase());
-                if (existingIndex >= 0) {
-                    newSavedTokens[existingIndex] = {
-                        ...newSavedTokens[existingIndex],
-                        holdings: heldToken.holdings,
-                        priceUsd: heldToken.priceUsd
-                    };
-                } else {
-                    // Add new token found in wallet
-                    newSavedTokens.push(heldToken);
-                }
-            });
-
             console.log('=== WALLET SYNC DEBUG ===');
             console.log('Tokens found:', heldTokens.length);
             console.log('Tokens with holdings > 0:', heldTokens.filter(t => t.holdings > 0).length);
             console.log('All held tokens:', heldTokens);
-            console.log('Updated saved tokens:', newSavedTokens);
             console.log('=========================');
 
-            onUpdateTokens(newSavedTokens);
+            onWalletSync(heldTokens);
             setSyncProgress(100);
             addAlert(`Wallet synced! Found ${heldTokens.length} assets.`, 'success');
 
@@ -218,8 +199,8 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                         onClick={handleSyncWallet}
                         disabled={isSyncing || !isConnected}
                         className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all ${isConnected
-                                ? 'bg-white text-purple-600 hover:bg-white/90 shadow-lg'
-                                : 'bg-white/20 text-white/50 cursor-not-allowed'
+                            ? 'bg-white text-purple-600 hover:bg-white/90 shadow-lg'
+                            : 'bg-white/20 text-white/50 cursor-not-allowed'
                             }`}
                     >
                         {isSyncing ? (

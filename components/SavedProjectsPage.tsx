@@ -13,14 +13,15 @@ const BookmarkIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 
 interface SavedProjectsPageProps {
     savedTokens: Token[];
+    walletTokens: Token[];
     onSave: (token: Token) => void;
     onUnsave: (token: Token) => void;
     onUpdateTokens?: (tokens: Token[]) => void;
+    onWalletSync?: (tokens: Token[]) => void;
 }
 
-const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({ savedTokens, onSave, onUnsave, onUpdateTokens }) => {
-    // Filter tokens for the watchlist (only those with 0 holdings)
-    // Tokens with holdings are shown in the PortfolioDashboard
+const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({ savedTokens, walletTokens, onSave, onUnsave, onUpdateTokens, onWalletSync }) => {
+    // Filter tokens for the watchlist (only saved tokens without holdings)
     const watchlistTokens = savedTokens.filter(t => !t.holdings || t.holdings === 0);
     const [selectedToken, setSelectedToken] = React.useState<Token | null>(null);
 
@@ -35,12 +36,12 @@ const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({ savedTokens, onSa
                 </p>
             </div>
 
-            {/* Portfolio Dashboard */}
-            {onUpdateTokens && (
+            {/* Portfolio Dashboard - Shows Wallet Tokens */}
+            {onWalletSync && (
                 <div className="mb-16 animate-fade-in">
                     <PortfolioDashboard
-                        savedTokens={savedTokens}
-                        onUpdateTokens={onUpdateTokens}
+                        walletTokens={walletTokens}
+                        onWalletSync={onWalletSync}
                     />
                 </div>
             )}

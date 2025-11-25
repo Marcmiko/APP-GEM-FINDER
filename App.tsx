@@ -27,6 +27,7 @@ const queryClient = new QueryClient();
 const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('gem-finder');
   const [savedTokens, setSavedTokens] = useLocalStorage<Token[]>('savedTokens', []);
+  const [walletTokens, setWalletTokens] = useState<Token[]>([]);
 
   const handleSaveToken = (tokenToSave: Token) => {
     setSavedTokens(prev => {
@@ -58,6 +59,10 @@ const App: React.FC = () => {
         return existing;
       });
     });
+  };
+
+  const handleWalletSync = (tokens: Token[]) => {
+    setWalletTokens(tokens);
   };
 
   // Ensure savedTokens is always an array to prevent crashes
@@ -122,9 +127,11 @@ const App: React.FC = () => {
                     {activePage === 'saved-projects' && (
                       <SavedProjectsPage
                         savedTokens={safeSavedTokens}
+                        walletTokens={walletTokens}
                         onSave={handleSaveToken}
                         onUnsave={handleUnsaveToken}
                         onUpdateTokens={handleUpdateTokens}
+                        onWalletSync={handleWalletSync}
                       />
                     )}
                   </ErrorBoundary>
