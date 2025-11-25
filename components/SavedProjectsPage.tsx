@@ -36,7 +36,7 @@ const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({ savedTokens, onSa
             </div>
 
             {/* Portfolio Dashboard */}
-            {savedTokens.length > 0 && onUpdateTokens && (
+            {onUpdateTokens && (
                 <div className="mb-16 animate-fade-in">
                     <PortfolioDashboard
                         savedTokens={savedTokens}
