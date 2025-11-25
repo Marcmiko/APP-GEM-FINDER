@@ -16,6 +16,7 @@ interface PortfolioDashboardProps {
 const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, onWalletSync }) => {
     const [isSyncing, setIsSyncing] = useState(false);
     const [syncProgress, setSyncProgress] = useState(0);
+    const [isExpanded, setIsExpanded] = useState(true);
     const { address, isConnected } = useAccount();
     const publicClient = usePublicClient();
     const { addAlert } = useAlerts();
@@ -184,6 +185,25 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
             {/* Total Balance Card */}
             <div className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-8 rounded-3xl shadow-2xl overflow-hidden">
                 <div className="absolute inset-0 bg-black/10"></div>
+
+                {/* Collapse/Expand Button */}
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="absolute top-4 right-4 z-20 p-2 bg-white/20 hover:bg-white/30 rounded-full transition-all backdrop-blur-sm"
+                    title={isExpanded ? "Reduce wallet" : "Expand wallet"}
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.5}
+                        stroke="currentColor"
+                        className={`w-5 h-5 text-white transition-transform duration-300 ${isExpanded ? '' : 'rotate-180'}`}
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                    </svg>
+                </button>
+
                 <div className="relative z-10 text-center">
                     <div className="flex items-center justify-center gap-2 mb-2">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white/80">
@@ -199,8 +219,8 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                         onClick={handleSyncWallet}
                         disabled={isSyncing || !isConnected}
                         className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all ${isConnected
-                            ? 'bg-white text-purple-600 hover:bg-white/90 shadow-lg'
-                            : 'bg-white/20 text-white/50 cursor-not-allowed'
+                                ? 'bg-white text-purple-600 hover:bg-white/90 shadow-lg'
+                                : 'bg-white/20 text-white/50 cursor-not-allowed'
                             }`}
                     >
                         {isSyncing ? (
@@ -223,91 +243,96 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                 </div>
             </div>
 
-            {/* Assets List */}
-            <div className="bg-slate-800/50 rounded-3xl border border-slate-700/50 overflow-hidden backdrop-blur-xl">
-                <div className="p-6 border-b border-slate-700/50 flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-white">Your Assets</h3>
-                    <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
-                        {holdings.length} {holdings.length === 1 ? 'token' : 'tokens'}
-                    </span>
-                </div>
-
-                <div className="divide-y divide-slate-700/30">
-                    {holdings.length === 0 ? (
-                        <div className="p-12 text-center">
-                            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-slate-700/30 flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-slate-500">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
-                                </svg>
-                            </div>
-                            <p className="text-slate-400 font-medium mb-2">
-                                {isSyncing ? 'Scanning blockchain...' : 'No assets found'}
-                            </p>
-                            <p className="text-slate-500 text-sm">
-                                {!isConnected ? 'Connect your wallet to get started' : 'Click "Sync Wallet" to scan your assets'}
-                            </p>
+            {/* Collapsible Assets Section */}
+            {isExpanded && (
+                <>
+                    {/* Assets List */}
+                    <div className="bg-slate-800/50 rounded-3xl border border-slate-700/50 overflow-hidden backdrop-blur-xl animate-fade-in">
+                        <div className="p-6 border-b border-slate-700/50 flex justify-between items-center">
+                            <h3 className="text-xl font-bold text-white">Your Assets</h3>
+                            <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
+                                {holdings.length} {holdings.length === 1 ? 'token' : 'tokens'}
+                            </span>
                         </div>
-                    ) : (
-                        holdings.map((token, idx) => {
-                            const value = (token.holdings || 0) * (token.priceUsd || 0);
-                            const priceChange = token.priceChange24h || 0;
-                            const isPositive = priceChange >= 0;
 
-                            return (
-                                <div
-                                    key={token.address || idx}
-                                    className="p-4 hover:bg-slate-700/20 transition-all duration-200 group cursor-pointer"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        {/* Token Icon */}
-                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform">
-                                            {token.iconUrl ? (
-                                                <img src={token.iconUrl} alt={token.symbol} className="w-full h-full rounded-full object-cover" />
-                                            ) : (
-                                                <span>{token.symbol?.substring(0, 2)}</span>
-                                            )}
-                                        </div>
-
-                                        {/* Token Info */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-baseline gap-2 mb-1">
-                                                <h4 className="text-white font-bold text-lg">{token.symbol}</h4>
-                                                <span className="text-slate-500 text-sm truncate">{token.name}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-slate-400 text-sm">
-                                                    ${token.priceUsd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
-                                                </span>
-                                                {priceChange !== 0 && (
-                                                    <span className={`text-xs font-bold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                        {isPositive ? '↗' : '↘'} {Math.abs(priceChange).toFixed(2)}%
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Holdings */}
-                                        <div className="text-right">
-                                            <div className="text-white font-bold text-lg mb-1">
-                                                {token.holdings?.toLocaleString(undefined, { maximumFractionDigits: 4 })}
-                                            </div>
-                                            <div className="text-slate-400 text-sm">
-                                                ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </div>
-                                        </div>
+                        <div className="divide-y divide-slate-700/30">
+                            {holdings.length === 0 ? (
+                                <div className="p-12 text-center">
+                                    <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-slate-700/30 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-slate-500">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
+                                        </svg>
                                     </div>
+                                    <p className="text-slate-400 font-medium mb-2">
+                                        {isSyncing ? 'Scanning blockchain...' : 'No assets found'}
+                                    </p>
+                                    <p className="text-slate-500 text-sm">
+                                        {!isConnected ? 'Connect your wallet to get started' : 'Click "Sync Wallet" to scan your assets'}
+                                    </p>
                                 </div>
-                            );
-                        })
-                    )}
-                </div>
-            </div>
+                            ) : (
+                                holdings.map((token, idx) => {
+                                    const value = (token.holdings || 0) * (token.priceUsd || 0);
+                                    const priceChange = token.priceChange24h || 0;
+                                    const isPositive = priceChange >= 0;
 
-            {/* Charts Section (if there are holdings) */}
-            {holdings.length > 0 && (
-                <div className="bg-slate-800/50 rounded-3xl border border-slate-700/50 p-6 backdrop-blur-xl">
-                    <PortfolioCharts tokens={holdings} totalValue={totalValue} />
-                </div>
+                                    return (
+                                        <div
+                                            key={token.address || idx}
+                                            className="p-4 hover:bg-slate-700/20 transition-all duration-200 group cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                {/* Token Icon */}
+                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform">
+                                                    {token.iconUrl ? (
+                                                        <img src={token.iconUrl} alt={token.symbol} className="w-full h-full rounded-full object-cover" />
+                                                    ) : (
+                                                        <span>{token.symbol?.substring(0, 2)}</span>
+                                                    )}
+                                                </div>
+
+                                                {/* Token Info */}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-baseline gap-2 mb-1">
+                                                        <h4 className="text-white font-bold text-lg">{token.symbol}</h4>
+                                                        <span className="text-slate-500 text-sm truncate">{token.name}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-slate-400 text-sm">
+                                                            ${token.priceUsd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                                                        </span>
+                                                        {priceChange !== 0 && (
+                                                            <span className={`text-xs font-bold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                                {isPositive ? '↗' : '↘'} {Math.abs(priceChange).toFixed(2)}%
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Holdings */}
+                                                <div className="text-right">
+                                                    <div className="text-white font-bold text-lg mb-1">
+                                                        {token.holdings?.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                                                    </div>
+                                                    <div className="text-slate-400 text-sm">
+                                                        ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Charts Section (if there are holdings) */}
+                    {holdings.length > 0 && (
+                        <div className="bg-slate-800/50 rounded-3xl border border-slate-700/50 p-6 backdrop-blur-xl animate-fade-in">
+                            <PortfolioCharts tokens={holdings} totalValue={totalValue} />
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
