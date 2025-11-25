@@ -53,7 +53,7 @@ const AnalystPicksPage: React.FC<AnalystPicksPageProps> = ({ savedTokens, onSave
         if (!hasScanned) {
             return (
                 <div className="text-center py-16 px-6 bg-slate-800/50 rounded-2xl border border-slate-700">
-                    <AnalystIcon className="w-16 h-16 mx-auto text-purple-400" />
+                    <img src="/assets/analyst_brain.png" alt="Analyst" className="w-24 h-24 mx-auto object-contain drop-shadow-2xl" />
                     <h3 className="mt-4 text-2xl font-bold text-white">Consult the Analyst?</h3>
                     <p className="mt-2 text-slate-400">Click the button to get the AI's latest high-conviction, narrative-driven picks.</p>
                 </div>

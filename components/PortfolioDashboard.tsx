@@ -52,6 +52,11 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                 return;
             }
 
+            // Fetch ETH Balance
+            const ethBalance = await publicClient.getBalance({ address });
+            const ethBalanceFormatted = formatUnits(ethBalance, 18);
+
+            // Fetch Token Balances
             const calls = tokensToSync.map(token => ({
                 address: token.address as `0x${string}`,
                 abi: parseAbi(['function balanceOf(address) view returns (uint256)']),
@@ -61,19 +66,14 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
 
             const results = await publicClient.multicall({ contracts: calls } as any);
 
-            const updatedTokens = savedTokens.map((token, index) => {
+            let updatedTokens = savedTokens.map((token, index) => {
                 // Find the result for this token
                 const syncIndex = tokensToSync.findIndex(t => t.address === token.address);
                 if (syncIndex === -1) return token;
 
                 const result = results[syncIndex];
                 if (result.status === 'success') {
-                    const balance = formatUnits(result.result as bigint, 18); // Assuming 18 decimals for simplicity, ideally should fetch decimals too
-                    // If balance > 0, update holdings. If 0, keep as is or set to 0? 
-                    // Let's set to 0 if we are syncing, to reflect reality.
-                    // But maybe user manually added holdings for a token they track but don't hold in THIS wallet?
-                    // The request is "see what tokens are there". So we should probably update it.
-                    // To be safe, let's only update if balance > 0 or if it was previously > 0.
+                    const balance = formatUnits(result.result as bigint, 18);
                     const newBalance = parseFloat(balance);
                     return {
                         ...token,
@@ -83,8 +83,83 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                 return token;
             });
 
+            // Add or Update ETH in the list
+            const ethIndex = updatedTokens.findIndex(t => t.symbol === 'ETH');
+            const ethValue = parseFloat(ethBalanceFormatted);
+
+            if (ethIndex >= 0) {
+                updatedTokens[ethIndex] = {
+                    ...updatedTokens[ethIndex],
+                    holdings: ethValue
+                };
+            } else if (ethValue > 0) {
+                // Add ETH if it doesn't exist and we have a balance
+                updatedTokens.unshift({
+                    name: 'Ethereum',
+                    symbol: 'ETH',
+                    address: '0x4200000000000000000000000000000000000006', // WETH on Base or placeholder
+                    priceUsd: 3500, // Placeholder, ideally fetch price
+                    holdings: ethValue,
+                    decimals: 18,
+                    chainId: 8453,
+                    pairAddress: '',
+                    creationDate: new Date().toISOString(),
+                    liquidity: 0,
+                    volume24h: 0,
+                    marketCap: 0,
+                    fdv: 0,
+                    holders: 0,
+                    buyPressure: 50,
+                    priceChange1h: 0,
+                    priceChange24h: 0,
+                    volume1h: 0,
+                    isLiquidityLocked: false,
+                    isOwnershipRenounced: false,
+                    gemScore: 0,
+                    analysis: {
+                        summary: 'Native Token',
+                        strengths: '',
+                        risks: '',
+                        verdict: 'Hold'
+                    },
+                    technicalIndicators: {
+                        rsi: null,
+                        macd: null,
+                        movingAverages: null
+                    },
+                    socialSentiment: {
+                        positive: 0,
+                        negative: 0,
+                        neutral: 100,
+                        summary: ''
+                    },
+                    links: {
+                        website: null,
+                        twitter: null,
+                        telegram: null,
+                        discord: null,
+                        coinmarketcap: null,
+                        coingecko: null
+                    },
+                    securityChecks: {
+                        renouncedOwnership: false,
+                        liquidityLocked: false,
+                        noMintFunction: false,
+                        noBlacklist: false,
+                        noProxy: false
+                    },
+                    websiteUrl: null,
+                    xUrl: null,
+                    telegramUrl: null,
+                    discordUrl: null,
+                    coinMarketCapUrl: null,
+                    coingeckoUrl: null,
+                    iconUrl: null
+                } as Token);
+            }
+
             onUpdateTokens(updatedTokens);
-            addAlert('Wallet synced successfully!', 'success');
+            addAlert(`Synced! ETH: ${parseFloat(ethBalanceFormatted).toFixed(4)}`, 'success');
 
         } catch (error) {
             console.error('Error syncing wallet:', error);

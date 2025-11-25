@@ -54,7 +54,7 @@ const SocialTrendsPage: React.FC<SocialTrendsPageProps> = ({ savedTokens, onSave
         if (!hasScanned) {
             return (
                 <div className="text-center py-16 px-6 bg-slate-800/50 rounded-2xl border border-slate-700">
-                    <FireIcon className="w-16 h-16 mx-auto text-blue-400" />
+                    <img src="/assets/social_fire.png" alt="Hype" className="w-24 h-24 mx-auto object-contain drop-shadow-2xl" />
                     <h3 className="mt-4 text-2xl font-bold text-white">Listen to the Hype</h3>
                     <p className="mt-2 text-slate-400">Scan X (Twitter) and Farcaster for tokens dominating the conversation right now.</p>
                 </div>

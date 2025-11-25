@@ -153,7 +153,7 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                             </span>
                         ) : hasScanned ? (
                             <>
-                                <RadarIcon className="w-6 h-6 mr-2" />
+                                <img src="/assets/scan_radar.png" alt="Scan" className="w-8 h-8 mr-2 object-contain" />
                                 Scan Again
                             </>
                         ) : (
