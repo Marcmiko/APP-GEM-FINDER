@@ -165,7 +165,42 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                         priceMap['eth'] = 3500; // Fallback
                     }
 
-                    // STEP 2: Try DexScreener for all tokens
+                    // STEP 2: Try 0x API (same as Base Wallet uses!)
+                    try {
+                        console.log('🔷 Trying 0x API for token prices...');
+
+                        for (const address of addressesToFetchPrice) {
+                            try {
+                                // 0x Price API for Base (chain ID 8453)
+                                const response = await fetch(
+                                    `https://api.0x.org/swap/v1/price?sellToken=${address}&buyToken=0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE&sellAmount=1000000000000000000`,
+                                    {
+                                        headers: {
+                                            '0x-api-key': 'public', // Public endpoint
+                                            '0x-chain-id': '8453' // Base chain ID
+                                        }
+                                    }
+                                );
+
+                                if (response.ok) {
+                                    const data = await response.json();
+                                    if (data.price) {
+                                        const price = parseFloat(data.price);
+                                        if (price > 0) {
+                                            priceMap[address.toLowerCase()] = price;
+                                            console.log(`🔷 0x API found price for ${address}: $${price}`);
+                                        }
+                                    }
+                                }
+                            } catch (err) {
+                                // Skip individual token errors
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('0x API failed:', err);
+                    }
+
+                    // STEP 3: Try DexScreener for all tokens
                     try {
                         const { getPairsByAddress } = await import('../services/dexScreenerService');
                         const pairs = await getPairsByAddress(addressesToFetchPrice);
@@ -185,7 +220,7 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                         console.warn('DexScreener failed:', err);
                     }
 
-                    // STEP 3: Update token prices
+                    // STEP 4: Update token prices
                     let pricesUpdated = 0;
                     heldTokens.forEach(t => {
                         const addr = t.address?.toLowerCase();
