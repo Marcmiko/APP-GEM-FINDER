@@ -178,6 +178,13 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
                                 </span>
                             )}
                         </div>
+                        {token.creationDate && (
+                            <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-500 font-mono">
+                                <span>🚀 {new Date(token.creationDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                                <span className="text-slate-600">•</span>
+                                <span>{getRelativeTime(token.creationDate)}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -185,6 +192,17 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
                     {isLive && (
                         <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-lg animate-pulse mb-1">
                             LIVE
+                        </div>
+                    )}
+                    {token.gemScore !== undefined && (
+                        <div className="flex items-center gap-1.5 bg-slate-800/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 shadow-lg mb-1">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Score</span>
+                            <span className={`text-sm font-black ${token.gemScore >= 80 ? 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400' :
+                                token.gemScore >= 50 ? 'text-emerald-400' :
+                                    'text-slate-300'
+                                }`}>
+                                {token.gemScore}/100
+                            </span>
                         </div>
                     )}
                     <div className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold border backdrop-blur-md ${verdictStyle}`}>
@@ -248,6 +266,17 @@ const getVerdictStyle = (verdict: string) => {
         default: return { style: "bg-purple-500/10 text-purple-400 border-purple-500/30", icon: <BearIcon className="w-5 h-5" /> };
     }
 }
+
+const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+};
 
 const IconPlaceholder: React.FC<{ symbol?: string }> = ({ symbol }) => (
     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center font-bold text-indigo-400 text-xl flex-shrink-0 shadow-inner ring-1 ring-white/5">
