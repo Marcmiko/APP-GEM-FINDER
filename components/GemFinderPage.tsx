@@ -158,7 +158,7 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                             </>
                         ) : (
                             <>
-                                <RocketIcon className="w-6 h-6 mr-2" />
+                                <img src="/assets/gem_scan_rocket.png" alt="Rocket" className="w-7 h-7 mr-2 object-contain" />
                                 Start Gem Scan
                             </>
                         )}
