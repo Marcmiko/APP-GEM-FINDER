@@ -75,27 +75,68 @@ export const getTokenPrices = async (addresses: string[]): Promise<Record<string
     if (addresses.length === 0) return {};
 
     try {
-        // GeckoTerminal allows up to 30 addresses per request usually, so we might need to chunk if list is huge
-        // For now, let's assume < 30 or handle simple batching if needed later.
+        // Try GeckoTerminal first
         const addressesStr = addresses.join(',');
         const response = await fetch(`${BASE_API_URL}/simple/networks/base/token_price/${addressesStr}`);
 
         if (!response.ok) {
-            throw new Error(`GeckoTerminal API error: ${response.statusText}`);
+            console.warn(`GeckoTerminal API error: ${response.statusText}`);
+            return await fetchPricesFromCoinGecko(addresses);
         }
 
         const data = await response.json();
-        // Response format: { data: { attributes: { token_prices: { "0x...": "1.23" } } } }
         const prices: Record<string, number> = {};
-        const rawPrices = data.data.attributes.token_prices;
+        const rawPrices = data.data?.attributes?.token_prices || {};
 
         for (const [addr, price] of Object.entries(rawPrices)) {
-            prices[addr] = parseFloat(price as string);
+            if (price && parseFloat(price as string) > 0) {
+                prices[addr.toLowerCase()] = parseFloat(price as string);
+            }
+        }
+
+        // For addresses that didn't get a price, try CoinGecko as fallback
+        const missingAddresses = addresses.filter(addr => !prices[addr.toLowerCase()]);
+        if (missingAddresses.length > 0) {
+            console.log(`Fetching ${missingAddresses.length} missing prices from CoinGecko...`);
+            const fallbackPrices = await fetchPricesFromCoinGecko(missingAddresses);
+            Object.assign(prices, fallbackPrices);
         }
 
         return prices;
     } catch (error) {
-        console.error("Error fetching token prices:", error);
+        console.error("Error fetching token prices from GeckoTerminal:", error);
+        // Try CoinGecko as complete fallback
+        return await fetchPricesFromCoinGecko(addresses);
+    }
+};
+
+// Fallback: Fetch prices from CoinGecko Pro API (more comprehensive)
+const fetchPricesFromCoinGecko = async (addresses: string[]): Promise<Record<string, number>> => {
+    try {
+        // CoinGecko API: GET /simple/token_price/{id}
+        // id for Base is "base"
+        const addressesStr = addresses.map(a => a.toLowerCase()).join(',');
+        const response = await fetch(
+            `https://api.coingecko.com/api/v3/simple/token_price/base?contract_addresses=${addressesStr}&vs_currencies=usd`
+        );
+
+        if (!response.ok) {
+            console.warn('CoinGecko API also failed');
+            return {};
+        }
+
+        const data = await response.json();
+        const prices: Record<string, number> = {};
+
+        for (const [addr, priceData] of Object.entries(data)) {
+            if (priceData && typeof priceData === 'object' && 'usd' in priceData) {
+                prices[addr.toLowerCase()] = (priceData as any).usd;
+            }
+        }
+
+        return prices;
+    } catch (error) {
+        console.error("Error fetching from CoinGecko:", error);
         return {};
     }
 };
