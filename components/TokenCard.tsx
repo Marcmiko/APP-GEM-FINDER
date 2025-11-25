@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Token, TechnicalIndicators } from '../types';
 import { useAlerts } from '../context/AlertContext';
+import { getMultiSourcePrice } from '../services/multiPriceService';
 
 
 // --- ICONS ---
@@ -124,6 +125,27 @@ interface TokenCardProps {
 const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave, onFlashBuy, isLive, onViewDetails }) => {
     // const [isExpanded, setIsExpanded] = useState(false); // Removed inline expansion state
     const { addAlert } = useAlerts();
+    const [displayPrice, setDisplayPrice] = useState<number | undefined>(token.priceUsd);
+
+    useEffect(() => {
+        // Sync with prop if it updates to a valid value
+        if (token.priceUsd && token.priceUsd > 0) {
+            setDisplayPrice(token.priceUsd);
+        } else {
+            // Self-healing: Fetch price if missing
+            const fetchPrice = async () => {
+                try {
+                    const fetchedPrice = await getMultiSourcePrice(token.address);
+                    if (fetchedPrice && fetchedPrice > 0) {
+                        setDisplayPrice(fetchedPrice);
+                    }
+                } catch (e) {
+                    // Silent fail
+                }
+            };
+            fetchPrice();
+        }
+    }, [token.priceUsd, token.address]);
 
     const handleSaveToggle = () => {
         if (isSaved) {
@@ -168,9 +190,9 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
                         </h3>
                         <div className="flex items-center gap-3 mt-1">
                             <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">
-                                {token.priceUsd !== undefined && token.priceUsd !== null
-                                    ? `$${token.priceUsd < 0.01 ? token.priceUsd.toFixed(6) : token.priceUsd.toFixed(4)}`
-                                    : 'N/A'}
+                                {displayPrice !== undefined && displayPrice !== null && displayPrice > 0
+                                    ? `$${displayPrice < 0.01 ? displayPrice.toFixed(6) : displayPrice.toFixed(4)}`
+                                    : 'Loading...'}
                             </span>
                             {token.priceChange24h !== undefined && token.priceChange24h !== null && (
                                 <span className={`px-2 py-0.5 rounded-lg text-xs font-bold ${token.priceChange24h >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
