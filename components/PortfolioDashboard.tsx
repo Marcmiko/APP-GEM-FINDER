@@ -178,6 +178,13 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                 }
             });
 
+            console.log('=== WALLET SYNC DEBUG ===');
+            console.log('Tokens found:', heldTokens.length);
+            console.log('Tokens with holdings > 0:', heldTokens.filter(t => t.holdings > 0).length);
+            console.log('All held tokens:', heldTokens);
+            console.log('Updated saved tokens:', newSavedTokens);
+            console.log('=========================');
+
             onUpdateTokens(newSavedTokens);
             setSyncProgress(100);
             addAlert(`Wallet synced! Found ${heldTokens.length} assets.`, 'success');
