@@ -317,15 +317,13 @@ export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: 
       Focus on tokens with REAL utility, products, or unique narratives.
       For each token, estimate "Sentiment Score" (0-100) and "Hype Magnitude" (1-10).
       
-      Return ONLY a JSON array:
-      [
         { "symbol": "TICKER", "sentiment": 85, "magnitude": 9, "category": "DeFi" },
         ...
       ]
-      `
-      ;
+      `;
 
-    const ai = getAiClient(); \n    const response = await generateWithRetry(ai, {
+    const ai = getAiClient();
+    const response = await generateWithRetry(ai, {
       model: "gemini-1.5-pro",
       contents: prompt,
       config: { responseMimeType: "application/json" }
