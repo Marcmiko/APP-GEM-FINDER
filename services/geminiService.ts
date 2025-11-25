@@ -307,26 +307,32 @@ export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: 
 
   try {
     const prompt = `
-      Find 15 tokens on Base blockchain that are currently trending on Twitter/X/Farcaster.
-      For each token, estimate a "Sentiment Score" (0-100, where 100 is extreme hype/bullishness) and a "Hype Magnitude" (1-10, where 10 is viral).
+      Find 15 DIVERSE tokens currently trending on Twitter/X/Farcaster across different categories:
+      - 5 tokens from DeFi/Infrastructure (DEXs, Lending, Bridges)
+      - 5 tokens from Gaming/NFT/AI
+      - 5 tokens from social/community projects
+
+      EXCLUDE these overused memecoins: DEGEN, BRETT, TOSHI, MOCHI, NORMIE, HIGHER, KEYCAT, MOG.
       
-      Return a JSON array of objects with this format:
+      Focus on tokens with REAL utility, products, or unique narratives.
+      For each token, estimate "Sentiment Score" (0-100) and "Hype Magnitude" (1-10).
+      
+      Return ONLY a JSON array:
       [
-        { "symbol": "TICKER", "sentiment": 85, "magnitude": 9 },
+        { "symbol": "TICKER", "sentiment": 85, "magnitude": 9, "category": "DeFi" },
         ...
       ]
-      Return ONLY the JSON array.
-      `;
+      `
+      ;
 
-    const ai = getAiClient();
-    const response = await generateWithRetry(ai, {
+    const ai = getAiClient(); \n    const response = await generateWithRetry(ai, {
       model: "gemini-1.5-pro",
       contents: prompt,
       config: { responseMimeType: "application/json" }
     });
 
     const text = response.text || '[]';
-    let trends: { symbol: string; sentiment: number; magnitude: number }[] = [];
+    let trends: { symbol: string; sentiment: number; magnitude: number; category?: string }[] = [];
 
     try {
       trends = JSON.parse(text);
@@ -334,30 +340,20 @@ export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: 
       console.warn("Failed to parse social trends JSON", e);
     }
 
+    // Filter out banned memecoins from AI response
+    const BANNED_SYMBOLS = ['DEGEN', 'BRETT', 'TOSHI', 'MOCHI', 'NORMIE', 'HIGHER', 'KEYCAT', 'MOG'];
+    trends = trends.filter(t => !BANNED_SYMBOLS.includes(t.symbol.toUpperCase()));
+
     // Fallback if parsing fails or empty
     if (trends.length === 0) {
-      console.warn("AI Social Trends failed, falling back to CoinGecko trending");
-      try {
-        const cgTrending = await getTrendingCoinGecko();
-        // Map CG trending strings to the trend object format with randomized sentiment
-        trends = cgTrending.slice(0, 10).map(symbol => ({
-          symbol: symbol.toUpperCase(),
-          sentiment: 60 + Math.floor(Math.random() * 35), // Random sentiment 60-95
-          magnitude: 5 + Math.floor(Math.random() * 5)    // Random magnitude 5-10
-        }));
-      } catch (err) {
-        console.error("CoinGecko fallback failed", err);
-      }
-    }
-
-    // Ultimate fallback if both AI and CG fail
-    if (trends.length === 0) {
+      console.warn("AI Social Trends failed, using diverse fallback");
       trends = [
-        { symbol: "VIRTUAL", sentiment: 85, magnitude: 9 },
-        { symbol: "AERO", sentiment: 90, magnitude: 10 },
-        { symbol: "HIGHER", sentiment: 75, magnitude: 8 },
-        { symbol: "LUNA", sentiment: 65, magnitude: 6 },
-        { symbol: "TALENT", sentiment: 70, magnitude: 7 }
+        { symbol: "VIRTUAL", sentiment: 85, magnitude: 9, category: "AI" },
+        { symbol: "AERO", sentiment: 90, magnitude: 10, category: "DeFi" },
+        { symbol: "LUNA", sentiment: 65, magnitude: 6, category: "Gaming" },
+        { symbol: "TALENT", sentiment: 70, magnitude: 7, category: "Social" },
+        { symbol: "PRIME", sentiment: 75, magnitude: 8, category: "Gaming" },
+        { symbol: "USDC", sentiment: 60, magnitude: 5, category: "Stablecoin" }
       ];
     }
 
@@ -374,9 +370,8 @@ export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: 
             ...token.socialSentiment,
             positive: trend.sentiment,
             negative: 100 - trend.sentiment,
-            summary: `Hype Magnitude: ${trend.magnitude}/10`
+            summary: `${trend.category || 'Trending'} | Hype: ${trend.magnitude}/10`
           },
-          // We can use 'convictionScore' or a new field to store the magnitude for the heatmap
           convictionScore: trend.magnitude
         };
       }
@@ -391,7 +386,8 @@ export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: 
 
   } catch (error: any) {
     console.error("findSocialTrends error:", error);
-    const tokens = await fetchTokensFromNames(["DEGEN", "MOG"]);
+    // Fallback with diverse tokens, NOT the same memecoins
+    const tokens = await fetchTokensFromNames(["VIRTUAL", "AERO", "PRIME"]);
     return { tokens, sources: [] };
   }
 };
