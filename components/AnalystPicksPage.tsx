@@ -6,11 +6,9 @@ import LoadingState from './LoadingState';
 import HistoryAccordion from './HistoryAccordion';
 import { useScanContext } from '../context/ScanContext';
 
-const CrystalBallIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-        <path d="M11.25 3.255a2.25 2.25 0 013.5 0 2.25 2.25 0 012.25 2.25c0 .546-.225 1.055-.598 1.43l-1.45 1.45a.75.75 0 01-1.06-1.06l1.22-1.22a.75.75 0 00-.53-1.28h-2.552a.75.75 0 00-.532 1.28l1.222 1.22a.75.75 0 01-1.06 1.06l-1.45-1.45A2.25 2.25 0 019 5.505a2.25 2.25 0 012.25-2.25z" />
-        <path fillRule="evenodd" d="M12.96 11.41a3.375 3.375 0 10-5.92 1.487 3.374 3.374 0 005.92-1.487zm-1.474 3.75a.75.75 0 001.06-1.06l-1.05-1.05a.75.75 0 111.06-1.06l1.05 1.05a.75.75 0 001.06-1.06l-1.05-1.05a.75.75 0 111.06-1.06l1.05 1.05a.75.75 0 001.06-1.06l-1.05-1.05a3.375 3.375 0 10-5.908 1.517.75.75 0 001.06-1.06l-1.05-1.05a.75.75 0 111.06-1.06l1.05 1.05a.75.75 0 001.06-1.06l-1.05-1.05a.75.75 0 111.06-1.06l1.05 1.05a.75.75 0 001.06-1.06L14.48 9.34a3.375 3.375 0 00-4.028-4.028l-1.05 1.05a.75.75 0 001.06 1.06L11.52 6.36a.75.75 0 00-1.06 1.06l-1.05 1.05a.75.75 0 001.06 1.06l1.05-1.05a.75.75 0 001.06 1.06l-1.05 1.05a.75.75 0 001.06 1.06l1.05-1.05a.75.75 0 001.06 1.06l-1.05 1.05a.75.75 0 001.06 1.06l1.05-1.05a.75.75 0 001.06 1.06l-2.12 2.12a.75.75 0 000 1.06l2.12 2.12a.75.75 0 001.06 0l2.12-2.12a.75.75 0 000-1.06l-2.12-2.12a.75.75 0 00-1.06 0L12 12.02l.53.53a.75.75 0 001.06-1.06L12.02 10l.53.53a.75.75 0 001.06-1.06L12.02 8.94l.53.53a.75.75 0 101.06-1.06l-2.12-2.12a.75.75 0 00-1.06 0L9.36 7.41a.75.75 0 000 1.06l2.12 2.12a.75.75 0 001.06 0l.53-.53z" clipRule="evenodd" />
-        <path d="M6 18a.75.75 0 00.75.75h10.5a.75.75 0 000-1.5H6.75a.75.75 0 00-.75.75z" />
+const AnalystIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
     </svg>
 );
 
@@ -55,7 +53,7 @@ const AnalystPicksPage: React.FC<AnalystPicksPageProps> = ({ savedTokens, onSave
         if (!hasScanned) {
             return (
                 <div className="text-center py-16 px-6 bg-slate-800/50 rounded-2xl border border-slate-700">
-                    <CrystalBallIcon className="w-16 h-16 mx-auto text-purple-400" />
+                    <AnalystIcon className="w-16 h-16 mx-auto text-purple-400" />
                     <h3 className="mt-4 text-2xl font-bold text-white">Consult the Analyst?</h3>
                     <p className="mt-2 text-slate-400">Click the button to get the AI's latest high-conviction, narrative-driven picks.</p>
                 </div>

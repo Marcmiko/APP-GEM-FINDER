@@ -28,7 +28,7 @@ const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({ savedTokens, onSa
         <>
             <div className="text-center max-w-3xl mx-auto mb-12">
                 <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight">
-                    Your <span className="bg-gradient-to-r from-pink-500 to-yellow-400 text-transparent bg-clip-text">Portfolio</span>
+                    Your <span className="bg-gradient-to-r from-pink-500 to-yellow-400 text-transparent bg-clip-text">Wallet</span>
                 </h1>
                 <p className="mt-4 text-lg md:text-xl text-slate-400">
                     Track your holdings and watch your favorite gems.

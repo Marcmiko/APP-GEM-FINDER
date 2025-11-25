@@ -6,9 +6,10 @@ import LoadingState from './LoadingState';
 import HistoryAccordion from './HistoryAccordion';
 import { useScanContext } from '../context/ScanContext';
 
-const MegaphoneIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+const FireIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 018.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1.001A3.75 3.75 0 0012 18z" />
     </svg>
 );
 
@@ -53,7 +54,7 @@ const SocialTrendsPage: React.FC<SocialTrendsPageProps> = ({ savedTokens, onSave
         if (!hasScanned) {
             return (
                 <div className="text-center py-16 px-6 bg-slate-800/50 rounded-2xl border border-slate-700">
-                    <MegaphoneIcon className="w-16 h-16 mx-auto text-blue-400" />
+                    <FireIcon className="w-16 h-16 mx-auto text-blue-400" />
                     <h3 className="mt-4 text-2xl font-bold text-white">Listen to the Hype</h3>
                     <p className="mt-2 text-slate-400">Scan X (Twitter) and Farcaster for tokens dominating the conversation right now.</p>
                 </div>
