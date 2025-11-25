@@ -145,19 +145,29 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
 
             setSyncProgress(80);
 
-            // 4. Fetch Prices from GeckoTerminal
+            // 4. Fetch Prices from GeckoTerminal + CoinGecko
             if (addressesToFetchPrice.length > 0) {
                 try {
+                    console.log('📊 Fetching prices for addresses:', addressesToFetchPrice);
                     const prices = await getTokenPrices(addressesToFetchPrice);
+                    console.log('💰 Prices received:', prices);
 
                     // Update prices in heldTokens
+                    let pricesUpdated = 0;
                     heldTokens.forEach(t => {
                         if (t.address && prices[t.address.toLowerCase()]) {
                             t.priceUsd = prices[t.address.toLowerCase()];
+                            pricesUpdated++;
+                            console.log(`✅ Price for ${t.symbol}: $${t.priceUsd}`);
+                        } else {
+                            console.warn(`❌ No price found for ${t.symbol} (${t.address})`);
                         }
                     });
+
+                    console.log(`📈 Updated ${pricesUpdated}/${heldTokens.length} token prices`);
                 } catch (priceError) {
-                    console.warn('Failed to fetch prices, using 0 as default', priceError);
+                    console.error('❌ Failed to fetch prices:', priceError);
+                    addAlert('Warning: Unable to fetch token prices', 'warning');
                 }
             }
 
@@ -219,8 +229,8 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                         onClick={handleSyncWallet}
                         disabled={isSyncing || !isConnected}
                         className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all ${isConnected
-                                ? 'bg-white text-purple-600 hover:bg-white/90 shadow-lg'
-                                : 'bg-white/20 text-white/50 cursor-not-allowed'
+                            ? 'bg-white text-purple-600 hover:bg-white/90 shadow-lg'
+                            : 'bg-white/20 text-white/50 cursor-not-allowed'
                             }`}
                     >
                         {isSyncing ? (
