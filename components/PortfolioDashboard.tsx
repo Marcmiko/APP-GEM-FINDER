@@ -145,132 +145,75 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
 
             setSyncProgress(80);
 
-            // 4. Multi-tier price fetching with aggressive fallbacks
+            // 4. Simple but reliable price fetching
+            const priceMap: Record<string, number> = {};
+
             if (addressesToFetchPrice.length > 0) {
                 try {
                     console.log('📊 Fetching prices for', addressesToFetchPrice.length, 'tokens...');
 
-                    const priceMap: Record<string, number> = {};
+                    // STEP 1: Get ETH price first (most important)
+                    try {
+                        const ethPriceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+                        const ethPriceData = await ethPriceRes.json();
+                        if (ethPriceData?.ethereum?.usd) {
+                            priceMap['eth'] = ethPriceData.ethereum.usd;
+                            console.log(`⚡ ETH price: $${ethPriceData.ethereum.usd}`);
+                        }
+                    } catch (err) {
+                        console.warn('ETH price fetch failed');
+                        priceMap['eth'] = 3500; // Fallback
+                    }
 
-                    // TIER 1: Try multi-source price aggregator (1inch, CMC, Birdeye)
-                    console.log('🌐 Trying multi-source APIs (1inch, CMC, Birdeye)...');
-                    const { getMultiSourcePrices } = await import('../services/multiPriceService');
-                    const multiPrices = await getMultiSourcePrices(addressesToFetchPrice);
-                    Object.assign(priceMap, multiPrices);
-                    console.log('🌐 Multi-source found', Object.keys(multiPrices).length, 'prices');
-
-                    // TIER 2: DexScreener by address for missing tokens
-                    const stillMissing1 = addressesToFetchPrice.filter(addr => !priceMap[addr.toLowerCase()]);
-                    if (stillMissing1.length > 0) {
-                        console.log('💎 Trying DexScreener for', stillMissing1.length, 'tokens...');
+                    // STEP 2: Try DexScreener for all tokens
+                    try {
                         const { getPairsByAddress } = await import('../services/dexScreenerService');
-                        const pairs = await getPairsByAddress(stillMissing1);
+                        const pairs = await getPairsByAddress(addressesToFetchPrice);
                         console.log('💎 DexScreener returned', pairs.length, 'pairs');
 
                         pairs.forEach(pair => {
                             if (pair.baseToken?.address && pair.priceUsd) {
                                 const addr = pair.baseToken.address.toLowerCase();
                                 const price = parseFloat(pair.priceUsd);
-                                if (price > 0 && !priceMap[addr]) {
+                                if (price > 0) {
                                     priceMap[addr] = price;
+                                    console.log(`💎 ${pair.baseToken.symbol}: $${price}`);
                                 }
                             }
                         });
+                    } catch (err) {
+                        console.warn('DexScreener failed:', err);
                     }
 
-                    // TIER 3: GeckoTerminal/CoinGecko for remaining missing tokens
-                    const tokensWithoutPrice = heldTokens.filter(t => {
-                        const addr = t.address?.toLowerCase();
-                        return addr && !priceMap[addr];
-                    });
-
-                    if (tokensWithoutPrice.length > 0) {
-                        console.log('🦎 Trying GeckoTerminal/CoinGecko for', tokensWithoutPrice.length, 'tokens...');
-                        const { getTokenPrices } = await import('../services/geckoTerminalService');
-                        const missingAddresses = tokensWithoutPrice.map(t => t.address);
-                        const geckoPrice = await getTokenPrices(missingAddresses);
-
-                        Object.keys(geckoPrice).forEach(addr => {
-                            if (geckoPrice[addr] > 0 && !priceMap[addr.toLowerCase()]) {
-                                priceMap[addr.toLowerCase()] = geckoPrice[addr];
-                                console.log(`🦎 GeckoTerminal price for ${addr}: $${geckoPrice[addr]}`);
-                            }
-                        });
-                    }
-
-                    // TIER 4: Search by symbol on DexScreener
-                    const stillMissingPrice = heldTokens.filter(t => {
-                        const addr = t.address?.toLowerCase();
-                        return addr && !priceMap[addr];
-                    });
-
-                    if (stillMissingPrice.length > 0) {
-                        console.log('🔍 Searching by symbol for', stillMissingPrice.length, 'tokens...');
-                        const { searchDexScreener } = await import('../services/dexScreenerService');
-
-                        for (const token of stillMissingPrice) {
-                            try {
-                                const searchResults = await searchDexScreener(token.symbol);
-                                if (searchResults.length > 0) {
-                                    const firstPair = searchResults[0];
-                                    const price = parseFloat(firstPair.priceUsd);
-                                    if (price > 0) {
-                                        priceMap[token.address.toLowerCase()] = price;
-                                        console.log(`🔎 Found ${token.symbol} by search: $${price.toFixed(6)}`);
-                                    }
-                                }
-                            } catch (err) {
-                                // Ignore
-                            }
-                        }
-                    }
-
-                    // TIER 5: ETH fallback
-                    const ethToken = heldTokens.find(t => t.symbol === 'ETH' || t.name === 'Ethereum');
-                    if (ethToken && !priceMap[ethToken.address?.toLowerCase()]) {
-                        try {
-                            // Fetch current ETH price from CoinGecko simple API
-                            const ethPriceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-                            const ethPriceData = await ethPriceRes.json();
-                            if (ethPriceData?.ethereum?.usd) {
-                                priceMap['eth'] = ethPriceData.ethereum.usd;
-                                console.log(`⚡ ETH price from CoinGecko: $${ethPriceData.ethereum.usd}`);
-                            }
-                        } catch (err) {
-                            console.warn('Failed to fetch ETH price, using fallback');
-                            priceMap['eth'] = 3500; // Fallback ETH price
-                        }
-                    }
-
-                    // Update prices in heldTokens
+                    // STEP 3: Update token prices
                     let pricesUpdated = 0;
                     heldTokens.forEach(t => {
                         const addr = t.address?.toLowerCase();
                         const isEth = t.symbol === 'ETH' || t.name === 'Ethereum';
 
-                        if (addr && priceMap[addr]) {
-                            t.priceUsd = priceMap[addr];
-                            pricesUpdated++;
-                            console.log(`✅ ${t.symbol}: $${t.priceUsd.toFixed(6)}`);
-                        } else if (isEth && priceMap['eth']) {
+                        if (isEth && priceMap['eth']) {
                             t.priceUsd = priceMap['eth'];
                             pricesUpdated++;
                             console.log(`✅ ${t.symbol}: $${t.priceUsd.toFixed(2)}`);
+                        } else if (addr && priceMap[addr]) {
+                            t.priceUsd = priceMap[addr];
+                            pricesUpdated++;
+                            console.log(`✅ ${t.symbol}: $${t.priceUsd.toFixed(6)}`);
                         } else {
-                            console.warn(`❌ No price for ${t.symbol} (${t.address})`);
+                            console.warn(`❌ No price for ${t.symbol}`);
                         }
                     });
 
                     console.log(`📈 Updated ${pricesUpdated}/${heldTokens.length} token prices`);
 
-                    if (pricesUpdated < heldTokens.length / 2) {
-                        addAlert(`Synced ${heldTokens.length} tokens. Only ${pricesUpdated} prices found (some tokens may be too new)`, 'warning');
+                    if (pricesUpdated === 0) {
+                        addAlert('Warning: Unable to fetch any token prices', 'error');
                     } else if (pricesUpdated < heldTokens.length) {
-                        addAlert(`Synced ${heldTokens.length} tokens. Prices found for ${pricesUpdated} tokens.`, 'info');
+                        addAlert(`Prices found for ${pricesUpdated}/${heldTokens.length} tokens`, 'info');
                     }
                 } catch (priceError) {
-                    console.error('❌ Price fetching failed:', priceError);
-                    addAlert('Warning: Unable to fetch token prices', 'warning');
+                    console.error('❌ Price fetching completely failed:', priceError);
+                    addAlert('Error fetching prices. Please try again.', 'error');
                 }
             }
 
