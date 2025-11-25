@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Token } from '../types';
 import PortfolioCharts from './PortfolioCharts';
+import { useAccount } from 'wagmi';
+import { usePublicClient } from 'wagmi';
+import { formatUnits, parseAbi } from 'viem';
+import { useAlerts } from '../context/AlertContext';
 
 interface PortfolioDashboardProps {
     savedTokens: Token[];
@@ -14,6 +18,11 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
     const [selectedTokenAddress, setSelectedTokenAddress] = useState<string>('');
     const [holdingsInput, setHoldingsInput] = useState('');
     const [avgPriceInput, setAvgPriceInput] = useState('');
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    const { address, isConnected } = useAccount();
+    const publicClient = usePublicClient();
+    const { addAlert } = useAlerts();
 
     const holdings = savedTokens.filter(t => (t.holdings || 0) > 0);
     const availableTokens = savedTokens.filter(t => !t.holdings || t.holdings === 0);
@@ -22,6 +31,68 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
     const totalCost = holdings.reduce((sum, t) => sum + ((t.holdings || 0) * (t.avgBuyPrice || 0)), 0);
     const totalPnL = totalValue - totalCost;
     const totalPnLPercent = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
+
+    const handleSyncWallet = async () => {
+        if (!isConnected || !address || !publicClient) {
+            addAlert('Please connect your wallet first!', 'warning');
+            return;
+        }
+
+        setIsSyncing(true);
+        addAlert('Syncing wallet balances...', 'info');
+
+        try {
+            // Filter tokens that have an address (exclude ETH if it's treated specially, but here tokens usually have addresses)
+            // Assuming all savedTokens are ERC20s for now. If ETH is in the list, it needs special handling.
+            const tokensToSync = savedTokens.filter(t => t.address && t.address.startsWith('0x'));
+
+            if (tokensToSync.length === 0) {
+                addAlert('No tokens to sync.', 'info');
+                setIsSyncing(false);
+                return;
+            }
+
+            const calls = tokensToSync.map(token => ({
+                address: token.address as `0x${string}`,
+                abi: parseAbi(['function balanceOf(address) view returns (uint256)']),
+                functionName: 'balanceOf',
+                args: [address]
+            }));
+
+            const results = await publicClient.multicall({ contracts: calls } as any);
+
+            const updatedTokens = savedTokens.map((token, index) => {
+                // Find the result for this token
+                const syncIndex = tokensToSync.findIndex(t => t.address === token.address);
+                if (syncIndex === -1) return token;
+
+                const result = results[syncIndex];
+                if (result.status === 'success') {
+                    const balance = formatUnits(result.result as bigint, 18); // Assuming 18 decimals for simplicity, ideally should fetch decimals too
+                    // If balance > 0, update holdings. If 0, keep as is or set to 0? 
+                    // Let's set to 0 if we are syncing, to reflect reality.
+                    // But maybe user manually added holdings for a token they track but don't hold in THIS wallet?
+                    // The request is "see what tokens are there". So we should probably update it.
+                    // To be safe, let's only update if balance > 0 or if it was previously > 0.
+                    const newBalance = parseFloat(balance);
+                    return {
+                        ...token,
+                        holdings: newBalance
+                    };
+                }
+                return token;
+            });
+
+            onUpdateTokens(updatedTokens);
+            addAlert('Wallet synced successfully!', 'success');
+
+        } catch (error) {
+            console.error('Error syncing wallet:', error);
+            addAlert('Failed to sync wallet.', 'error');
+        } finally {
+            setIsSyncing(false);
+        }
+    };
 
     const handleEditClick = (token: Token) => {
         setEditingToken(token);
@@ -78,7 +149,7 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                         </span>
                     </div>
                 </div>
-                <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 flex items-center justify-center">
+                <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 flex flex-col items-center justify-center gap-3">
                     <button
                         onClick={handleAddClick}
                         disabled={availableTokens.length === 0}
@@ -86,6 +157,35 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ savedTokens, on
                     >
                         Add Asset
                     </button>
+                    <button
+                        onClick={handleSyncWallet}
+                        disabled={isSyncing || !isConnected}
+                        className={`px-6 py-3 w-full rounded-xl font-bold transition-colors flex items-center justify-center gap-2
+                            ${isConnected
+                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                                : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                            }`}
+                    >
+                        {isSyncing ? (
+                            <>
+                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Syncing...
+                            </>
+                        ) : (
+                            <>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                                    <path fillRule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 100 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0015.059-4.035.75.75 0 00-.53-.918z" clipRule="evenodd" />
+                                </svg>
+                                Sync Wallet
+                            </>
+                        )}
+                    </button>
+                    {!isConnected && (
+                        <span className="text-xs text-slate-500">Connect wallet to sync</span>
+                    )}
                 </div>
             </div>
 
