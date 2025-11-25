@@ -171,16 +171,36 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
 
                     console.log('💵 Price map from addresses:', Object.keys(priceMap).length, 'entries');
 
-                    // TIER 2: For tokens without price, search by symbol
+                    // TIER 2: Try GeckoTerminal/CoinGecko for missing tokens
                     const tokensWithoutPrice = heldTokens.filter(t => {
                         const addr = t.address?.toLowerCase();
                         return addr && !priceMap[addr];
                     });
 
                     if (tokensWithoutPrice.length > 0) {
-                        console.log('🔍 Searching by symbol for', tokensWithoutPrice.length, 'tokens...');
+                        console.log('🦎 Trying GeckoTerminal/CoinGecko for', tokensWithoutPrice.length, 'tokens...');
+                        const { getTokenPrices } = await import('../services/geckoTerminalService');
+                        const missingAddresses = tokensWithoutPrice.map(t => t.address);
+                        const geckoPrice = await getTokenPrices(missingAddresses);
 
-                        for (const token of tokensWithoutPrice) {
+                        Object.keys(geckoPrice).forEach(addr => {
+                            if (geckoPrice[addr] > 0) {
+                                priceMap[addr.toLowerCase()] = geckoPrice[addr];
+                                console.log(`🦎 GeckoTerminal found price for ${addr}: $${geckoPrice[addr]}`);
+                            }
+                        });
+                    }
+
+                    // TIER 3: For remaining tokens, search by symbol on DexScreener
+                    const stillMissingPrice = heldTokens.filter(t => {
+                        const addr = t.address?.toLowerCase();
+                        return addr && !priceMap[addr];
+                    });
+
+                    if (stillMissingPrice.length > 0) {
+                        console.log('🔍 Searching by symbol for', stillMissingPrice.length, 'tokens...');
+
+                        for (const token of stillMissingPrice) {
                             try {
                                 const searchResults = await searchDexScreener(token.symbol);
                                 if (searchResults.length > 0) {
@@ -198,7 +218,7 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                         }
                     }
 
-                    // TIER 3: Hardcoded fallback for ETH
+                    // TIER 4: Hardcoded fallback for ETH
                     const ethToken = heldTokens.find(t => t.symbol === 'ETH' || t.name === 'Ethereum');
                     if (ethToken && !priceMap[ethToken.address?.toLowerCase()]) {
                         try {
