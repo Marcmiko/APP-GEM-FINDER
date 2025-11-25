@@ -74,16 +74,16 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
                 <div className="flex items-center justify-between h-24">
                     <div className="flex items-center space-x-4 flex-shrink-0 group cursor-pointer">
                         <div className="relative">
-                            <div className="absolute inset-0 bg-indigo-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
-                            <DiamondIcon className="w-10 h-10 text-indigo-400 relative z-10 transform group-hover:rotate-12 transition-transform duration-500" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-yellow-400 blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
+                            <DiamondIcon className="w-10 h-10 text-pink-400 relative z-10 transform group-hover:rotate-12 transition-transform duration-500" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="hidden md:block text-2xl font-black text-white tracking-tight">
-                                GEM<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">FINDER</span>
+                            <span className="hidden md:block text-2xl font-black">
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-400 animate-gradient bg-300">MARCMIKO</span>
                             </span>
-                            <span className="hidden md:block text-[10px] font-bold text-slate-500 tracking-[0.3em] uppercase">AI Powered Sniper</span>
+                            <span className="hidden md:block text-[10px] font-bold text-slate-500 tracking-[0.3em] uppercase">Crypto Intelligence</span>
                         </div>
-                        <span className="md:hidden text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">GF</span>
+                        <span className="md:hidden text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-yellow-400">MM</span>
                     </div>
 
                     {/* Navigation - Desktop & Mobile Scroll */}

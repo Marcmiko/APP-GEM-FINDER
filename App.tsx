@@ -71,7 +71,16 @@ const App: React.FC = () => {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider theme={darkTheme()}>
+        <RainbowKitProvider
+          theme={darkTheme({
+            accentColor: '#ec4899', // Pink accent
+            accentColorForeground: 'white',
+            borderRadius: 'large',
+            fontStack: 'system',
+            overlayBlur: 'small',
+          })}
+          modalSize="compact"
+        >
           <ScanProvider>
             <AlertProvider>
               <div className="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-indigo-500/30">

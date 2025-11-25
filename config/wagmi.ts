@@ -14,7 +14,7 @@ import {
 const projectId = 'f5281b195c2a7472e1b59d1afc9223d7'; // Get one at https://cloud.walletconnect.com
 
 export const config = getDefaultConfig({
-    appName: 'Gem Finder AI',
+    appName: 'MARCMIKO',
     projectId,
     chains: [base],
     ssr: false,
