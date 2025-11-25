@@ -100,6 +100,9 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                         const token = item.token;
                         const balance = parseFloat(formatUnits(BigInt(item.value), parseInt(token.decimals) || 18));
 
+                        // Debug log
+                        console.log(`Found token: ${token.symbol} (${token.address}), Balance: ${balance}`);
+
                         if (balance > 0) {
                             heldTokens.push({
                                 name: token.name || token.symbol || 'Unknown',
@@ -137,7 +140,9 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                                 iconUrl: token.icon_url || null
                             } as Token);
 
-                            addressesToFetchPrice.push(token.address);
+                            if (token.address) {
+                                addressesToFetchPrice.push(token.address);
+                            }
                         }
                     }
                 });
@@ -200,6 +205,24 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                         console.warn('0x API failed:', err);
                     }
 
+                    // STEP 2.5: Try GeckoTerminal (New Service)
+                    try {
+                        const missingForGecko = addressesToFetchPrice.filter(addr => !priceMap[addr.toLowerCase()]);
+                        if (missingForGecko.length > 0) {
+                            console.log('🦎 Asking GeckoTerminal for', missingForGecko.length, 'prices...');
+                            const geckoPrices = await getTokenPrices(missingForGecko);
+
+                            Object.entries(geckoPrices).forEach(([addr, price]) => {
+                                if (price > 0) {
+                                    priceMap[addr.toLowerCase()] = price;
+                                    console.log(`🦎 GeckoTerminal found price for ${addr}: $${price}`);
+                                }
+                            });
+                        }
+                    } catch (err) {
+                        console.warn('GeckoTerminal failed:', err);
+                    }
+
                     // STEP 3: Try DexScreener for all tokens
                     try {
                         const { getPairsByAddress } = await import('../services/dexScreenerService');
@@ -222,7 +245,7 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
 
                     // STEP 4: Try Basescan Scraper (User Request)
                     // Only for tokens that still don't have a price
-                    const missingPrice = addressesToFetchPrice.filter(addr => !priceMap[addr.toLowerCase()]);
+                    const missingPrice = addressesToFetchPrice.filter(addr => addr && !priceMap[addr.toLowerCase()]);
                     if (missingPrice.length > 0) {
                         try {
                             console.log('🔍 Scraping Basescan for', missingPrice.length, 'missing tokens...');

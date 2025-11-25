@@ -73,7 +73,6 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
         if (!hasScanned) {
             return (
                 <div className="text-center py-16 px-6 bg-slate-800/50 rounded-2xl border border-slate-700">
-                    <RocketIcon className="w-16 h-16 mx-auto text-indigo-400" />
                     <h3 className="mt-4 text-2xl font-bold text-white">Ready to find some gems?</h3>
                     <p className="mt-2 text-slate-400">Click the "Scan for Gems" button to start the AI analysis.</p>
                 </div>
@@ -153,12 +152,12 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                             </span>
                         ) : hasScanned ? (
                             <>
-                                <img src="/assets/scan_radar.png" alt="Scan" className="w-8 h-8 mr-2 object-contain" />
+                                <RadarIcon className="w-8 h-8 mr-2 text-indigo-300" />
                                 Scan Again
                             </>
                         ) : (
                             <>
-                                <img src="/assets/gem_scan_rocket.png" alt="Rocket" className="w-7 h-7 mr-2 object-contain" />
+                                <RocketIcon className="w-7 h-7 mr-2 text-indigo-300" />
                                 Start Gem Scan
                             </>
                         )}

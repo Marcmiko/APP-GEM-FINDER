@@ -1,11 +1,18 @@
 // Multi-source price aggregator for Base tokens
 // Tries multiple APIs to maximize price discovery
 
+import { getTokenPrices } from './geckoTerminalService';
+import { getPairsByAddress } from './dexScreenerService';
+
 export async function getMultiSourcePrice(tokenAddress: string): Promise<number | null> {
     const address = tokenAddress.toLowerCase();
 
     // Try multiple sources in parallel
+    // Try multiple sources in parallel
+    // Prioritize GeckoTerminal and DexScreener for Base tokens
     const sources = [
+        fetchGeckoTerminalPrice(address),
+        fetchDexScreenerPrice(address),
         fetch1InchPrice(address),
         fetchCoinMarketCapPrice(address),
         fetchBirdeyePrice(address)
@@ -77,7 +84,32 @@ async function fetchBirdeyePrice(address: string): Promise<number | null> {
         return null;
     }
 }
+// GeckoTerminal Wrapper
+async function fetchGeckoTerminalPrice(address: string): Promise<number | null> {
+    try {
+        const prices = await getTokenPrices([address]);
+        return prices[address.toLowerCase()] || null;
+    } catch (error) {
+        return null;
+    }
+}
 
+// DexScreener Wrapper
+async function fetchDexScreenerPrice(address: string): Promise<number | null> {
+    try {
+        const pairs = await getPairsByAddress([address]);
+        if (pairs.length > 0) {
+            // Return the price of the most liquid pair
+            const bestPair = pairs.sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0))[0];
+            return parseFloat(bestPair.priceUsd) || null;
+        }
+        return null;
+    } catch (error) {
+        return null;
+    }
+}
+
+// Batch fetch prices for multiple tokens
 // Batch fetch prices for multiple tokens
 export async function getMultiSourcePrices(addresses: string[]): Promise<Record<string, number>> {
     const prices: Record<string, number> = {};
