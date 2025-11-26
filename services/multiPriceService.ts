@@ -135,7 +135,29 @@ export async function getMultiSourcePrices(addresses: string[]): Promise<Record<
         }
     });
 
-    // 2. Individual Fallback for missing tokens
+    // 2. Try Moralis (if key is present)
+    if (missingAddresses.length > 0) {
+        try {
+            // Dynamic import to avoid issues if service is not perfect yet
+            const { getMoralisTokenPrices } = await import('./moralisService');
+            const moralisPrices = await getMoralisTokenPrices(missingAddresses);
+
+            Object.entries(moralisPrices).forEach(([addr, price]) => {
+                if (price > 0) {
+                    prices[addr.toLowerCase()] = price;
+                    // Remove from missing
+                    const index = missingAddresses.indexOf(addr);
+                    if (index > -1) {
+                        missingAddresses.splice(index, 1);
+                    }
+                }
+            });
+        } catch (e) {
+            console.warn('Moralis fetch failed:', e);
+        }
+    }
+
+    // 3. Individual Fallback for missing tokens
     if (missingAddresses.length > 0) {
         console.log(`Falling back for ${missingAddresses.length} tokens...`);
 
@@ -163,7 +185,7 @@ export async function getMultiSourcePrices(addresses: string[]): Promise<Record<
         }
     }
 
-    // 3. Last Resort: BaseScan Scraper (if available)
+    // 4. Last Resort: BaseScan Scraper (if available)
     const stillMissing = addresses.filter(addr => !prices[addr.toLowerCase()]);
     if (stillMissing.length > 0) {
         try {
