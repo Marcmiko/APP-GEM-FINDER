@@ -116,16 +116,20 @@ export async function getMultiSourcePrices(addresses: string[]): Promise<Record<
     const prices: Record<string, number> = {};
     const missingAddresses: string[] = [];
 
+    console.log(`[MultiPrice] Starting fetch for ${addresses.length} tokens`);
+
     // 1. Try Batch Fetching (GeckoTerminal is best for batch)
     try {
+        console.log('[MultiPrice] Step 1: GeckoTerminal Batch');
         const geckoPrices = await getTokenPrices(addresses);
         Object.entries(geckoPrices).forEach(([addr, price]) => {
             if (price > 0) {
                 prices[addr.toLowerCase()] = price;
             }
         });
+        console.log(`[MultiPrice] GeckoTerminal found ${Object.keys(geckoPrices).length} prices`);
     } catch (e) {
-        console.warn('Batch GeckoTerminal fetch failed:', e);
+        console.warn('[MultiPrice] Batch GeckoTerminal fetch failed:', e);
     }
 
     // Identify missing
@@ -137,14 +141,17 @@ export async function getMultiSourcePrices(addresses: string[]): Promise<Record<
 
     // 2. Try Moralis (if key is present)
     if (missingAddresses.length > 0) {
+        console.log(`[MultiPrice] Step 2: Moralis for ${missingAddresses.length} missing tokens`);
         try {
             // Dynamic import to avoid issues if service is not perfect yet
             const { getMoralisTokenPrices } = await import('./moralisService');
             const moralisPrices = await getMoralisTokenPrices(missingAddresses);
 
+            let moralisCount = 0;
             Object.entries(moralisPrices).forEach(([addr, price]) => {
                 if (price > 0) {
                     prices[addr.toLowerCase()] = price;
+                    moralisCount++;
                     // Remove from missing
                     const index = missingAddresses.indexOf(addr);
                     if (index > -1) {
@@ -152,31 +159,46 @@ export async function getMultiSourcePrices(addresses: string[]): Promise<Record<
                     }
                 }
             });
+            console.log(`[MultiPrice] Moralis found ${moralisCount} prices`);
         } catch (e) {
-            console.warn('Moralis fetch failed:', e);
+            console.warn('[MultiPrice] Moralis fetch failed:', e);
         }
     }
 
     // 3. Individual Fallback for missing tokens
     if (missingAddresses.length > 0) {
-        console.log(`Falling back for ${missingAddresses.length} tokens...`);
+        console.log(`[MultiPrice] Step 3: Individual Fallback for ${missingAddresses.length} tokens...`);
 
         // Process in parallel with concurrency limit
         const BATCH_SIZE = 5;
         for (let i = 0; i < missingAddresses.length; i += BATCH_SIZE) {
             const batch = missingAddresses.slice(i, i + BATCH_SIZE);
             await Promise.all(batch.map(async (addr) => {
+                let price = null;
+
                 // Try DexScreener first (best for memes)
-                let price = await fetchDexScreenerPrice(addr);
+                if (!price) {
+                    price = await fetchDexScreenerPrice(addr);
+                    if (price) console.log(`[MultiPrice] DexScreener found price for ${addr}`);
+                }
 
                 // Then CoinGecko (reliable for majors)
-                if (!price) price = await fetchCoinMarketCapPrice(addr); // Using CMC wrapper as CG fallback
+                if (!price) {
+                    price = await fetchCoinMarketCapPrice(addr);
+                    if (price) console.log(`[MultiPrice] CMC found price for ${addr}`);
+                }
 
                 // Then 1inch (Oracle)
-                if (!price) price = await fetch1InchPrice(addr);
+                if (!price) {
+                    price = await fetch1InchPrice(addr);
+                    if (price) console.log(`[MultiPrice] 1inch found price for ${addr}`);
+                }
 
                 // Then Birdeye
-                if (!price) price = await fetchBirdeyePrice(addr);
+                if (!price) {
+                    price = await fetchBirdeyePrice(addr);
+                    if (price) console.log(`[MultiPrice] Birdeye found price for ${addr}`);
+                }
 
                 if (price && price > 0) {
                     prices[addr.toLowerCase()] = price;
@@ -188,6 +210,7 @@ export async function getMultiSourcePrices(addresses: string[]): Promise<Record<
     // 4. Last Resort: BaseScan Scraper (if available)
     const stillMissing = addresses.filter(addr => !prices[addr.toLowerCase()]);
     if (stillMissing.length > 0) {
+        console.log(`[MultiPrice] Step 4: BaseScan Scraper for ${stillMissing.length} tokens`);
         try {
             // Dynamic import to avoid circular deps if any
             const { getBasescanPrices } = await import('./basescanService');
@@ -195,12 +218,14 @@ export async function getMultiSourcePrices(addresses: string[]): Promise<Record<
             Object.entries(scrapedPrices).forEach(([addr, price]) => {
                 if (price && typeof price === 'number' && price > 0) {
                     prices[addr.toLowerCase()] = price;
+                    console.log(`[MultiPrice] BaseScan found price for ${addr}`);
                 }
             });
         } catch (e) {
-            console.warn('BaseScan fallback failed:', e);
+            console.warn('[MultiPrice] BaseScan fallback failed:', e);
         }
     }
 
+    console.log(`[MultiPrice] Finished. Total prices found: ${Object.keys(prices).length}/${addresses.length}`);
     return prices;
 }
