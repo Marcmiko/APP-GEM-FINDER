@@ -114,115 +114,71 @@ async function fetchDexScreenerPrice(address: string): Promise<number | null> {
 // Batch fetch prices for multiple tokens with robust fallback
 export async function getMultiSourcePrices(addresses: string[]): Promise<Record<string, number>> {
     const prices: Record<string, number> = {};
-    const missingAddresses: string[] = [];
 
-    console.log(`[MultiPrice] Starting fetch for ${addresses.length} tokens`);
+    // Strict validation of addresses
+    const validAddresses = addresses.filter(addr =>
+        addr &&
+        addr !== 'undefined' &&
+        addr.startsWith('0x')
+    );
 
-    // 1. Try Batch Fetching (GeckoTerminal is best for batch)
-    try {
-        console.log('[MultiPrice] Step 1: GeckoTerminal Batch');
-        const geckoPrices = await getTokenPrices(addresses);
-        Object.entries(geckoPrices).forEach(([addr, price]) => {
-            if (price > 0) {
-                prices[addr.toLowerCase()] = price;
+    console.log(`[MultiPrice] Starting fetch for ${validAddresses.length} valid tokens`);
+
+    // 1. Try DexScreener (Primary Source - Supports CORS & Base)
+    // DexScreener allows up to 30 addresses per call in theory, but we'll do individual or small batch
+    // The user's snippet suggests individual calls or batch.
+    // DexScreener API: GET https://api.dexscreener.com/latest/dex/tokens/addr1,addr2
+
+    const BATCH_SIZE = 30;
+    for (let i = 0; i < validAddresses.length; i += BATCH_SIZE) {
+        const batch = validAddresses.slice(i, i + BATCH_SIZE);
+        const batchStr = batch.join(',');
+
+        try {
+            console.log(`[MultiPrice] Fetching batch of ${batch.length} from DexScreener`);
+            const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${batchStr}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.pairs && Array.isArray(data.pairs)) {
+                    // DexScreener returns pairs, we need to find the best price for each token
+                    batch.forEach(addr => {
+                        const tokenPairs = data.pairs.filter((p: any) =>
+                            p.baseToken.address.toLowerCase() === addr.toLowerCase()
+                        );
+
+                        if (tokenPairs.length > 0) {
+                            // Sort by liquidity to get the most accurate price
+                            tokenPairs.sort((a: any, b: any) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
+                            const bestPair = tokenPairs[0];
+                            const price = parseFloat(bestPair.priceUsd);
+                            if (price > 0) {
+                                prices[addr.toLowerCase()] = price;
+                            }
+                        }
+                    });
+                }
             }
-        });
-        console.log(`[MultiPrice] GeckoTerminal found ${Object.keys(geckoPrices).length} prices`);
-    } catch (e) {
-        console.warn('[MultiPrice] Batch GeckoTerminal fetch failed:', e);
+        } catch (e) {
+            console.warn('[MultiPrice] DexScreener batch failed:', e);
+        }
     }
 
-    // Identify missing
-    addresses.forEach(addr => {
-        if (!prices[addr.toLowerCase()]) {
-            missingAddresses.push(addr);
-        }
-    });
-
-    // 2. Try Moralis (if key is present)
-    if (missingAddresses.length > 0) {
-        console.log(`[MultiPrice] Step 2: Moralis for ${missingAddresses.length} missing tokens`);
+    // 2. Fallback: GeckoTerminal for any missing
+    const missing = validAddresses.filter(addr => !prices[addr.toLowerCase()]);
+    if (missing.length > 0) {
+        console.log(`[MultiPrice] Falling back to GeckoTerminal for ${missing.length} tokens`);
         try {
-            // Dynamic import to avoid issues if service is not perfect yet
-            const { getMoralisTokenPrices } = await import('./moralisService');
-            const moralisPrices = await getMoralisTokenPrices(missingAddresses);
-
-            let moralisCount = 0;
-            Object.entries(moralisPrices).forEach(([addr, price]) => {
+            const geckoPrices = await getTokenPrices(missing);
+            Object.entries(geckoPrices).forEach(([addr, price]) => {
                 if (price > 0) {
                     prices[addr.toLowerCase()] = price;
-                    moralisCount++;
-                    // Remove from missing
-                    const index = missingAddresses.indexOf(addr);
-                    if (index > -1) {
-                        missingAddresses.splice(index, 1);
-                    }
-                }
-            });
-            console.log(`[MultiPrice] Moralis found ${moralisCount} prices`);
-        } catch (e) {
-            console.warn('[MultiPrice] Moralis fetch failed:', e);
-        }
-    }
-
-    // 3. Individual Fallback for missing tokens
-    if (missingAddresses.length > 0) {
-        console.log(`[MultiPrice] Step 3: Individual Fallback for ${missingAddresses.length} tokens...`);
-
-        // Process in parallel with concurrency limit
-        const BATCH_SIZE = 5;
-        for (let i = 0; i < missingAddresses.length; i += BATCH_SIZE) {
-            const batch = missingAddresses.slice(i, i + BATCH_SIZE);
-            await Promise.all(batch.map(async (addr) => {
-                if (!addr) return; // Safety check
-
-                let price = null;
-
-                // Try DexScreener first (User recommended, supports CORS & Base)
-                if (!price) {
-                    try {
-                        price = await fetchDexScreenerPrice(addr);
-                        if (price) console.log(`[MultiPrice] DexScreener found price for ${addr}`);
-                    } catch (e) { console.warn(`DexScreener failed for ${addr}`, e); }
-                }
-
-                // Try GeckoTerminal Individual (User recommended)
-                if (!price) {
-                    try {
-                        price = await fetchGeckoTerminalPrice(addr);
-                        if (price) console.log(`[MultiPrice] GeckoTerminal found price for ${addr}`);
-                    } catch (e) { console.warn(`GeckoTerminal failed for ${addr}`, e); }
-                }
-
-                // Removed 1inch, CMC, Birdeye due to CORS/404 errors as reported by user.
-                // If we need them later, we must use a backend proxy.
-
-                if (price && price > 0) {
-                    prices[addr.toLowerCase()] = price;
-                }
-            }));
-        }
-    }
-
-    // 4. Last Resort: BaseScan Scraper (if available)
-    const stillMissing = addresses.filter(addr => !prices[addr.toLowerCase()]);
-    if (stillMissing.length > 0) {
-        console.log(`[MultiPrice] Step 4: BaseScan Scraper for ${stillMissing.length} tokens`);
-        try {
-            // Dynamic import to avoid circular deps if any
-            const { getBasescanPrices } = await import('./basescanService');
-            const scrapedPrices = await getBasescanPrices(stillMissing);
-            Object.entries(scrapedPrices).forEach(([addr, price]) => {
-                if (price && typeof price === 'number' && price > 0) {
-                    prices[addr.toLowerCase()] = price;
-                    console.log(`[MultiPrice] BaseScan found price for ${addr}`);
                 }
             });
         } catch (e) {
-            console.warn('[MultiPrice] BaseScan fallback failed:', e);
+            console.warn('[MultiPrice] GeckoTerminal fallback failed:', e);
         }
     }
 
-    console.log(`[MultiPrice] Finished. Total prices found: ${Object.keys(prices).length}/${addresses.length}`);
+    console.log(`[MultiPrice] Finished. Total prices found: ${Object.keys(prices).length}/${validAddresses.length}`);
     return prices;
 }
