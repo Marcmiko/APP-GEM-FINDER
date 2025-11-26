@@ -174,31 +174,28 @@ export async function getMultiSourcePrices(addresses: string[]): Promise<Record<
         for (let i = 0; i < missingAddresses.length; i += BATCH_SIZE) {
             const batch = missingAddresses.slice(i, i + BATCH_SIZE);
             await Promise.all(batch.map(async (addr) => {
+                if (!addr) return; // Safety check
+
                 let price = null;
 
-                // Try DexScreener first (best for memes)
+                // Try DexScreener first (User recommended, supports CORS & Base)
                 if (!price) {
-                    price = await fetchDexScreenerPrice(addr);
-                    if (price) console.log(`[MultiPrice] DexScreener found price for ${addr}`);
+                    try {
+                        price = await fetchDexScreenerPrice(addr);
+                        if (price) console.log(`[MultiPrice] DexScreener found price for ${addr}`);
+                    } catch (e) { console.warn(`DexScreener failed for ${addr}`, e); }
                 }
 
-                // Then CoinGecko (reliable for majors)
+                // Try GeckoTerminal Individual (User recommended)
                 if (!price) {
-                    price = await fetchCoinMarketCapPrice(addr);
-                    if (price) console.log(`[MultiPrice] CMC found price for ${addr}`);
+                    try {
+                        price = await fetchGeckoTerminalPrice(addr);
+                        if (price) console.log(`[MultiPrice] GeckoTerminal found price for ${addr}`);
+                    } catch (e) { console.warn(`GeckoTerminal failed for ${addr}`, e); }
                 }
 
-                // Then 1inch (Oracle)
-                if (!price) {
-                    price = await fetch1InchPrice(addr);
-                    if (price) console.log(`[MultiPrice] 1inch found price for ${addr}`);
-                }
-
-                // Then Birdeye
-                if (!price) {
-                    price = await fetchBirdeyePrice(addr);
-                    if (price) console.log(`[MultiPrice] Birdeye found price for ${addr}`);
-                }
+                // Removed 1inch, CMC, Birdeye due to CORS/404 errors as reported by user.
+                // If we need them later, we must use a backend proxy.
 
                 if (price && price > 0) {
                     prices[addr.toLowerCase()] = price;

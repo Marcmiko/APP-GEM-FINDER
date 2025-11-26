@@ -147,7 +147,7 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                                 iconUrl: token.icon_url || null
                             } as Token);
 
-                            if (token.address) {
+                            if (token.address && typeof token.address === 'string') {
                                 addressesToFetchPrice.push(token.address);
                             }
                         }
