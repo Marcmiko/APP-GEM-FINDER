@@ -111,25 +111,73 @@ async function fetchDexScreenerPrice(address: string): Promise<number | null> {
 
 // Batch fetch prices for multiple tokens
 // Batch fetch prices for multiple tokens
+// Batch fetch prices for multiple tokens with robust fallback
 export async function getMultiSourcePrices(addresses: string[]): Promise<Record<string, number>> {
     const prices: Record<string, number> = {};
+    const missingAddresses: string[] = [];
 
-    // Fetch in parallel (limit concurrency to avoid rate limits)
-    const BATCH_SIZE = 5;
-    for (let i = 0; i < addresses.length; i += BATCH_SIZE) {
-        const batch = addresses.slice(i, i + BATCH_SIZE);
-        const results = await Promise.all(
-            batch.map(async (addr) => {
-                const price = await getMultiSourcePrice(addr);
-                return { addr: addr.toLowerCase(), price };
-            })
-        );
-
-        results.forEach(({ addr, price }) => {
-            if (price && price > 0) {
-                prices[addr] = price;
+    // 1. Try Batch Fetching (GeckoTerminal is best for batch)
+    try {
+        const geckoPrices = await getTokenPrices(addresses);
+        Object.entries(geckoPrices).forEach(([addr, price]) => {
+            if (price > 0) {
+                prices[addr.toLowerCase()] = price;
             }
         });
+    } catch (e) {
+        console.warn('Batch GeckoTerminal fetch failed:', e);
+    }
+
+    // Identify missing
+    addresses.forEach(addr => {
+        if (!prices[addr.toLowerCase()]) {
+            missingAddresses.push(addr);
+        }
+    });
+
+    // 2. Individual Fallback for missing tokens
+    if (missingAddresses.length > 0) {
+        console.log(`Falling back for ${missingAddresses.length} tokens...`);
+
+        // Process in parallel with concurrency limit
+        const BATCH_SIZE = 5;
+        for (let i = 0; i < missingAddresses.length; i += BATCH_SIZE) {
+            const batch = missingAddresses.slice(i, i + BATCH_SIZE);
+            await Promise.all(batch.map(async (addr) => {
+                // Try DexScreener first (best for memes)
+                let price = await fetchDexScreenerPrice(addr);
+
+                // Then CoinGecko (reliable for majors)
+                if (!price) price = await fetchCoinMarketCapPrice(addr); // Using CMC wrapper as CG fallback
+
+                // Then 1inch (Oracle)
+                if (!price) price = await fetch1InchPrice(addr);
+
+                // Then Birdeye
+                if (!price) price = await fetchBirdeyePrice(addr);
+
+                if (price && price > 0) {
+                    prices[addr.toLowerCase()] = price;
+                }
+            }));
+        }
+    }
+
+    // 3. Last Resort: BaseScan Scraper (if available)
+    const stillMissing = addresses.filter(addr => !prices[addr.toLowerCase()]);
+    if (stillMissing.length > 0) {
+        try {
+            // Dynamic import to avoid circular deps if any
+            const { getBasescanPrices } = await import('./basescanService');
+            const scrapedPrices = await getBasescanPrices(stillMissing);
+            Object.entries(scrapedPrices).forEach(([addr, price]) => {
+                if (price && typeof price === 'number' && price > 0) {
+                    prices[addr.toLowerCase()] = price;
+                }
+            });
+        } catch (e) {
+            console.warn('BaseScan fallback failed:', e);
+        }
     }
 
     return prices;
