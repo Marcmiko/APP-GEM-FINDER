@@ -18,15 +18,4 @@ export const config = getDefaultConfig({
     projectId,
     chains: [base],
     ssr: false,
-    wallets: [
-        {
-            groupName: 'Recommended',
-            wallets: [
-                coinbaseWallet,
-                metaMaskWallet,
-                rainbowWallet,
-                walletConnectWallet,
-            ],
-        },
-    ],
 });

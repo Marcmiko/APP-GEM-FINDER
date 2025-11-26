@@ -3,6 +3,7 @@ import { Page } from '../types';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useScanContext } from '../context/ScanContext';
 
+// --- ICONS ---
 const DiamondIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
         <path d="M12.001 2.003c.87-.002 1.66.495 2.03 1.25l7.108 14.218c.367.734.363 1.61-.01 2.34a2.122 2.122 0 01-1.84 1.189H4.713a2.122 2.122 0 01-1.84-1.189 2.124 2.124 0 01-.01-2.34L10.03 3.253a2.123 2.123 0 011.97-1.25zm0 2.27L6.08 18.75h11.84L12.001 4.273z" />
@@ -19,6 +20,37 @@ const SpinIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 const SearchIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
         <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+    </svg>
+);
+
+const SniperIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12 6a6 6 0 100 12 6 6 0 000-12zm-3 6a3 3 0 116 0 3 3 0 01-6 0z" clipRule="evenodd" />
+    </svg>
+);
+
+const NewIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path fillRule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813a3.75 3.75 0 002.576-2.576l.813-2.846A.75.75 0 019 4.5z" clipRule="evenodd" />
+    </svg>
+);
+
+const AnalystIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+    </svg>
+);
+
+const TrendingIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path fillRule="evenodd" d="M15.22 6.268a.75.75 0 01.968-.432l5.942 2.28a.75.75 0 01.431.97l-2.28 5.941a.75.75 0 11-1.4-.537l1.63-4.251-1.086.483a6 6 0 00-2.742 2.742l-.921 2.763a.75.75 0 01-1.422-.474l.921-2.763a4.5 4.5 0 012.056-2.056l2.763-.921-4.251 1.63a.75.75 0 01-.537-1.402l5.941-2.28z" clipRule="evenodd" />
+        <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75 1.886 0 3.66.535 5.18 1.467a.75.75 0 01-.79 1.278A8.22 8.22 0 0012 3.75a8.25 8.25 0 00-8.25 8.25c0 2.89 1.495 5.438 3.75 6.95a.75.75 0 11-.832 1.25A9.72 9.72 0 012.25 12z" clipRule="evenodd" />
+    </svg>
+);
+
+const WalletIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 11-.671-1.34l.041-.022zM12 9a.75.75 0 100-1.5.75.75 0 000 1.5z" />
     </svg>
 );
 
@@ -41,21 +73,19 @@ const NavItem: React.FC<{
     return (
         <button
             onClick={() => setActivePage(page)}
-            className={`relative flex items-center px-5 py-2.5 text-sm font-bold rounded-2xl transition-all duration-300 whitespace-nowrap ${badgeCount ? 'pr-10' : ''} 
+            className={`relative flex items-center gap-2 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 whitespace-nowrap group
                 ${isActive
-                    ? 'bg-slate-800 text-white shadow-lg shadow-indigo-500/20 ring-1 ring-indigo-500/50'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-105'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
                 }`}
         >
-            {icon && <span className={`mr-2 ${isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-indigo-400'}`}>{icon}</span>}
-            <span className={isActive ? 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400' : ''}>
-                {children}
-            </span>
+            {icon && <span className={`transition-colors duration-300 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-white'}`}>{icon}</span>}
+            <span>{children}</span>
             {isLoading && (
-                <SpinIcon className="ml-2 w-3 h-3 animate-spin text-indigo-400" />
+                <SpinIcon className="w-3 h-3 animate-spin text-indigo-200" />
             )}
             {badgeCount !== undefined && badgeCount > 0 && (
-                <span className="absolute top-2 right-2 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-pink-500 to-rose-500 rounded-full shadow-sm">
+                <span className={`ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${isActive ? 'bg-white text-indigo-600' : 'bg-indigo-500 text-white'}`}>
                     {badgeCount}
                 </span>
             )}
@@ -64,51 +94,65 @@ const NavItem: React.FC<{
 }
 
 const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }) => {
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { gemFinder, newProjects, analystPicks, socialTrends, tokenAnalyzer } = useScanContext();
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
-            <div className="absolute inset-0 glass-panel border-b-0"></div>
+        <header className="fixed top-0 left-0 right-0 z-50">
+            {/* Glass Background */}
+            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md border-b border-white/5 shadow-2xl"></div>
+
             <div className="container mx-auto px-4 relative">
-                <div className="flex items-center justify-between h-24">
-                    <div className="flex items-center space-x-4 flex-shrink-0 group cursor-pointer">
+                <div className="flex items-center justify-between h-20">
+                    {/* Logo Area */}
+                    <div className="flex items-center space-x-3 flex-shrink-0 group cursor-pointer" onClick={() => setActivePage('gem-finder')}>
                         <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-yellow-400 blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
-                            <DiamondIcon className="w-10 h-10 text-pink-400 relative z-10 transform group-hover:rotate-12 transition-transform duration-500" />
+                            <div className="absolute inset-0 bg-indigo-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                            <DiamondIcon className="w-8 h-8 text-indigo-400 relative z-10 transform group-hover:scale-110 transition-transform duration-500" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="hidden md:block text-2xl font-black">
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-400 animate-gradient bg-300">MARCMIKO</span>
+                            <span className="text-xl font-black tracking-tight text-white">
+                                MARCMIKO
                             </span>
-                            <span className="hidden md:block text-[10px] font-bold text-slate-500 tracking-[0.3em] uppercase">Crypto Intelligence</span>
-                        </div>
-                        <span className="md:hidden text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-yellow-400">MM</span>
-                    </div>
-
-                    {/* Navigation - Desktop & Mobile Scroll */}
-                    <div className="flex-1 max-w-4xl mx-4 md:mx-8 overflow-x-auto no-scrollbar">
-                        <div className="flex items-center p-1.5 bg-slate-900/50 backdrop-blur-sm rounded-2xl border border-white/5 w-max mx-auto">
-                            <NavItem page="gem-finder" activePage={activePage} setActivePage={setActivePage} isLoading={gemFinder.isLoading}>Gem Finder</NavItem>
-                            <NavItem page="ai-sniper" activePage={activePage} setActivePage={setActivePage}>Sniper</NavItem>
-                            <NavItem page="new-projects" activePage={activePage} setActivePage={setActivePage} isLoading={newProjects.isLoading}>New</NavItem>
-                            <NavItem page="analyst-picks" activePage={activePage} setActivePage={setActivePage} isLoading={analystPicks.isLoading}>Analyst</NavItem>
-                            <NavItem page="social-trends" activePage={activePage} setActivePage={setActivePage} isLoading={socialTrends.isLoading}>Trends</NavItem>
-                            <NavItem page="token-analyzer" activePage={activePage} setActivePage={setActivePage} isLoading={tokenAnalyzer.isLoading} icon={<SearchIcon className="w-4 h-4" />}>Analyzer</NavItem>
-                            <NavItem page="saved-projects" activePage={activePage} setActivePage={setActivePage} badgeCount={savedCount}>Your Wallet</NavItem>
+                            <span className="text-[9px] font-bold text-indigo-400 tracking-[0.2em] uppercase">
+                                Intelligence
+                            </span>
                         </div>
                     </div>
 
-                    {/* Right Side Actions */}
-                    <div className="flex items-center space-x-4">
-                        <div className="hidden md:block">
-                            <ConnectButton showBalance={false} chainStatus="icon" accountStatus="avatar" />
+                    {/* Navigation - Scrollable Container */}
+                    <div className="flex-1 max-w-5xl mx-4 md:mx-8 overflow-x-auto no-scrollbar mask-fade-sides">
+                        <div className="flex items-center space-x-1 p-1 w-max mx-auto">
+                            <NavItem page="gem-finder" activePage={activePage} setActivePage={setActivePage} isLoading={gemFinder.isLoading} icon={<DiamondIcon className="w-4 h-4" />}>
+                                Gem Finder
+                            </NavItem>
+                            <NavItem page="ai-sniper" activePage={activePage} setActivePage={setActivePage} icon={<SniperIcon className="w-4 h-4" />}>
+                                Sniper
+                            </NavItem>
+                            <NavItem page="new-projects" activePage={activePage} setActivePage={setActivePage} isLoading={newProjects.isLoading} icon={<NewIcon className="w-4 h-4" />}>
+                                New
+                            </NavItem>
+                            <NavItem page="analyst-picks" activePage={activePage} setActivePage={setActivePage} isLoading={analystPicks.isLoading} icon={<AnalystIcon className="w-4 h-4" />}>
+                                Analyst
+                            </NavItem>
+                            <NavItem page="social-trends" activePage={activePage} setActivePage={setActivePage} isLoading={socialTrends.isLoading} icon={<TrendingIcon className="w-4 h-4" />}>
+                                Trends
+                            </NavItem>
+                            <NavItem page="token-analyzer" activePage={activePage} setActivePage={setActivePage} isLoading={tokenAnalyzer.isLoading} icon={<SearchIcon className="w-4 h-4" />}>
+                                Analyzer
+                            </NavItem>
+                            <NavItem page="saved-projects" activePage={activePage} setActivePage={setActivePage} badgeCount={savedCount} icon={<WalletIcon className="w-4 h-4" />}>
+                                Portfolio
+                            </NavItem>
                         </div>
+                    </div>
 
-                        {/* Mobile Menu Toggle (if needed in future, currently nav is scrollable) */}
-                        <div className="md:hidden">
-                            <ConnectButton showBalance={false} chainStatus="none" accountStatus="avatar" />
-                        </div>
+                    {/* Wallet Connect */}
+                    <div className="flex-shrink-0">
+                        <ConnectButton
+                            showBalance={false}
+                            chainStatus={{ smallScreen: 'none', largeScreen: 'icon' }}
+                            accountStatus={{ smallScreen: 'avatar', largeScreen: 'full' }}
+                        />
                     </div>
                 </div>
             </div>

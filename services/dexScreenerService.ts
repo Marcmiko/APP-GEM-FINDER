@@ -1,7 +1,7 @@
 
 import { Token } from '../types';
 
-const BASE_API_URL = 'https://api.dexscreener.com/latest/dex';
+const BASE_API_URL = import.meta.env.DEV ? '/api/dexscreener' : 'https://api.dexscreener.com/latest/dex';
 
 export interface DexScreenerPair {
   chainId: string;

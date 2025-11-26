@@ -1,7 +1,7 @@
 
 import { Token } from '../types';
 
-const BASE_API_URL = 'https://api.geckoterminal.com/api/v2';
+const BASE_API_URL = import.meta.env.DEV ? '/api/geckoterminal' : 'https://api.geckoterminal.com/api/v2';
 
 export interface GeckoTerminalPool {
     id: string;

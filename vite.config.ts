@@ -10,6 +10,23 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      proxy: {
+        '/api/dexscreener': {
+          target: 'https://api.dexscreener.com/latest/dex',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/dexscreener/, ''),
+        },
+        '/api/geckoterminal': {
+          target: 'https://api.geckoterminal.com/api/v2',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/geckoterminal/, ''),
+        },
+        '/api/coingecko': {
+          target: 'https://api.coingecko.com/api/v3',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/coingecko/, ''),
+        },
+      },
     },
     plugins: [
       react(),
