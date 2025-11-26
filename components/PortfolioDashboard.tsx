@@ -6,7 +6,7 @@ import { usePublicClient } from 'wagmi';
 import { formatUnits, parseAbi } from 'viem';
 import { useAlerts } from '../context/AlertContext';
 import { POPULAR_BASE_TOKENS } from '../data/popularTokens';
-import { getTokenPrices } from '../services/geckoTerminalService';
+import { getMultiSourcePrices } from '../services/multiPriceService';
 
 interface PortfolioDashboardProps {
     walletTokens: Token[];
@@ -20,6 +20,13 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
     const { address, isConnected } = useAccount();
     const publicClient = usePublicClient();
     const { addAlert } = useAlerts();
+
+    // Auto-sync when wallet connects
+    useEffect(() => {
+        if (isConnected && address && walletTokens.length === 0 && !isSyncing) {
+            handleSyncWallet();
+        }
+    }, [isConnected, address]);
 
     // Filter out tokens with 0 holdings for display
     const holdings = walletTokens.filter(t => (t.holdings || 0) > 0);
@@ -150,138 +157,25 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
 
             setSyncProgress(80);
 
-            // 4. Simple but reliable price fetching
-            const priceMap: Record<string, number> = {};
-
+            // 4. Fetch prices using multi-source service
             if (addressesToFetchPrice.length > 0) {
                 try {
                     console.log('📊 Fetching prices for', addressesToFetchPrice.length, 'tokens...');
+                    const prices = await getMultiSourcePrices(addressesToFetchPrice);
 
-                    // STEP 1: Get ETH price first (most important)
-                    try {
-                        const ethPriceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-                        const ethPriceData = await ethPriceRes.json();
-                        if (ethPriceData?.ethereum?.usd) {
-                            priceMap['eth'] = ethPriceData.ethereum.usd;
-                            console.log(`⚡ ETH price: $${ethPriceData.ethereum.usd}`);
-                        }
-                    } catch (err) {
-                        console.warn('ETH price fetch failed');
-                        priceMap['eth'] = 3500; // Fallback
-                    }
-
-                    // STEP 2: Try 0x API (same as Base Wallet uses!)
-                    try {
-                        console.log('🔷 Trying 0x API for token prices...');
-
-                        for (const address of addressesToFetchPrice) {
-                            try {
-                                // 0x Price API for Base (chain ID 8453)
-                                const response = await fetch(
-                                    `https://api.0x.org/swap/v1/price?sellToken=${address}&buyToken=0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE&sellAmount=1000000000000000000`,
-                                    {
-                                        headers: {
-                                            '0x-api-key': 'public', // Public endpoint
-                                            '0x-chain-id': '8453' // Base chain ID
-                                        }
-                                    }
-                                );
-
-                                if (response.ok) {
-                                    const data = await response.json();
-                                    if (data.price) {
-                                        const price = parseFloat(data.price);
-                                        if (price > 0) {
-                                            priceMap[address.toLowerCase()] = price;
-                                            console.log(`🔷 0x API found price for ${address}: $${price}`);
-                                        }
-                                    }
-                                }
-                            } catch (err) {
-                                // Skip individual token errors
-                            }
-                        }
-                    } catch (err) {
-                        console.warn('0x API failed:', err);
-                    }
-
-                    // STEP 2.5: Try GeckoTerminal (New Service)
-                    try {
-                        const missingForGecko = addressesToFetchPrice.filter(addr => !priceMap[addr.toLowerCase()]);
-                        if (missingForGecko.length > 0) {
-                            console.log('🦎 Asking GeckoTerminal for', missingForGecko.length, 'prices...');
-                            const geckoPrices = await getTokenPrices(missingForGecko);
-
-                            Object.entries(geckoPrices).forEach(([addr, price]) => {
-                                if (price > 0) {
-                                    priceMap[addr.toLowerCase()] = price;
-                                    console.log(`🦎 GeckoTerminal found price for ${addr}: $${price}`);
-                                }
-                            });
-                        }
-                    } catch (err) {
-                        console.warn('GeckoTerminal failed:', err);
-                    }
-
-                    // STEP 3: Try DexScreener for all tokens
-                    try {
-                        const { getPairsByAddress } = await import('../services/dexScreenerService');
-                        const pairs = await getPairsByAddress(addressesToFetchPrice);
-                        console.log('💎 DexScreener returned', pairs.length, 'pairs');
-
-                        pairs.forEach(pair => {
-                            if (pair.baseToken?.address && pair.priceUsd) {
-                                const addr = pair.baseToken.address.toLowerCase();
-                                const price = parseFloat(pair.priceUsd);
-                                if (price > 0) {
-                                    priceMap[addr] = price;
-                                    console.log(`💎 ${pair.baseToken.symbol}: $${price}`);
-                                }
-                            }
-                        });
-                    } catch (err) {
-                        console.warn('DexScreener failed:', err);
-                    }
-
-                    // STEP 4: Try Basescan Scraper (User Request)
-                    // Only for tokens that still don't have a price
-                    const missingPrice = addressesToFetchPrice.filter(addr => addr && !priceMap[addr.toLowerCase()]);
-                    if (missingPrice.length > 0) {
-                        try {
-                            console.log('🔍 Scraping Basescan for', missingPrice.length, 'missing tokens...');
-                            const { getBasescanPrices } = await import('../services/basescanService');
-
-                            // Only try for a few to avoid long waits/blocks
-                            const tokensToScrape = missingPrice.slice(0, 5);
-                            const scrapedPrices = await getBasescanPrices(tokensToScrape);
-
-                            Object.entries(scrapedPrices).forEach(([addr, price]) => {
-                                if (price > 0) {
-                                    priceMap[addr.toLowerCase()] = price;
-                                    console.log(`🔍 Basescan found price for ${addr}: $${price}`);
-                                }
-                            });
-                        } catch (err) {
-                            console.warn('Basescan scrape failed:', err);
-                        }
-                    }
-
-                    // STEP 5: Update token prices
                     let pricesUpdated = 0;
                     heldTokens.forEach(t => {
-                        const addr = t.address?.toLowerCase();
-                        const isEth = t.symbol === 'ETH' || t.name === 'Ethereum';
+                        const addr = t.address.toLowerCase();
+                        // Handle ETH special case if needed, but service should handle it
+                        // or map 0x42...06 to ETH price
 
-                        if (isEth && priceMap['eth']) {
-                            t.priceUsd = priceMap['eth'];
-                            pricesUpdated++;
-                            console.log(`✅ ${t.symbol}: $${t.priceUsd.toFixed(2)}`);
-                        } else if (addr && priceMap[addr]) {
-                            t.priceUsd = priceMap[addr];
+                        const price = prices[addr];
+                        if (price && price > 0) {
+                            t.priceUsd = price;
                             pricesUpdated++;
                             console.log(`✅ ${t.symbol}: $${t.priceUsd.toFixed(6)}`);
                         } else {
-                            console.warn(`❌ No price for ${t.symbol}`);
+                            console.warn(`❌ No price for ${t.symbol} (${t.address})`);
                         }
                     });
 
