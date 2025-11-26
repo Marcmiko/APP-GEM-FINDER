@@ -131,26 +131,26 @@ const fetchTokensFromNames = async (names: string[], minLiquidity = 10000, minVo
       }
     }
   }
-}
 
-// Batch update prices to ensure they are fresh
-if (tokens.length > 0) {
-  try {
-    const addresses = tokens.map(t => t.address);
-    const latestPrices = await getMultiSourcePrices(addresses);
 
-    tokens.forEach(token => {
-      const price = latestPrices[token.address.toLowerCase()];
-      if (price && price > 0) {
-        token.priceUsd = price;
-      }
-    });
-  } catch (e) {
-    console.warn("Failed to refresh prices in fetchTokensFromNames", e);
+  // Batch update prices to ensure they are fresh
+  if (tokens.length > 0) {
+    try {
+      const addresses = tokens.map(t => t.address);
+      const latestPrices = await getMultiSourcePrices(addresses);
+
+      tokens.forEach(token => {
+        const price = latestPrices[token.address.toLowerCase()];
+        if (price && price > 0) {
+          token.priceUsd = price;
+        }
+      });
+    } catch (e) {
+      console.warn("Failed to refresh prices in fetchTokensFromNames", e);
+    }
   }
-}
 
-return tokens;
+  return tokens;
 };
 
 const getGeminiSuggestions = async (prompt: string): Promise<{ names: string[], sources: GroundingChunk[] }> => {
