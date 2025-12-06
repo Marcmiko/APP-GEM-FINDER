@@ -9,6 +9,10 @@ import {
     walletConnectWallet,
     metaMaskWallet,
     rainbowWallet,
+    trustWallet,
+    ledgerWallet,
+    phantomWallet,
+    rabbyWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 
 const projectId = 'f5281b195c2a7472e1b59d1afc9223d7'; // Get one at https://cloud.walletconnect.com
@@ -26,6 +30,10 @@ export const config = getDefaultConfig({
                 walletConnectWallet,
                 metaMaskWallet,
                 rainbowWallet,
+                trustWallet,
+                ledgerWallet,
+                phantomWallet,
+                rabbyWallet,
             ],
         },
     ],
