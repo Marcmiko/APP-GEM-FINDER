@@ -381,9 +381,9 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                                             key={token.address || idx}
                                             className="p-4 hover:bg-slate-700/20 transition-all duration-200 group cursor-pointer"
                                         >
-                                            <div className="flex items-center gap-4">
+                                            <div className="flex items-start sm:items-center gap-3 sm:gap-4">
                                                 {/* Token Icon */}
-                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform">
+                                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform">
                                                     {token.iconUrl ? (
                                                         <img src={token.iconUrl} alt={token.symbol} className="w-full h-full rounded-full object-cover" />
                                                     ) : (
@@ -391,47 +391,50 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                                                     )}
                                                 </div>
 
-                                                {/* Token Info */}
+                                                {/* Token Info - Flexible layout */}
                                                 <div className="flex-1 min-w-0">
+                                                    {/* Name & Symbol */}
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <h4 className="font-bold text-white text-lg truncate">{token.symbol}</h4>
-                                                        <span className="text-slate-400 text-sm truncate">{token.name}</span>
+                                                        <h4 className="font-bold text-white text-base sm:text-lg truncate">{token.symbol}</h4>
+                                                        <span className="hidden sm:inline text-slate-400 text-sm truncate">{token.name}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-3 text-sm">
+
+                                                    {/* Holdings & Price - Stack on mobile */}
+                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs sm:text-sm">
                                                         <span className="text-slate-400">
-                                                            {(token.holdings || 0).toLocaleString(undefined, { maximumFractionDigits: 6 })} {token.symbol}
+                                                            {(token.holdings || 0).toLocaleString(undefined, { maximumFractionDigits: 4 })} {token.symbol}
                                                         </span>
-                                                        <span className="text-slate-500">•</span>
+                                                        <span className="hidden sm:inline text-slate-500">•</span>
                                                         <span className="text-slate-300">
                                                             ${(token.priceUsd || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                                                         </span>
                                                     </div>
                                                 </div>
 
-                                                {/* Value & PnL */}
-                                                <div className="text-right">
-                                                    <div className="font-bold text-white text-lg mb-1">
+                                                {/* Value & PnL - Right aligned */}
+                                                <div className="text-right flex-shrink-0">
+                                                    <div className="font-bold text-white text-base sm:text-lg mb-1">
                                                         {formatCurrency(value)}
                                                     </div>
-                                                    <div className="flex items-center gap-2 justify-end">
+                                                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 sm:justify-end">
                                                         {/* 24h Change */}
-                                                        <div className={`flex items-center gap-1 text-sm font-medium ${getChangeColor(priceChange)}`}>
+                                                        <div className={`flex items-center gap-1 text-xs sm:text-sm font-medium ${getChangeColor(priceChange)}`}>
                                                             <svg
                                                                 xmlns="http://www.w3.org/2000/svg"
                                                                 viewBox="0 0 20 20"
                                                                 fill="currentColor"
-                                                                className={`w-4 h-4 ${isPositive ? '' : 'rotate-180'}`}
+                                                                className={`w-3 h-3 sm:w-4 sm:h-4 ${isPositive ? '' : 'rotate-180'}`}
                                                             >
                                                                 <path fillRule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.29 9.77a.75.75 0 01-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0110 17z" clipRule="evenodd" />
                                                             </svg>
                                                             {formatPercent(Math.abs(priceChange))}
                                                         </div>
 
-                                                        {/* PnL if available */}
+                                                        {/* PnL if available - Hide on very small screens */}
                                                         {(token.entryPrice || token.avgBuyPrice) && (
                                                             <>
-                                                                <span className="text-slate-600">|</span>
-                                                                <div className={`text-sm font-medium ${getChangeColor(tokenMetrics.pnl)}`}>
+                                                                <span className="hidden sm:inline text-slate-600">|</span>
+                                                                <div className={`hidden sm:block text-xs sm:text-sm font-medium ${getChangeColor(tokenMetrics.pnl)}`}>
                                                                     PnL: {formatPercent(tokenMetrics.pnlPercent)}
                                                                 </div>
                                                             </>
@@ -439,8 +442,8 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                                                     </div>
                                                 </div>
 
-                                                {/* Quick Actions */}
-                                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {/* Quick Actions - Hidden on mobile, show on hover on desktop */}
+                                                <div className="hidden md:flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <a
                                                         href={`https://dexscreener.com/base/${token.address}`}
                                                         target="_blank"

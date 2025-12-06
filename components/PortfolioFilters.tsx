@@ -66,7 +66,7 @@ const PortfolioFilters: React.FC<PortfolioFiltersProps> = ({
                 {/* Filter By */}
                 <div>
                     <label className="block text-sm font-medium text-slate-400 mb-2">Filter</label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <button
                             onClick={() => onFilterChange('all')}
                             className={`flex-1 px-4 py-2 rounded-xl font-medium transition-all ${filterBy === 'all'
