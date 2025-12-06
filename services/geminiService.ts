@@ -241,20 +241,34 @@ export const findGems = async (startDate?: string, endDate?: string, forceRefres
     // - Min volume 1h: $100 (down from $1k)
     const tokens = await fetchTokensFromNames(combinedNames, 10000, 2000, 100);
 
-    // Filter out tokens with market cap > $10M (hidden gems only)
+    // Filter out tokens with market cap > $50M (relaxed from $10M to find more gems)
     const hiddenGems = tokens.filter(t => {
       const marketCap = t.marketCap || 0;
-      return marketCap < 10_000_000; // Max $10M market cap
+      return marketCap < 50_000_000; // Max $50M market cap
     });
 
-    const result = { tokens: hiddenGems.slice(0, 12), sources }; // Limit to 12
+    // If strict filter removed everything, try a more relaxed filter (up to $100M)
+    // or just return the top tokens found regardless of MC (but sorted by lowest MC)
+    let finalTokens = hiddenGems;
+    if (finalTokens.length === 0 && tokens.length > 0) {
+      console.warn("Strict filter removed all tokens, relaxing criteria...");
+      finalTokens = tokens.filter(t => (t.marketCap || 0) < 100_000_000);
+    }
+
+    // If STILL nothing, just return what we found but mark them (or just show them)
+    if (finalTokens.length === 0 && tokens.length > 0) {
+      finalTokens = tokens;
+    }
+
+    const result = { tokens: finalTokens.slice(0, 12), sources }; // Limit to 12
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
     return result;
 
   } catch (error: any) {
     console.error("findGems error:", error);
     // Fallback to hardcoded list if AI fails completely
-    const tokens = await fetchTokensFromNames(FALLBACK_TOKENS, 10000, 2000, 100);
+    // Use lower thresholds for fallback to ensure we show SOMETHING
+    const tokens = await fetchTokensFromNames(FALLBACK_TOKENS, 5000, 1000, 0);
     return { tokens, sources: [] };
   }
 };
@@ -300,18 +314,25 @@ export const findNewProjects = async (forceRefresh = false): Promise<{ tokens: T
     // - Min volume 1h: $50 (shows it's alive)
     const tokens = await fetchTokensFromNames(names, 5000, 500, 50);
 
-    // Filter for very early stage (market cap < $5M)
+    // Filter for very early stage (market cap < $10M, relaxed from $5M)
     const earlyStage = tokens.filter(t => {
       const marketCap = t.marketCap || 0;
-      return marketCap < 5_000_000; // Max $5M for new projects
+      return marketCap < 10_000_000; // Max $10M for new projects
     });
 
-    const result = { tokens: earlyStage.slice(0, 12), sources };
+    let finalTokens = earlyStage;
+    if (finalTokens.length === 0 && tokens.length > 0) {
+      // If strict filter failed, show whatever we found
+      finalTokens = tokens;
+    }
+
+    const result = { tokens: finalTokens.slice(0, 12), sources };
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
     return result;
 
   } catch (error: any) {
     console.error("findNewProjects error:", error);
+    // Fallback to some recent-ish tokens if possible, or just empty
     return { tokens: [], sources: [] };
   }
 };
