@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Token } from '../types';
 import PortfolioCharts from './PortfolioCharts';
 import PortfolioMetrics from './PortfolioMetrics';
+import AllocationChart from './AllocationChart';
 import PortfolioFilters, { applyFiltersAndSort, SortOption, FilterOption } from './PortfolioFilters';
 import { useAccount } from 'wagmi';
 import { usePublicClient } from 'wagmi';
@@ -334,6 +335,9 @@ const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({ walletTokens, o
                 <>
                     {/* Portfolio Metrics */}
                     <PortfolioMetrics metrics={metrics} lastUpdate={lastUpdate} />
+
+                    {/* Allocation Chart */}
+                    <AllocationChart tokens={holdings} />
 
                     {/* Filters */}
                     <PortfolioFilters
