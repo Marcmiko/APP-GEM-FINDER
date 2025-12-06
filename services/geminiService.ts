@@ -87,12 +87,16 @@ const generateWithRetry = async (ai: any, params: any, retries = 5): Promise<any
 // --- CORE LOGIC ---
 
 const FALLBACK_TOKENS = ["BRETT", "DEGEN", "TOSHI", "AERO", "MOG", "KEYCAT", "VIRTUAL", "HIGHER"];
+const BLACKLIST_TOKENS = ["PIPPIN", "HONEYPOT", "SCAM"]; // Add known bad tokens here
 
 const fetchTokensFromNames = async (names: string[], minLiquidity = 10000, minVolume = 1000, minVolume1h = 0): Promise<Token[]> => {
   const tokens: Token[] = [];
   const seenAddresses = new Set<string>();
 
-  for (const name of names) {
+  // Filter out blacklisted names before even searching
+  const filteredNames = names.filter(name => !BLACKLIST_TOKENS.includes(name.toUpperCase()));
+
+  for (const name of filteredNames) {
     // 1. Try DexScreener first (best for new/meme tokens)
     const pairs = await searchDexScreener(name);
 
@@ -205,29 +209,52 @@ export const findGems = async (startDate?: string, endDate?: string, forceRefres
   try {
     const today = new Date().toISOString().split('T')[0];
     const prompt = `
-    Find the top 10 TRENDING token tickers on Base blockchain right now (Current Date: ${today}).
-    Look for "Top Gainers", "Trending", or "Hottest" tokens on Base from the last 24 hours.
-    Focus on tokens with high volume and community engagement.
-    Return ONLY a JSON array of strings (tickers or names). Example: ["BRETT", "DEGEN", "TOSHI"].
+    Find 10 HIDDEN GEM tokens on Base blockchain that are UNDER THE RADAR (Current Date: ${today}).
+    
+    CRITERIA FOR HIDDEN GEMS:
+    - Market cap UNDER $5 million (preferably under $1M)
+    - Recently launched (last 7-14 days)
+    - Growing community but NOT yet mainstream
+    - NOT in top trending lists (we want undiscovered gems)
+    - Active development or unique use case
+    - Decent liquidity (at least $10k) but not massive
+    
+    AVOID:
+    - Well-known tokens like BRETT, DEGEN, TOSHI, AERO
+    - Tokens with market cap over $10M
+    - Tokens already listed on major CEX
+    - Obvious scams or rugs
+    
+    Return ONLY a JSON array of strings (tickers or names). Example: ["TOKEN1", "TOKEN2", "TOKEN3"].
     Do not include any other text.
     `;
 
     const { names, sources } = await getGeminiSuggestions(prompt);
 
-    // Mix in CoinGecko trending if available
-    const cgTrending = await getTrendingCoinGecko();
-    const combinedNames = [...new Set([...names, ...cgTrending, ...FALLBACK_TOKENS])];
+    // DON'T mix with CoinGecko trending - those are already known
+    // Only use AI suggestions and fallback
+    const combinedNames = [...new Set([...names, ...FALLBACK_TOKENS])];
 
-    const tokens = await fetchTokensFromNames(combinedNames, 50000, 10000, 1000);
+    // LOWER thresholds for hidden gems:
+    // - Min liquidity: $10k (down from $50k)
+    // - Min volume 24h: $2k (down from $10k)  
+    // - Min volume 1h: $100 (down from $1k)
+    const tokens = await fetchTokensFromNames(combinedNames, 10000, 2000, 100);
 
-    const result = { tokens: tokens.slice(0, 12), sources }; // Limit to 12
+    // Filter out tokens with market cap > $10M (hidden gems only)
+    const hiddenGems = tokens.filter(t => {
+      const marketCap = t.marketCap || 0;
+      return marketCap < 10_000_000; // Max $10M market cap
+    });
+
+    const result = { tokens: hiddenGems.slice(0, 12), sources }; // Limit to 12
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
     return result;
 
   } catch (error: any) {
     console.error("findGems error:", error);
     // Fallback to hardcoded list if AI fails completely
-    const tokens = await fetchTokensFromNames(FALLBACK_TOKENS);
+    const tokens = await fetchTokensFromNames(FALLBACK_TOKENS, 10000, 2000, 100);
     return { tokens, sources: [] };
   }
 };
@@ -242,46 +269,50 @@ export const findNewProjects = async (forceRefresh = false): Promise<{ tokens: T
 
   try {
     const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
     const prompt = `
-    Find 10 NEWLY LAUNCHED tokens on Base blockchain from the last 24-48 hours (Current Date: ${today}).
-    Look for "New Pairs", "New Listings", or "Recent Mints" on Base.
-    Ignore any tokens launched before ${today}.
+    Find 10 NEWLY LAUNCHED tokens on Base blockchain from the last 24-72 hours (Current Date: ${today}).
+    
+    CRITERIA FOR NEW HIDDEN GEMS:
+    - Launched between ${yesterday} and ${today}
+    - Market cap UNDER $2 million (very early stage)
+    - Has liquidity pool created (at least $5k liquidity)
+    - NOT a copycat or obvious scam
+    - Has some initial volume (shows real interest)
+    - Unique name or concept
+    
+    AVOID:
+    - Tokens launched more than 3 days ago
+    - Tokens with market cap already over $5M
+    - Known forks or copies
+    - Tokens with suspicious contract
+    
+    Look for "New Pairs", "New Listings", or "Recent Launches" on Base.
     Return ONLY a JSON array of strings (tickers or names).
     `;
 
     const { names, sources } = await getGeminiSuggestions(prompt);
-    // Fallback list must be recent-ish or generic placeholders
-    const searchList = names.length > 0 ? names : ["VIRTUAL", "LUNA", "KEYCAT"];
 
-    // Fetch tokens with lower thresholds for new projects but still some liquidity
-    let tokens = await fetchTokensFromNames(searchList, 2000, 500);
+    // Even lower thresholds for brand new projects:
+    // - Min liquidity: $5k (very new)
+    // - Min volume 24h: $500 (just needs some activity)
+    // - Min volume 1h: $50 (shows it's alive)
+    const tokens = await fetchTokensFromNames(names, 5000, 500, 50);
 
-    // SAFETY NET: If AI + Search failed to find ANYTHING, use a hardcoded list of known active tokens
-    if (tokens.length === 0) {
-      console.warn("findNewProjects: No tokens found via AI/Search. Using hard fallback.");
-      tokens = await fetchTokensFromNames(["BRETT", "DEGEN", "TOSHI", "AERO"], 1000, 100);
-    }
-
-    const now = Date.now();
-    const recentTokens = tokens.filter(t => {
-      const created = new Date(t.creationDate).getTime();
-      const ageHours = (now - created) / (1000 * 60 * 60);
-      return ageHours <= 168; // 7 days max
+    // Filter for very early stage (market cap < $5M)
+    const earlyStage = tokens.filter(t => {
+      const marketCap = t.marketCap || 0;
+      return marketCap < 5_000_000; // Max $5M for new projects
     });
 
-    // If strict filter removes everything, fallback to the original list (AI suggestions are usually relevant enough)
-    // If even that is empty (shouldn't be due to safety net), return the safety net tokens
-    const finalTokens = recentTokens.length > 0 ? recentTokens : tokens;
-
-    const result = { tokens: finalTokens.slice(0, 12), sources };
+    const result = { tokens: earlyStage.slice(0, 12), sources };
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
     return result;
 
   } catch (error: any) {
     console.error("findNewProjects error:", error);
-    // Ultimate fallback on error
-    const tokens = await fetchTokensFromNames(["BRETT", "DEGEN"], 1000, 100);
-    return { tokens, sources: [] };
+    return { tokens: [], sources: [] };
   }
 };
 

@@ -170,38 +170,38 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
                 {/* Background Gradient Effect */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-3xl rounded-full -mr-10 -mt-10 pointer-events-none"></div>
 
-                <div className="flex items-center space-x-4 z-10">
-                    <div className="relative">
+                <div className="flex items-center space-x-3 sm:space-x-4 z-10 flex-1 min-w-0">
+                    <div className="relative flex-shrink-0">
                         {token.iconUrl ? (
-                            <img src={token.iconUrl} alt={`${token.symbol} icon`} className="w-12 h-12 rounded-full shadow-lg ring-2 ring-white/10" />
+                            <img src={token.iconUrl} alt={`${token.symbol} icon`} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full shadow-lg ring-2 ring-white/10" />
                         ) : (
                             <IconPlaceholder symbol={token.symbol} />
                         )}
                         {token.isVerified && (
                             <div className="absolute -bottom-1 -right-1 bg-slate-900 rounded-full p-0.5">
-                                <VerifiedIcon className="w-4 h-4 text-indigo-400" />
+                                <VerifiedIcon className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-400" />
                             </div>
                         )}
                     </div>
-                    <div>
-                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                            {token.name}
-                            <span className="text-slate-500 text-sm font-medium">({token.symbol})</span>
+                    <div className="min-w-0 flex-1">
+                        <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 truncate">
+                            <span className="truncate">{token.name}</span>
+                            <span className="text-slate-500 text-xs sm:text-sm font-medium flex-shrink-0">({token.symbol})</span>
                         </h3>
-                        <div className="flex items-center gap-3 mt-1">
-                            <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1">
+                            <span className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">
                                 {displayPrice !== undefined && displayPrice !== null && displayPrice > 0
                                     ? `$${displayPrice < 0.01 ? displayPrice.toFixed(6) : displayPrice.toFixed(4)}`
                                     : 'Loading...'}
                             </span>
                             {token.priceChange24h !== undefined && token.priceChange24h !== null && (
-                                <span className={`px-2 py-0.5 rounded-lg text-xs font-bold ${token.priceChange24h >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                                <span className={`px-1.5 py-0.5 rounded-lg text-[10px] sm:text-xs font-bold ${token.priceChange24h >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                                     {token.priceChange24h >= 0 ? '+' : ''}{token.priceChange24h.toFixed(2)}%
                                 </span>
                             )}
                         </div>
                         {token.creationDate && (
-                            <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-500 font-mono">
+                            <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-500 font-mono hidden sm:flex">
                                 <span>🚀 {new Date(token.creationDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
                                 <span className="text-slate-600">•</span>
                                 <span>{getRelativeTime(token.creationDate)}</span>
