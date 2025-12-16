@@ -8,7 +8,7 @@ interface Settings {
 
 interface SettingsContextType {
   settings: Settings;
-  setSettings: (settings: Settings) => void;
+  setSettings: (settings: Partial<Settings>) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

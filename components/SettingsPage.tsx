@@ -6,7 +6,7 @@ const SettingsPage: React.FC = () => {
   const { settings, setSettings } = useSettings();
 
   const handleBrandNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSettings({ ...settings, brandName: e.target.value });
+    setSettings({ brandName: e.target.value });
   };
 
   return (

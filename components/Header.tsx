@@ -81,7 +81,7 @@ const NavItem: React.FC<{
     return (
         <button
             onClick={() => setActivePage(page)}
-            className={`relative flex items-center gap-2 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 whitespace-nowrap group
+            className={`relative flex items-center gap-1 px-2 py-2 text-sm font-bold rounded-xl transition-all duration-300 whitespace-nowrap group
                 ${isActive
                     ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-105'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
