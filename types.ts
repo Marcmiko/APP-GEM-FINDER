@@ -114,4 +114,4 @@ export interface ScanResult {
   sources: GroundingChunk[];
 }
 
-export type Page = 'gem-finder' | 'ai-sniper' | 'new-projects' | 'analyst-picks' | 'social-trends' | 'token-analyzer' | 'saved-projects';
+export type Page = 'gem-finder' | 'ai-sniper' | 'new-projects' | 'analyst-picks' | 'social-trends' | 'token-analyzer' | 'saved-projects' | 'settings';
