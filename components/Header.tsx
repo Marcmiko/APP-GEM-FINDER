@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+
+import React from 'react';
 import { Page } from '../types';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useScanContext } from '../context/ScanContext';
+import { useSettings } from '../context/SettingsContext';
 
 // --- ICONS ---
 const DiamondIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -54,6 +56,12 @@ const WalletIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     </svg>
 );
 
+const SettingsIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path fillRule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 5.85C8.001 6.234 7.058 6.78 6.234 7.507L4.15 6.41c-.893-.444-1.952-.185-2.446.702-.494.887-.186 1.952.702 2.446l2.083 1.033c-.283.945-.487 1.933-.598 2.952L2.81 14.93c-1.002.24-1.623 1.25-1.383 2.262.24 1.012 1.25 1.623 2.262 1.383l2.581-.645c.825.727 1.768 1.274 2.818 1.658l-.174 2.089c-.151.904.532 1.73 1.45 1.85.917.12 1.73-.532 1.85-1.45l.174-2.089c1.05-.384 2.023-.93 2.818-1.658l2.581.645c1.012.24 2.022-.37 2.262-1.383.24-1.012-.37-2.022-1.383-2.262l-2.083-.52c-.11-.98-.315-1.933-.598-2.952l2.083-1.033c.887-.494 1.195-1.559.702-2.446-.494-.887-1.559-1.195-2.446-.702l-2.084 1.033c-.825-.727-1.768-1.274-2.818-1.658l.174-2.09c.151-.904-.532-1.73-1.45-1.85a1.88 1.88 0 00-.233 0zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clipRule="evenodd" />
+    </svg>
+);
+
 interface HeaderProps {
     activePage: Page;
     setActivePage: (page: Page) => void;
@@ -95,6 +103,7 @@ const NavItem: React.FC<{
 
 const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }) => {
     const { gemFinder, newProjects, analystPicks, socialTrends, tokenAnalyzer } = useScanContext();
+    const { settings } = useSettings();
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50">
@@ -111,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
                         </div>
                         <div className="flex flex-col">
                             <span className="text-xl font-black tracking-tight text-white">
-                                MARCMIKO
+                                {settings.brandName}
                             </span>
                             <span className="text-[9px] font-bold text-indigo-400 tracking-[0.2em] uppercase">
                                 Intelligence
@@ -142,6 +151,9 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
                             </NavItem>
                             <NavItem page="saved-projects" activePage={activePage} setActivePage={setActivePage} badgeCount={savedCount} icon={<WalletIcon className="w-4 h-4" />}>
                                 Portfolio
+                            </NavItem>
+                             <NavItem page="settings" activePage={activePage} setActivePage={setActivePage} icon={<SettingsIcon className="w-4 h-4" />}>
+                                Settings
                             </NavItem>
                         </div>
                     </div>
