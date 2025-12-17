@@ -10,6 +10,7 @@ export interface TokenAnalysis {
   strengths: string;
   risks: string;
   verdict: string;
+  explosionRationale?: string;
 }
 
 export interface SocialSentiment {
@@ -80,6 +81,7 @@ export interface Token {
 
   gemScore: number;
   analysis: TokenAnalysis;
+  explosionRationale?: string; // Quick access to analysis.explosionRationale
   technicalIndicators?: TechnicalIndicators;
   socialSentiment?: SocialSentiment;
 

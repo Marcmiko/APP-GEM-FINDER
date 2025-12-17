@@ -118,6 +118,21 @@ const TokenDetailModal: React.FC<TokenDetailModalProps> = ({ token, isOpen, onCl
                 <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Left Column: Analysis & Info */}
                     <div className="space-y-6">
+                        {/* EXPLOSION THESIS (New) */}
+                        {token.explosionRationale && (
+                            <div className="relative overflow-hidden rounded-2xl p-6 border border-amber-500/30 group">
+                                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-600/10 opacity-50"></div>
+                                <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/20 blur-3xl rounded-full"></div>
+
+                                <h3 className="relative text-lg font-bold text-amber-400 mb-3 flex items-center gap-2">
+                                    🚀 The Explosion Thesis
+                                </h3>
+                                <p className="relative text-amber-100/90 leading-relaxed text-base font-medium">
+                                    "{token.explosionRationale}"
+                                </p>
+                            </div>
+                        )}
+
                         {/* AI Analysis */}
                         <div className="bg-indigo-500/5 rounded-2xl p-6 border border-indigo-500/10">
                             <h3 className="text-lg font-bold text-indigo-400 mb-3 flex items-center gap-2">

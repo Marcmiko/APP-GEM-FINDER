@@ -209,31 +209,70 @@ export const findGems = async (startDate?: string, endDate?: string, forceRefres
   try {
     const today = new Date().toISOString().split('T')[0];
     const prompt = `
-    Find 10 HIDDEN GEM tokens on Base blockchain that are UNDER THE RADAR (Current Date: ${today}).
+    Find 10 HIDDEN GEM tokens on Base blockchain that fit one of these 4 HISTORICAL SUCCESS ARCHETYPES (Current Date: ${today}):
     
-    CRITERIA FOR HIDDEN GEMS:
-    - Market cap UNDER $5 million (preferably under $1M)
-    - Recently launched (last 7-14 days)
-    - Growing community but NOT yet mainstream
-    - NOT in top trending lists (we want undiscovered gems)
-    - Active development or unique use case
-    - Decent liquidity (at least $10k) but not massive
+    1. "THE SLEEPING GIANT" (Pattern: DONUT)
+       - Older token (>3 months) with massive, active community but price is lagging.
+       - unique utility (e.g. social tipping, governance).
+       - High holder count despite low market cap.
+       
+    2. "THE FAIR LAUNCH" (Pattern: BRETT)
+       - Recent launch (last 1-30 days).
+       - 100% Liquidity Burned/Locked, Renounced Contract, 0% Tax.
+       - "Mascot" or distinctive cultural vibe.
+       
+    3. "THE TECH INNOVATOR" (Pattern: VIRTUAL)
+       - AI, Gaming, or Infrastructure focus.
+       - TEAM IS SHIPPING: Regular updates, actual product beta/live.
+       - Deflationary mechanics or strong vesting transparency.
+
+    4. "THE CASH COW" (Pattern: PROTOCOL REVENUE)
+       - Projects generating REAL REVENUE or FEES (check DefiLlama/Dune).
+       - High Revenue/Market Cap ratio (Undervalued).
+       - "Flipping" narrative (e.g. "Revenue higher than X competitor").
+    
+    CRITERIA:
+    - Market cap UNDER $5 million (IMPORTANT: can be up to $15M ONLY for "Cash Cow" / Revenue plays with proven fees).
+    - Liquidity > $10k.
+    - NOT in top trending lists (we want undiscovered gems).
     
     AVOID:
-    - Well-known tokens like BRETT, DEGEN, TOSHI, AERO
-    - Tokens with market cap over $10M
-    - Tokens already listed on major CEX
-    - Obvious scams or rugs
+    - Well-known tokens like DEGEN, TOSHI, AERO, KEYCAT, MOG.
+    - Obvious scams or rugs.
     
-    Return ONLY a JSON array of strings (tickers or names). Example: ["TOKEN1", "TOKEN2", "TOKEN3"].
-    Do not include any other text.
+    INSTRUCTIONS:
+    - Return ONLY a JSON array of objects.
+    - Format: [{"symbol": "TOKEN1", "archetype": "The Sleeping Giant", "rationale": "Reason why..."}]
+    - Ensure a DIVERSE MIX of archetypes (don't just list revenue coins).
+    - Do not include any other text.
     `;
 
-    const { names, sources } = await getGeminiSuggestions(prompt);
+    const ai = getAiClient();
+    const response = await generateWithRetry(ai, {
+      model: "gemini-1.5-pro",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        tools: [{ googleSearch: {} }],
+        thinkingConfig: { thinkingBudget: 2048 }
+      },
+    });
 
-    // DON'T mix with CoinGecko trending - those are already known
-    // Only use AI suggestions and fallback
-    const combinedNames = [...new Set([...names, ...FALLBACK_TOKENS])];
+    let suggestions: { symbol: string, archetype: string, rationale: string }[] = [];
+    try {
+      if (response.text) {
+        suggestions = JSON.parse(response.text);
+      }
+    } catch (e) {
+      console.warn("Failed to parse structured gems JSON", e);
+      // Fallback: try to match simple string array pattern if AI failed to follow instructions
+      const { names } = await getGeminiSuggestions(prompt);
+      suggestions = names.map(n => ({ symbol: n, archetype: "Unknown", rationale: "AI suggested hidden gem." }));
+    }
+
+    const searchList = suggestions.map(s => s.symbol);
+    // Add defaults if empty
+    const combinedNames = [...new Set(searchList.length > 0 ? searchList : FALLBACK_TOKENS)];
 
     // LOWER thresholds for hidden gems:
     // - Min liquidity: $10k (down from $50k)
@@ -241,8 +280,26 @@ export const findGems = async (startDate?: string, endDate?: string, forceRefres
     // - Min volume 1h: $100 (down from $1k)
     const tokens = await fetchTokensFromNames(combinedNames, 10000, 2000, 100);
 
+    // Merge AI rationale back into tokens
+    const enrichedTokens = tokens.map(t => {
+      const suggestion = suggestions.find(s => s.symbol.toUpperCase() === t.symbol.toUpperCase());
+      if (suggestion) {
+        return {
+          ...t,
+          explosionRationale: suggestion.rationale,
+          keyDrivers: `Archetype: ${suggestion.archetype} - ${suggestion.rationale}`, // Put archetype in key drivers
+          analysis: {
+            ...t.analysis,
+            strengths: `Archetype: ${suggestion.archetype}. ${t.analysis?.strengths || ''}`,
+            explosionRationale: suggestion.rationale
+          }
+        };
+      }
+      return t;
+    });
+
     // Filter out tokens with market cap > $50M (relaxed from $10M to find more gems)
-    const hiddenGems = tokens.filter(t => {
+    const hiddenGems = enrichedTokens.filter(t => {
       const marketCap = t.marketCap || 0;
       return marketCap < 50_000_000; // Max $50M market cap
     });
@@ -250,24 +307,35 @@ export const findGems = async (startDate?: string, endDate?: string, forceRefres
     // If strict filter removed everything, try a more relaxed filter (up to $100M)
     // or just return the top tokens found regardless of MC (but sorted by lowest MC)
     let finalTokens = hiddenGems;
-    if (finalTokens.length === 0 && tokens.length > 0) {
+    if (finalTokens.length === 0 && enrichedTokens.length > 0) {
       console.warn("Strict filter removed all tokens, relaxing criteria...");
-      finalTokens = tokens.filter(t => (t.marketCap || 0) < 100_000_000);
+      finalTokens = enrichedTokens.filter(t => (t.marketCap || 0) < 100_000_000);
     }
 
     // If STILL nothing, just return what we found but mark them (or just show them)
-    if (finalTokens.length === 0 && tokens.length > 0) {
-      finalTokens = tokens;
+    if (finalTokens.length === 0 && enrichedTokens.length > 0) {
+      finalTokens = enrichedTokens;
     }
 
+    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
     const result = { tokens: finalTokens.slice(0, 12), sources }; // Limit to 12
     if (result.tokens.length > 0) saveToCache(cacheKey, result);
     return result;
 
   } catch (error: any) {
     console.error("findGems error:", error);
-    // Fallback to hardcoded list if AI fails completely
-    // Use lower thresholds for fallback to ensure we show SOMETHING
+    // Fallback: Try to get real new pools from GeckoTerminal first
+    try {
+      const { getNewPools } = await import('./geckoTerminalService');
+      const newPools = await getNewPools();
+      if (newPools.length > 0) {
+        return { tokens: newPools.slice(0, 12), sources: [] };
+      }
+    } catch (e) {
+      console.warn("Fallback to new pools failed:", e);
+    }
+
+    // Ultimate fallback to hardcoded list if everything fails
     const tokens = await fetchTokensFromNames(FALLBACK_TOKENS, 5000, 1000, 0);
     return { tokens, sources: [] };
   }
@@ -382,7 +450,7 @@ export const findSocialTrends = async (forceRefresh = false): Promise<{ tokens: 
       Find 15 DIVERSE tokens currently trending on Twitter/X/Farcaster across different categories:
       - 5 tokens from DeFi/Infrastructure (DEXs, Lending, Bridges)
       - 5 tokens from Gaming/NFT/AI
-      - 5 tokens from social/community projects
+      - 5 tokens from "Revenue Spikes" or "Dune Analytics Breakouts" (High fee generation)
 
       EXCLUDE these overused memecoins: DEGEN, BRETT, TOSHI, MOCHI, NORMIE, HIGHER, KEYCAT, MOG.
       
@@ -497,17 +565,24 @@ export const enrichTokenAnalysis = async (token: Token): Promise<Token> => {
     Analyze the crypto token ${token.name} (${token.symbol}) on Base blockchain.
     Data: Liquidity $${token.liquidity}, Volume $${token.volume24h}, Market Cap $${token.marketCap}.
     
+    Check if it fits one of these "Success Archetypes":
+    1. "Sleeping Giant" (Old, active community, low price)
+    2. "Fair Launch" (Locked LP, Renounced, No Tax, organic growth)
+    3. "Tech Innovator" (Real shipping product, AI/Gaming, transparency)
+    4. "Cash Cow" (High Revenue/Fees, Undervalued vs Revenue)
+    
     Provide a JSON object with the following fields:
     - summary: A 1-sentence summary of what the project does.
-    - strengths: A short list of key strengths (e.g. "Strong community", "High volume").
-    - risks: A short list of key risks (e.g. "Low liquidity", "Anon team").
-    - verdict: A short investment verdict (e.g. "High Risk / High Reward", "Safe Bet").
+    - strengths: A short list of key strengths. If it fits an archetype, MENTION IT HERE.
+    - risks: A short list of key risks.
+    - explosionRationale: A specific thesis on WHY this token could explode (e.g. "Dune revenue up 200%", "Undervalued vs AERO").
+    - verdict: A short investment verdict.
     - auditScore: A number 0-100 representing overall project quality/safety.
     - securityScore: A number 0-100 (contract safety, audit status).
     - utilityScore: A number 0-100 (use case, product).
     - communityScore: A number 0-100 (social activity, holders).
-    - redFlags: A list of critical warning signs (e.g. "Mintable", "Blacklist function").
-    - greenFlags: A list of positive signals (e.g. "Renounced ownership", "Doxxed team").
+    - redFlags: A list of critical warning signs.
+    - greenFlags: A list of positive signals.
     - holderCount: An estimated number of holders (integer) or 0 if unknown.
     
     Return ONLY the JSON object.
@@ -525,6 +600,7 @@ export const enrichTokenAnalysis = async (token: Token): Promise<Token> => {
     return {
       ...token,
       holders: analysis.holderCount || token.holders || 0,
+      explosionRationale: analysis.explosionRationale,
       auditScore: analysis.auditScore || 50,
       auditReport: {
         securityScore: analysis.auditScorecard.securityScore,
@@ -534,11 +610,15 @@ export const enrichTokenAnalysis = async (token: Token): Promise<Token> => {
         redFlags: analysis.auditScorecard.redFlags,
         greenFlags: analysis.auditScorecard.greenFlags
       },
+      aiAnalysis: analysis.summary || token.analysis.summary,
+      keyDrivers: Array.isArray(analysis.strengths) ? analysis.strengths.join(", ") : (analysis.strengths || token.analysis.strengths),
+      risks: Array.isArray(analysis.risks) ? analysis.risks.join(", ") : (analysis.risks || token.analysis.risks),
       analysis: {
         summary: analysis.summary || token.analysis.summary,
         strengths: Array.isArray(analysis.strengths) ? analysis.strengths.join(", ") : (analysis.strengths || token.analysis.strengths),
         risks: Array.isArray(analysis.risks) ? analysis.risks.join(", ") : (analysis.risks || token.analysis.risks),
         verdict: analysis.verdict || token.analysis.verdict,
+        explosionRationale: analysis.explosionRationale
       }
     };
   } catch (error) {

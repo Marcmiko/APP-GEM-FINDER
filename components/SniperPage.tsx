@@ -5,6 +5,7 @@ import SniperFilters from './SniperFilters';
 import { useScanContext } from '../context/ScanContext';
 import { getNewPools } from '../services/geckoTerminalService';
 import FlashTradeModal from './FlashTradeModal';
+import TokenDetailModal from './TokenDetailModal';
 
 interface SniperPageProps {
     savedTokens: Token[];
@@ -207,6 +208,6 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
     );
 };
 
-import TokenDetailModal from './TokenDetailModal'; // Add import
+
 
 export default SniperPage;
