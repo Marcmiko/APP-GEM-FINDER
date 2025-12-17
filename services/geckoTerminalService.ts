@@ -113,7 +113,23 @@ export const getNewPools = async (): Promise<Token[]> => {
     }
 };
 
-// ... (getTokenPrices remains unchanged) ...
+export const getTokenPrices = async (addresses: string[]): Promise<Record<string, number>> => {
+    if (addresses.length === 0) return {};
+    try {
+        const addressStr = addresses.join(',');
+        const response = await fetch(`${BASE_API_URL}/networks/base/tokens/multi/${addressStr}`);
+        if (!response.ok) throw new Error('Failed to fetch prices');
+        const data = await response.json();
+        const prices: Record<string, number> = {};
+        data.data.forEach((token: any) => {
+            prices[token.attributes.address.toLowerCase()] = parseFloat(token.attributes.price_usd);
+        });
+        return prices;
+    } catch (error) {
+        console.error("Error fetching token prices:", error);
+        return {};
+    }
+};
 
 const mapGeckoTerminalPoolToToken = (pool: GeckoTerminalPool): Token => {
     const attr = pool.attributes;
