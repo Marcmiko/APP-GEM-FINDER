@@ -81,7 +81,10 @@ export const getNewPools = async (): Promise<Token[]> => {
                     if (dexPair) {
                         return {
                             ...token,
-                            iconUrl: dexPair.info?.imageUrl || token.iconUrl,
+                            // Special case for our GFT Token
+                            iconUrl: token.address.toLowerCase() === '0x55d34f6e95aE41a5B61064684bdD5EFAE0e4b6d0'.toLowerCase()
+                                ? '/logo.png'
+                                : (dexPair.info?.imageUrl || token.iconUrl),
                             links: {
                                 ...token.links,
                                 twitter: dexPair.info?.socials?.find(s => s.type === 'twitter')?.url || token.links.twitter,

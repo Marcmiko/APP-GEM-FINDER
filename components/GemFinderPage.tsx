@@ -12,63 +12,7 @@ import { TokenBalance } from './TokenBalance';
 
 import SwipeView from './SwipeView';
 import SwapModal from './SwapModal';
-
-const TokenPurchaseModal = ({ isOpen, onClose, onBuy, isLoading }: any) => {
-    if (!isOpen) return null;
-    const [amount, setAmount] = useState('0.01');
-    const [rate, setRate] = useState<number | null>(null);
-
-    useEffect(() => {
-        tokenService.getSaleRate().then(setRate);
-    }, []);
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-2xl">
-                <h3 className="text-2xl font-bold text-white mb-4">Get GemFinder Tokens</h3>
-                <p className="text-slate-400 mb-6">
-                    You need GFT tokens to use the AI Analysis features.
-                    <br />
-                    <span className="text-sm">Current Rate: 1 ETH = {rate || '...'} GFT</span>
-                </p>
-
-                <div className="space-y-4 mb-6">
-                    <div>
-                        <label className="block text-slate-400 text-sm mb-2">ETH Amount</label>
-                        <input
-                            type="number"
-                            step="0.001"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                        />
-                    </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">You Receive:</span>
-                        <span className="text-purple-400 font-bold">{rate ? (parseFloat(amount) * rate).toLocaleString() : '...'} GFT</span>
-                    </div>
-                </div>
-
-                <div className="flex gap-4">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-800 transition-colors"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={() => onBuy(amount)}
-                        disabled={isLoading}
-                        className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 transition-opacity disabled:opacity-50"
-                    >
-                        {isLoading ? 'Purchasing...' : 'Buy Tokens'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
+import { TokenSaleModal } from './TokenSaleModal';
 
 const RocketIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -98,7 +42,7 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
     const [viewMode, setViewMode] = useState<'grid' | 'swipe'>('grid');
     const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
-    const [isPurchasing, setIsPurchasing] = useState(false);
+    // const [isPurchasing, setIsPurchasing] = useState(false); // Managed internally by TokenSaleModal
     const [swapToken, setSwapToken] = useState<Token | null>(null);
     const [selectedToken, setSelectedToken] = useState<Token | null>(null);
     const [analysisCost, setAnalysisCost] = useState<string>('10');
@@ -138,15 +82,14 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
         }
     };
 
-    const handleBuyTokens = async (amount: string) => {
-        setIsPurchasing(true);
-        const success = await tokenService.buyTokens(amount);
-        setIsPurchasing(false);
-        if (success) {
-            setIsPurchaseModalOpen(false);
-            // Refresh balance would happen automatically via component update or can force reload
-        }
-    };
+    // const handleBuyTokens = async (amount: string) => { // Moved to internal modal logic
+    //     setIsPurchasing(true);
+    //     const success = await tokenService.buyTokens(amount);
+    //     setIsPurchasing(false);
+    //     if (success) {
+    //         setIsPurchaseModalOpen(false);
+    //     }
+    // };
 
     const handleNotificationAction = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -358,11 +301,9 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                 initialOutputTokenAddress={swapToken?.address}
             />
 
-            <TokenPurchaseModal
+            <TokenSaleModal
                 isOpen={isPurchaseModalOpen}
                 onClose={() => setIsPurchaseModalOpen(false)}
-                onBuy={handleBuyTokens}
-                isLoading={isPurchasing}
             />
 
             {/* Detail Modal */}

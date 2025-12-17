@@ -39,6 +39,7 @@ export const config = getDefaultConfig({
         },
     ],
     transports: {
-        [base.id]: http(),
+        [base.id]: http('https://base.llamarpc.com'),
     },
+    // ssr: true, // properties like ssr should be at the top level or check react-query adapter docs
 });
