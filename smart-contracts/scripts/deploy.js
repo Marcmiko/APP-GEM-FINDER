@@ -1,33 +1,50 @@
 const hre = require("hardhat");
 const { ethers } = hre;
 
+// Helper to wait for code indexing
+async function waitForCode(address, name) {
+    console.log(`⏳ Waiting for ${name} code to be indexed at ${address}...`);
+    let code = await ethers.provider.getCode(address);
+    let retries = 0;
+    while (code === "0x" && retries < 20) {
+        await new Promise(r => setTimeout(r, 3000));
+        code = await ethers.provider.getCode(address);
+        process.stdout.write("."); // Simple loading indicator
+        retries++;
+    }
+    console.log(""); // Newline
+    if (code === "0x") {
+        console.error(`❌ ${name} code NOT found after waiting.`);
+        throw new Error("Contract deployment verification failed (RPC latency).");
+    } else {
+        console.log(`✅ ${name} code verified.`);
+    }
+}
+
 async function main() {
-    console.log("🚀 Starting GemFinder Token deployment...\n");
+    console.log("🚀 Starting GemFinder Token deployment (Resilient Mode)...\n");
 
-    // Get deployer account
     const [deployer] = await ethers.getSigners();
-    console.log("📝 Deploying contracts with account:", deployer.address);
-
+    console.log("📝 Deploying with account:", deployer.address);
     const balance = await ethers.provider.getBalance(deployer.address);
     console.log("💰 Account balance:", ethers.formatEther(balance), "ETH\n");
 
-    // Deploy GemFinderToken
+    // 1. Deploy GemFinderToken
     console.log("🪙 Deploying GemFinderToken...");
     const GemFinderToken = await ethers.getContractFactory("GemFinderToken");
     const gftToken = await GemFinderToken.deploy();
-    await gftToken.waitForDeployment();
+    await gftToken.waitForDeployment(); // Standard wait
     const gftAddress = await gftToken.getAddress();
     console.log("✅ GemFinderToken deployed to:", gftAddress);
 
-    // Get token details
-    const name = await gftToken.name();
-    const symbol = await gftToken.symbol();
-    const totalSupply = await gftToken.totalSupply();
-    console.log(`   Name: ${name}`);
-    console.log(`   Symbol: ${symbol}`);
-    console.log(`   Total Supply: ${ethers.formatEther(totalSupply)} GFT\n`);
+    // Explicit wait for code
+    await waitForCode(gftAddress, "GemFinderToken");
 
-    // Deploy TokenGate
+    console.log(`   Name: ${await gftToken.name()}`);
+    console.log(`   Symbol: ${await gftToken.symbol()}`);
+    console.log(`   Total Supply: ${ethers.formatEther(await gftToken.totalSupply())} GFT\n`);
+
+    // 2. Deploy TokenGate
     console.log("🔐 Deploying TokenGate...");
     const TokenGate = await ethers.getContractFactory("TokenGate");
     const tokenGate = await TokenGate.deploy(gftAddress, deployer.address);
@@ -35,32 +52,44 @@ async function main() {
     const tokenGateAddress = await tokenGate.getAddress();
     console.log("✅ TokenGate deployed to:", tokenGateAddress);
 
-    // Get TokenGate details
-    const analysisCost = await tokenGate.gemAnalysisCost();
-    const filterCost = await tokenGate.advancedFilterCost();
-    console.log(`   Gem Analysis Cost: ${ethers.formatEther(analysisCost)} GFT`);
-    console.log(`   Advanced Filter Cost: ${ethers.formatEther(filterCost)} GFT\n`);
+    await waitForCode(tokenGateAddress, "TokenGate");
 
-    // Deploy TokenSale
-    // Rate: 1 ETH = 100,000 GFT (Example rate: 0.00001 ETH per GFT)
+    console.log(`   Analysis Cost: ${ethers.formatEther(await tokenGate.gemAnalysisCost())} GFT`);
+    console.log(`   Filter Cost: ${ethers.formatEther(await tokenGate.advancedFilterCost())} GFT\n`);
+
+    // 3. Deploy TokenSale
     const RATE = 100000;
     console.log("💰 Deploying TokenSale...");
-    console.log(`   Rate: 1 ETH = ${RATE} GFT`);
     const TokenSale = await ethers.getContractFactory("TokenSale");
     const tokenSale = await TokenSale.deploy(gftAddress, RATE);
     await tokenSale.waitForDeployment();
     const tokenSaleAddress = await tokenSale.getAddress();
     console.log("✅ TokenSale deployed to:", tokenSaleAddress);
 
+    await waitForCode(tokenSaleAddress, "TokenSale");
+
     // Distribution
     console.log("\n📦 Distributing Tokens...");
-    const SALE_ALLOCATION = ethers.parseEther("400000000"); // 40% (400M)
-    // const AIRDROP_ALLOCATION = ethers.parseEther("400000000"); // 40% (400M) - Kept in owner wallet for now
-    // const TEAM_ALLOCATION = ethers.parseEther("200000000"); // 20% (200M) - Kept in owner wallet for now
+    const SALE_ALLOCATION = ethers.parseEther("400000000"); // 40%
+    // const AIRDROP_ALLOCATION = ethers.parseEther("400000000"); 
 
     console.log("   Transferring 40% (400M GFT) to TokenSale contract...");
-    await gftToken.transfer(tokenSaleAddress, SALE_ALLOCATION);
+    const tx = await gftToken.transfer(tokenSaleAddress, SALE_ALLOCATION);
+    await tx.wait();
     console.log("   ✅ Transfer complete");
+
+    // Send tokens to user as requested
+    const USER_ADDRESS = "0x0eaC02BbEA586Cd72335093c5952D2E88e411FAf";
+    console.log("\n🎁 Fulfilling User Request...");
+    const USER_AMOUNT = ethers.parseEther("10000"); // 10k GFT
+    console.log(`   Sending 10,000 GFT to ${USER_ADDRESS}...`);
+    try {
+        const userTx = await gftToken.transfer(USER_ADDRESS, USER_AMOUNT);
+        await userTx.wait();
+        console.log("   ✅ User tokens sent!");
+    } catch (e) {
+        console.error("   ❌ Failed to send user tokens:", e.message);
+    }
 
     console.log("\n📋 Deployment Summary:");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -68,24 +97,7 @@ async function main() {
     console.log("TokenGate:     ", tokenGateAddress);
     console.log("TokenSale:     ", tokenSaleAddress);
     console.log("Treasury:      ", deployer.address);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("Distribution:");
-    console.log(" - Sale (40%):    400,000,000 GFT (In TokenSale contract)");
-    console.log(" - Airdrop (40%): 400,000,000 GFT (In Deployer wallet)");
-    console.log(" - Team (20%):    200,000,000 GFT (In Deployer wallet)");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-
-    console.log("⏳ Waiting for block confirmations before verification...");
-    await gftToken.deploymentTransaction()?.wait(5);
-    await tokenGate.deploymentTransaction()?.wait(5);
-    await tokenSale.deploymentTransaction()?.wait(5);
-
-    console.log("\n📝 To verify contracts on BaseScan, run:");
-    console.log(`npx hardhat verify --network baseSepolia ${gftAddress}`);
-    console.log(`npx hardhat verify --network baseSepolia ${tokenGateAddress} ${gftAddress} ${deployer.address}`);
-    console.log(`npx hardhat verify --network baseSepolia ${tokenSaleAddress} ${gftAddress} ${RATE}`);
-
-    console.log("\n✨ Deployment complete!");
 }
 
 main()

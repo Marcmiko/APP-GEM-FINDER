@@ -26,9 +26,9 @@ const TOKEN_SALE_ABI = [
 ] as const;
 
 // Contract addresses
-export const GFT_TOKEN_ADDRESS = (process.env.VITE_GFT_TOKEN_ADDRESS || '0x0000000000000000000000000000000000000000') as Address;
-export const TOKEN_GATE_ADDRESS = (process.env.VITE_TOKEN_GATE_ADDRESS || '0x0000000000000000000000000000000000000000') as Address;
-export const TOKEN_SALE_ADDRESS = (process.env.VITE_TOKEN_SALE_ADDRESS || '0x0000000000000000000000000000000000000000') as Address;
+export const GFT_TOKEN_ADDRESS = (process.env.VITE_GFT_TOKEN_ADDRESS || '0x55d34f6e95aE41a5B61064684bdD5EFAE0e4b6d0') as Address;
+export const TOKEN_GATE_ADDRESS = (process.env.VITE_TOKEN_GATE_ADDRESS || '0x4eb3E01b0f78652b58A8FaA6b5312074E9ea67B3') as Address;
+export const TOKEN_SALE_ADDRESS = (process.env.VITE_TOKEN_SALE_ADDRESS || '0xA68524Fcea41B3ccac8E911b7baa367adC8fc1De') as Address;
 
 export interface TokenBalance {
     balance: string;
@@ -41,7 +41,7 @@ export class TokenService {
 
     constructor() {
         this.publicClient = createPublicClient({
-            chain: baseSepolia, // Default to testnet
+            chain: base, // Mainnet
             transport: http()
         });
     }

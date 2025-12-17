@@ -235,7 +235,7 @@ const TokenDetailModal: React.FC<TokenDetailModalProps> = ({ token, isOpen, onCl
                                 </button>
                             </div>
                             <a
-                                href={`https://etherscan.io/token/${token.address}`}
+                                href={`https://basescan.org/token/${token.address}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-xs text-indigo-400 hover:text-indigo-300 mt-2 inline-block"

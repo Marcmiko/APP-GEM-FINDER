@@ -2,6 +2,7 @@
 import '@rainbow-me/rainbowkit/styles.css';
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { base } from 'wagmi/chains';
+import { http } from 'wagmi';
 
 import { connectorsForWallets } from '@rainbow-me/rainbowkit';
 import {
@@ -37,4 +38,7 @@ export const config = getDefaultConfig({
             ],
         },
     ],
+    transports: {
+        [base.id]: http(),
+    },
 });

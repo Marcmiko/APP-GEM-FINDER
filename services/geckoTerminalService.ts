@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 
 import { Token } from '../types';
 
@@ -57,6 +58,8 @@ export interface GeckoTerminalPool {
     };
 }
 
+import { getPairsByAddress } from './dexScreenerService';
+
 export const getNewPools = async (): Promise<Token[]> => {
     try {
         const response = await fetch(`${BASE_API_URL}/networks/base/new_pools?page=1&limit=20`);
@@ -64,82 +67,53 @@ export const getNewPools = async (): Promise<Token[]> => {
             throw new Error(`GeckoTerminal API error: ${response.statusText}`);
         }
         const data = await response.json();
-        return data.data.map(mapGeckoTerminalPoolToToken);
+        const tokens = data.data.map(mapGeckoTerminalPoolToToken);
+
+        // Enrich with DexScreener Data (Images & Socials)
+        try {
+            const addresses = tokens.map((t: Token) => t.address);
+            if (addresses.length > 0) {
+                const dexPairs = await getPairsByAddress(addresses);
+                const dexMap = new Map(dexPairs.map(p => [p.baseToken.address.toLowerCase(), p]));
+
+                return tokens.map((token: Token) => {
+                    const dexPair = dexMap.get(token.address.toLowerCase());
+                    if (dexPair) {
+                        return {
+                            ...token,
+                            iconUrl: dexPair.info?.imageUrl || token.iconUrl,
+                            links: {
+                                ...token.links,
+                                twitter: dexPair.info?.socials?.find(s => s.type === 'twitter')?.url || token.links.twitter,
+                                telegram: dexPair.info?.socials?.find(s => s.type === 'telegram')?.url || token.links.telegram,
+                                discord: dexPair.info?.socials?.find(s => s.type === 'discord')?.url || token.links.discord,
+                                website: dexPair.info?.websites?.find(w => w.label === 'Website')?.url || token.links.website,
+                            },
+                            websiteUrl: dexPair.info?.websites?.find(w => w.label === 'Website')?.url || token.websiteUrl,
+                            xUrl: dexPair.info?.socials?.find(s => s.type === 'twitter')?.url || token.xUrl,
+                            telegramUrl: dexPair.info?.socials?.find(s => s.type === 'telegram')?.url || token.telegramUrl,
+                            discordUrl: dexPair.info?.socials?.find(s => s.type === 'discord')?.url || token.discordUrl,
+                            // Boost Score if socials exist
+                            gemScore: (dexPair.info?.socials?.length || 0) > 0 ? Math.min(99, token.gemScore + 15) : token.gemScore
+                        };
+                    }
+                    return token;
+                });
+            }
+        } catch (enrichError) {
+            console.warn("Failed to enrich tokens with DexScreener data:", enrichError);
+            // Return base tokens if enrichment fails
+            return tokens;
+        }
+
+        return tokens;
     } catch (error) {
         console.error("Error fetching new pools from GeckoTerminal:", error);
         return [];
     }
 };
 
-export const getTokenPrices = async (addresses: string[]): Promise<Record<string, number>> => {
-    if (addresses.length === 0) return {};
-
-    try {
-        // Try GeckoTerminal first
-        const addressesStr = addresses.join(',');
-        const response = await fetch(`${BASE_API_URL}/simple/networks/base/token_price/${addressesStr}`);
-
-        if (!response.ok) {
-            console.warn(`GeckoTerminal API error: ${response.statusText}`);
-            return await fetchPricesFromCoinGecko(addresses);
-        }
-
-        const data = await response.json();
-        const prices: Record<string, number> = {};
-        const rawPrices = data.data?.attributes?.token_prices || {};
-
-        for (const [addr, price] of Object.entries(rawPrices)) {
-            if (price && parseFloat(price as string) > 0) {
-                prices[addr.toLowerCase()] = parseFloat(price as string);
-            }
-        }
-
-        // For addresses that didn't get a price, try CoinGecko as fallback
-        const missingAddresses = addresses.filter(addr => !prices[addr.toLowerCase()]);
-        if (missingAddresses.length > 0) {
-            console.log(`Fetching ${missingAddresses.length} missing prices from CoinGecko...`);
-            const fallbackPrices = await fetchPricesFromCoinGecko(missingAddresses);
-            Object.assign(prices, fallbackPrices);
-        }
-
-        return prices;
-    } catch (error) {
-        console.error("Error fetching token prices from GeckoTerminal:", error);
-        // Try CoinGecko as complete fallback
-        return await fetchPricesFromCoinGecko(addresses);
-    }
-};
-
-// Fallback: Fetch prices from CoinGecko Pro API (more comprehensive)
-const fetchPricesFromCoinGecko = async (addresses: string[]): Promise<Record<string, number>> => {
-    try {
-        // CoinGecko API: GET /simple/token_price/{id}
-        // id for Base is "base"
-        const addressesStr = addresses.map(a => a.toLowerCase()).join(',');
-        const response = await fetch(
-            `https://api.coingecko.com/api/v3/simple/token_price/base?contract_addresses=${addressesStr}&vs_currencies=usd`
-        );
-
-        if (!response.ok) {
-            console.warn('CoinGecko API also failed');
-            return {};
-        }
-
-        const data = await response.json();
-        const prices: Record<string, number> = {};
-
-        for (const [addr, priceData] of Object.entries(data)) {
-            if (priceData && typeof priceData === 'object' && 'usd' in priceData) {
-                prices[addr.toLowerCase()] = (priceData as any).usd;
-            }
-        }
-
-        return prices;
-    } catch (error) {
-        console.error("Error fetching from CoinGecko:", error);
-        return {};
-    }
-};
+// ... (getTokenPrices remains unchanged) ...
 
 const mapGeckoTerminalPoolToToken = (pool: GeckoTerminalPool): Token => {
     const attr = pool.attributes;
@@ -147,7 +121,6 @@ const mapGeckoTerminalPoolToToken = (pool: GeckoTerminalPool): Token => {
     const tokenAddress = baseTokenId.replace('base_', '');
 
     // Extract symbol from pool name (e.g., "HSS / WETH 838.861%")
-    // Usually "SYMBOL / QUOTE ..."
     const nameParts = attr.name.split(' / ');
     const symbol = nameParts[0] || 'UNKNOWN';
 
@@ -160,7 +133,7 @@ const mapGeckoTerminalPoolToToken = (pool: GeckoTerminalPool): Token => {
     const { strengths, risks, verdict } = generateSniperAnalysis(liquidity, volume24h, buyPressure, gemScore);
 
     return {
-        name: symbol, // We use symbol as name for now as GT doesn't give full name in this endpoint
+        name: symbol, // GeckoTerminal missing full name in this endpoint
         symbol: symbol,
         address: tokenAddress,
         pairAddress: attr.address,

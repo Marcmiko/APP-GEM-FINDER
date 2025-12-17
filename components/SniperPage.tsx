@@ -18,9 +18,9 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
     const [isSniping, setIsSniping] = useState(false);
     const [sniperTokens, setSniperTokens] = useState<Token[]>([]);
     // Filter States
-    const [minLiquidity, setMinLiquidity] = useState(5000);
+    const [minLiquidity, setMinLiquidity] = useState(15000);
     const [maxAgeHours, setMaxAgeHours] = useState(24);
-    const [minBuyPressure, setMinBuyPressure] = useState(40);
+    const [minBuyPressure, setMinBuyPressure] = useState(45);
     const [honeypotCheck, setHoneypotCheck] = useState(true);
 
     // Real-time sniping logic
