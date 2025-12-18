@@ -1,14 +1,41 @@
 
 import '@rainbow-me/rainbowkit/styles.css';
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { connectorsForWallets } from '@rainbow-me/rainbowkit';
+import {
+    rainbowWallet,
+    walletConnectWallet,
+    metaMaskWallet,
+    coinbaseWallet,
+    trustWallet,
+    ledgerWallet,
+} from '@rainbow-me/rainbowkit/wallets';
+import { createConfig, http } from 'wagmi';
 import { base } from 'wagmi/chains';
-import { http } from 'wagmi';
 
 const projectId = 'f5281b195c2a7472e1b59d1afc9223d7';
 
-export const config = getDefaultConfig({
-    appName: 'MARCMIKO GEM FINDER',
-    projectId,
+const connectors = connectorsForWallets(
+    [
+        {
+            groupName: 'Recommended',
+            wallets: [
+                coinbaseWallet,
+                metaMaskWallet,
+                walletConnectWallet,
+                rainbowWallet,
+                trustWallet,
+                ledgerWallet,
+            ],
+        },
+    ],
+    {
+        appName: 'MARCMIKO GEM FINDER',
+        projectId,
+    }
+);
+
+export const config = createConfig({
+    connectors,
     chains: [base],
     ssr: false,
     transports: {
