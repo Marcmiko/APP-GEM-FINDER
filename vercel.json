@@ -5,7 +5,7 @@
             "headers": [
                 {
                     "key": "Content-Security-Policy",
-                    "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live; connect-src 'self' https://api.dexscreener.com https://api.geckoterminal.com https://api.coingecko.com https://base.blockscout.com https://deep-index.moralis.io wss://relay.walletconnect.com https://*.walletconnect.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline';"
+                    "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.walletconnect.com https://*.walletconnect.org; connect-src 'self' https://api.dexscreener.com https://api.geckoterminal.com https://api.coingecko.com https://base.blockscout.com https://deep-index.moralis.io wss://relay.walletconnect.com https://*.walletconnect.com https://*.walletconnect.org; img-src 'self' data: https:; style-src 'self' 'unsafe-inline';"
                 }
             ]
         }
