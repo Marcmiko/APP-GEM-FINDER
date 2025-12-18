@@ -1,16 +1,17 @@
+import { Buffer } from 'buffer';
+import process from 'process';
+
+// Polyfills for WalletConnect / Wagmi
+if (typeof window !== 'undefined') {
+  window.Buffer = Buffer;
+  window.process = process;
+  window.global = window;
+}
+
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
-
-// WalletConnect / Wagmi Polyfills
-import { Buffer } from 'buffer';
-window.Buffer = Buffer;
-window.global = window;
-if (!window.process) {
-  // @ts-ignore
-  window.process = { env: {} };
-}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
