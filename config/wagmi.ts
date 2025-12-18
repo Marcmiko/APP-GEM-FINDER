@@ -1,6 +1,14 @@
 
 import '@rainbow-me/rainbowkit/styles.css';
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import {
+    coinbaseWallet,
+    walletConnectWallet,
+    metaMaskWallet,
+    rainbowWallet,
+    trustWallet,
+    ledgerWallet
+} from '@rainbow-me/rainbowkit/wallets';
 import { base } from 'wagmi/chains';
 import { http } from 'wagmi';
 
@@ -11,6 +19,24 @@ export const config = getDefaultConfig({
     projectId,
     chains: [base],
     ssr: false,
+    wallets: [
+        {
+            groupName: 'Recommended',
+            wallets: [
+                coinbaseWallet,
+                walletConnectWallet,
+                metaMaskWallet,
+                rainbowWallet,
+            ],
+        },
+        {
+            groupName: 'Other',
+            wallets: [
+                trustWallet,
+                ledgerWallet,
+            ],
+        },
+    ],
     transports: {
         [base.id]: http('https://mainnet.base.org'),
     },
