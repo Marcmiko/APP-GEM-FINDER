@@ -211,39 +211,35 @@ export const findGems = async (startDate?: string, endDate?: string, forceRefres
     const prompt = `
     Find 10 HIDDEN GEM tokens on Base blockchain that fit one of these 4 HISTORICAL SUCCESS ARCHETYPES (Current Date: ${today}):
     
-    1. "THE SLEEPING GIANT" (Pattern: DONUT)
-       - Older token (>3 months) with massive, active community but price is lagging.
-       - unique utility (e.g. social tipping, governance).
-       - High holder count despite low market cap.
+    1. "THE SLEEPING GIANT" (Pattern: DONUT/TOSHI)
+       - Older token (>3 months) with massive community strength (check social mentions).
+       - Price is currently ranging or consolidating after a long period of quiet.
+       - High holder count relative to its market cap.
        
-    2. "THE FAIR LAUNCH" (Pattern: BRETT)
-       - Recent launch (last 1-30 days).
-       - 100% Liquidity Burned/Locked, Renounced Contract, 0% Tax.
-       - "Mascot" or distinctive cultural vibe.
+    2. "THE FAIR LAUNCH" (Pattern: BRETT/MOCHI)
+       - Recent launch (last 1-60 days).
+       - Verified mechanics: Liquidity Burned, Renounced, 0 Tax.
+       - Strong "meme-ability" or cultural impact potential.
        
-    3. "THE TECH INNOVATOR" (Pattern: VIRTUAL)
-       - AI, Gaming, or Infrastructure focus.
-       - TEAM IS SHIPPING: Regular updates, actual product beta/live.
-       - Deflationary mechanics or strong vesting transparency.
+    3. "THE TECH INNOVATOR" (Pattern: VIRTUAL/PRIME)
+       - Focus on AI, DePIN, Gaming, or Infrastructure.
+       - Continuous shipping: Look for recent GitHub or social updates.
+       - Solves a real problem in the Base ecosystem.
 
-    4. "THE CASH COW" (Pattern: PROTOCOL REVENUE)
-       - Projects generating REAL REVENUE or FEES (check DefiLlama/Dune).
-       - High Revenue/Market Cap ratio (Undervalued).
-       - "Flipping" narrative (e.g. "Revenue higher than X competitor").
+    4. "THE CASH COW" (Pattern: AERO/REVENUE)
+       - Protocols generating high fees relative to TVL or MC.
+       - High Buy-back and burn mechanics or staker rewards.
+       - Undervalued P/S ratio compared to competitors.
     
     CRITERIA:
-    - Market cap UNDER $5 million (IMPORTANT: can be up to $15M ONLY for "Cash Cow" / Revenue plays with proven fees).
+    - Market cap UNDER $5 million (up to $15M for high-revenue plays).
     - Liquidity > $10k.
-    - NOT in top trending lists (we want undiscovered gems).
-    
-    AVOID:
-    - Well-known tokens like DEGEN, TOSHI, AERO, KEYCAT, MOG.
-    - Obvious scams or rugs.
+    - Not typically found in the standard trending lists.
     
     INSTRUCTIONS:
     - Return ONLY a JSON array of objects.
-    - Format: [{"symbol": "TOKEN1", "archetype": "The Sleeping Giant", "rationale": "Reason why..."}]
-    - Ensure a DIVERSE MIX of archetypes (don't just list revenue coins).
+    - Format: [{"symbol": "TOKEN1", "archetype": "The Sleeping Giant", "rationale": "Deep technical analysis of why it matches this pattern"}]
+    - Diversify the selection across all 4 archetypes.
     - Do not include any other text.
     `;
 

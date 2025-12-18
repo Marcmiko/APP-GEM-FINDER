@@ -62,7 +62,7 @@ export class TokenService {
                 abi: GFT_TOKEN_ABI,
                 functionName: 'balanceOf',
                 args: [address as Address]
-            });
+            } as any);
 
             return {
                 balance: balance.toString(),
@@ -80,7 +80,7 @@ export class TokenService {
                 address: TOKEN_GATE_ADDRESS,
                 abi: TOKEN_GATE_ABI,
                 functionName: 'gemAnalysisCost'
-            });
+            } as any);
             return formatEther(cost);
         } catch (e) {
             return null;
@@ -94,7 +94,7 @@ export class TokenService {
                 abi: TOKEN_GATE_ABI,
                 functionName: 'canPurchaseAnalysis',
                 args: [address as Address]
-            });
+            } as any);
         } catch (e) {
             return false;
         }
@@ -109,14 +109,14 @@ export class TokenService {
                 address: TOKEN_GATE_ADDRESS,
                 abi: TOKEN_GATE_ABI,
                 functionName: 'gemAnalysisCost'
-            });
+            } as any);
 
             const allowance = await this.publicClient.readContract({
                 address: GFT_TOKEN_ADDRESS,
                 abi: GFT_TOKEN_ABI,
                 functionName: 'allowance',
                 args: [address, TOKEN_GATE_ADDRESS]
-            });
+            } as any);
 
             if (allowance < cost) {
                 const hash = await this.walletClient.writeContract({
