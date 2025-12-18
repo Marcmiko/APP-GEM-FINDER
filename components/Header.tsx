@@ -126,7 +126,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
                                 MARCMIKO
                             </span>
                             <span className="text-[9px] font-bold text-indigo-400 tracking-[0.2em] uppercase">
-                                Intelligence v1.0.5
+                                Intelligence v1.0.7
                             </span>
                         </div>
                     </div>
