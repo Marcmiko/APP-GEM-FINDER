@@ -101,8 +101,12 @@ const fetchTokensFromNames = async (names: string[], minLiquidity = 10000, minVo
     const pairs = await searchDexScreener(name);
 
     if (pairs.length > 0) {
+      // Prioritize exact symbol matches
+      const exactMatches = pairs.filter(p => p.baseToken.symbol.toUpperCase() === name.toUpperCase());
+      const sourcePairs = exactMatches.length > 0 ? exactMatches : pairs;
+
       // Filter out garbage pairs first
-      const validPairs = pairs.filter(p =>
+      const validPairs = sourcePairs.filter(p =>
         (p.liquidity?.usd || 0) >= minLiquidity &&
         (p.volume?.h24 || 0) >= minVolume &&
         (minVolume1h === 0 || (p.volume?.h1 || 0) >= minVolume1h)
@@ -599,12 +603,12 @@ export const enrichTokenAnalysis = async (token: Token): Promise<Token> => {
       explosionRationale: analysis.explosionRationale,
       auditScore: analysis.auditScore || 50,
       auditReport: {
-        securityScore: analysis.auditScorecard.securityScore,
-        utilityScore: analysis.auditScorecard.utilityScore,
-        communityScore: analysis.auditScorecard.communityScore,
-        overallScore: Math.round((analysis.auditScorecard.securityScore + analysis.auditScorecard.utilityScore + analysis.auditScorecard.communityScore) / 3),
-        redFlags: analysis.auditScorecard.redFlags,
-        greenFlags: analysis.auditScorecard.greenFlags
+        securityScore: analysis.securityScore || 50,
+        utilityScore: analysis.utilityScore || 50,
+        communityScore: analysis.communityScore || 50,
+        overallScore: analysis.auditScore || 50,
+        redFlags: analysis.redFlags || [],
+        greenFlags: analysis.greenFlags || []
       },
       aiAnalysis: analysis.summary || token.analysis.summary,
       keyDrivers: Array.isArray(analysis.strengths) ? analysis.strengths.join(", ") : (analysis.strengths || token.analysis.strengths),
