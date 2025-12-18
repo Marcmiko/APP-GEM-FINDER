@@ -4,6 +4,9 @@ import TokenCard from './TokenCard';
 import SniperFilters from './SniperFilters';
 import { useScanContext } from '../context/ScanContext';
 import { getNewPools } from '../services/geckoTerminalService';
+import { useAccount } from 'wagmi';
+import { tokenService } from '../services/tokenService';
+import { TokenSaleModal } from './TokenSaleModal';
 import FlashTradeModal from './FlashTradeModal';
 import TokenDetailModal from './TokenDetailModal';
 
@@ -17,6 +20,7 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
     const { gemFinder, newProjects, analystPicks, scanGemFinder, scanNewProjects, scanAnalystPicks } = useScanContext();
     const [isSniping, setIsSniping] = useState(false);
     const [sniperTokens, setSniperTokens] = useState<Token[]>([]);
+    const [selectedToken, setSelectedToken] = useState<Token | null>(null);
     // Filter States
     const [minLiquidity, setMinLiquidity] = useState(15000);
     const [maxAgeHours, setMaxAgeHours] = useState(24);
@@ -83,8 +87,24 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
         );
     });
 
-    const [selectedToken, setSelectedToken] = useState<Token | null>(null);
     const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+    const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+    const { isConnected, address } = useAccount();
+
+    const handleStartSniping = async () => {
+        if (!isConnected || !address) {
+            alert("Please connect your wallet first!");
+            return;
+        }
+
+        const canSnipe = await tokenService.canPurchaseAnalysis(address);
+        if (!canSnipe) {
+            setIsPurchaseModalOpen(true);
+            return;
+        }
+
+        setIsSniping(!isSniping);
+    };
 
     const handleFlashBuy = (token: Token) => {
         setSelectedToken(token);
@@ -100,16 +120,20 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
                     onClose={() => setIsTradeModalOpen(false)}
                 />
             )}
+            <TokenSaleModal
+                isOpen={isPurchaseModalOpen}
+                onClose={() => setIsPurchaseModalOpen(false)}
+            />
             <div className="flex flex-col md:flex-row items-center justify-between mb-8">
                 <div>
                     <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight flex items-center">
                         <span className="mr-3 text-4xl">🔭</span>
                         AI Sniper
-                        <span className="ml-3 px-3 py-1 bg-indigo-500/20 text-indigo-400 text-xs font-bold rounded-full border border-indigo-500/30 uppercase tracking-widest">
-                            Beta
+                        <span className="ml-3 px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold rounded-full border border-amber-500/30 uppercase tracking-widest">
+                            Exclusive
                         </span>
                     </h1>
-                    <p className="text-slate-400 mt-2">Real-time discovery of high-velocity token launches.</p>
+                    <p className="text-slate-400 mt-2">Real-time discovery of high-velocity token launches. <span className="text-amber-500/80 font-medium">Requires GFT Tokens.</span></p>
                 </div>
 
                 <div className="flex items-center space-x-4 mt-4 md:mt-0">
@@ -122,7 +146,7 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
                         </button>
                     )}
                     <button
-                        onClick={() => setIsSniping(!isSniping)}
+                        onClick={handleStartSniping}
                         className={`px-8 py-3 rounded-full font-bold text-lg transition-all duration-300 shadow-lg flex items-center ${isSniping
                             ? 'bg-red-500 hover:bg-red-600 text-white shadow-red-500/30 animate-pulse'
                             : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/30'

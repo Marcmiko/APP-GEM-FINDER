@@ -68,7 +68,8 @@ const NavItem: React.FC<{
     badgeCount?: number;
     isLoading?: boolean;
     icon?: React.ReactNode;
-}> = ({ page, activePage, setActivePage, children, badgeCount, isLoading, icon }) => {
+    isExclusive?: boolean;
+}> = ({ page, activePage, setActivePage, children, badgeCount, isLoading, icon, isExclusive }) => {
     const isActive = page === activePage;
     return (
         <button
@@ -87,6 +88,11 @@ const NavItem: React.FC<{
             {badgeCount !== undefined && badgeCount > 0 && (
                 <span className={`ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${isActive ? 'bg-white text-indigo-600' : 'bg-indigo-500 text-white'}`}>
                     {badgeCount}
+                </span>
+            )}
+            {isExclusive && (
+                <span className="ml-1 px-1 py-0.5 text-[8px] font-black rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30 tracking-widest uppercase">
+                    PRO
                 </span>
             )}
         </button>
@@ -122,10 +128,10 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
                     {/* Navigation - Scrollable Container */}
                     <div className="flex-1 max-w-5xl mx-4 md:mx-8 overflow-x-auto no-scrollbar">
                         <div className="flex items-center space-x-1 p-1 w-max mx-auto">
-                            <NavItem page="gem-finder" activePage={activePage} setActivePage={setActivePage} isLoading={gemFinder.isLoading} icon={<DiamondIcon className="w-4 h-4" />}>
+                            <NavItem page="gem-finder" activePage={activePage} setActivePage={setActivePage} isLoading={gemFinder.isLoading} icon={<DiamondIcon className="w-4 h-4" />} isExclusive={true}>
                                 Gem Finder
                             </NavItem>
-                            <NavItem page="ai-sniper" activePage={activePage} setActivePage={setActivePage} icon={<SniperIcon className="w-4 h-4" />}>
+                            <NavItem page="ai-sniper" activePage={activePage} setActivePage={setActivePage} icon={<SniperIcon className="w-4 h-4" />} isExclusive={true}>
                                 Sniper
                             </NavItem>
                             <NavItem page="new-projects" activePage={activePage} setActivePage={setActivePage} isLoading={newProjects.isLoading} icon={<NewIcon className="w-4 h-4" />}>
