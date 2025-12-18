@@ -45,6 +45,6 @@ export const config = getDefaultConfig({
         },
     ],
     transports: {
-        [base.id]: http('https://base.llamarpc.com'),
+        [base.id]: http(), // Use default transport or let wagmi handle it
     },
 });

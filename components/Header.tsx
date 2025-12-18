@@ -101,7 +101,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
             {/* Glass Background */}
             <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md border-b border-white/5 shadow-2xl"></div>
 
-            <div className="container mx-auto px-4 relative">
+            <div className="container mx-auto px-4 relative z-10">
                 <div className="flex items-center justify-between h-20">
                     {/* Logo Area */}
                     <div className="flex items-center space-x-3 flex-shrink-0 group cursor-pointer" onClick={() => setActivePage('gem-finder')}>
@@ -120,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
                     </div>
 
                     {/* Navigation - Scrollable Container */}
-                    <div className="flex-1 max-w-5xl mx-4 md:mx-8 overflow-x-auto no-scrollbar mask-fade-sides">
+                    <div className="flex-1 max-w-5xl mx-4 md:mx-8 overflow-x-auto no-scrollbar">
                         <div className="flex items-center space-x-1 p-1 w-max mx-auto">
                             <NavItem page="gem-finder" activePage={activePage} setActivePage={setActivePage} isLoading={gemFinder.isLoading} icon={<DiamondIcon className="w-4 h-4" />}>
                                 Gem Finder
