@@ -1,30 +1,25 @@
 
 import '@rainbow-me/rainbowkit/styles.css';
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { base } from 'wagmi/chains';
-import { http } from 'wagmi';
-
-import { connectorsForWallets } from '@rainbow-me/rainbowkit';
 import {
-    coinbaseWallet,
-    walletConnectWallet,
-    metaMaskWallet,
+    connectorsForWallets
+} from '@rainbow-me/rainbowkit';
+import {
     rainbowWallet,
+    walletConnectWallet,
+    coinbaseWallet,
+    metaMaskWallet,
     trustWallet,
     ledgerWallet,
     phantomWallet,
     rabbyWallet,
 } from '@rainbow-me/rainbowkit/wallets';
+import { base } from 'wagmi/chains';
+import { http, createConfig } from 'wagmi';
 
-const projectId = 'f5281b195c2a7472e1b59d1afc9223d7'; // Get one at https://cloud.walletconnect.com
+const projectId = 'f5281b195c2a7472e1b59d1afc9223d7';
 
-export const config = getDefaultConfig({
-    appName: 'MARCMIKO GEM FINDER',
-    projectId,
-    chains: [base],
-    ssr: false,
-    appIcon: 'https://base-gem-finder.vercel.app/gem-logo.png', // Add your app icon here
-    wallets: [
+const connectors = connectorsForWallets(
+    [
         {
             groupName: 'Recommended',
             wallets: [
@@ -32,19 +27,28 @@ export const config = getDefaultConfig({
                 walletConnectWallet,
                 metaMaskWallet,
                 rainbowWallet,
+                trustWallet,
             ],
         },
         {
             groupName: 'Other',
             wallets: [
-                trustWallet,
                 ledgerWallet,
                 phantomWallet,
                 rabbyWallet,
             ],
         },
     ],
+    {
+        appName: 'MARCMIKO GEM FINDER',
+        projectId,
+    }
+);
+
+export const config = createConfig({
+    connectors,
+    chains: [base],
     transports: {
-        [base.id]: http(), // Use default transport or let wagmi handle it
+        [base.id]: http(),
     },
 });
