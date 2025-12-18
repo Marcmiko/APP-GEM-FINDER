@@ -126,7 +126,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
                                 MARCMIKO
                             </span>
                             <span className="text-[9px] font-bold text-indigo-400 tracking-[0.2em] uppercase">
-                                Intelligence
+                                Intelligence v1.0.5
                             </span>
                         </div>
                     </div>
@@ -166,11 +166,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
 
                     {/* Wallet Connect */}
                     <div className="flex-shrink-0">
-                        <ConnectButton
-                            showBalance={false}
-                            chainStatus={{ smallScreen: 'none', largeScreen: 'icon' }}
-                            accountStatus={{ smallScreen: 'avatar', largeScreen: 'full' }}
-                        />
+                        <ConnectButton />
                     </div>
                 </div>
             </div>
