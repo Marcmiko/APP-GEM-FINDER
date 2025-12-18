@@ -19,18 +19,24 @@ import {
 const projectId = 'f5281b195c2a7472e1b59d1afc9223d7'; // Get one at https://cloud.walletconnect.com
 
 export const config = getDefaultConfig({
-    appName: 'MARCMIKO',
+    appName: 'MARCMIKO GEM FINDER',
     projectId,
     chains: [base],
     ssr: false,
+    appIcon: 'https://base-gem-finder.vercel.app/gem-logo.png', // Add your app icon here
     wallets: [
         {
             groupName: 'Recommended',
             wallets: [
-                coinbaseWallet,
+                () => coinbaseWallet({ preference: 'smartWallet' }),
                 walletConnectWallet,
                 metaMaskWallet,
                 rainbowWallet,
+            ],
+        },
+        {
+            groupName: 'Other',
+            wallets: [
                 trustWallet,
                 ledgerWallet,
                 phantomWallet,
@@ -41,5 +47,4 @@ export const config = getDefaultConfig({
     transports: {
         [base.id]: http('https://base.llamarpc.com'),
     },
-    // ssr: true, // properties like ssr should be at the top level or check react-query adapter docs
 });

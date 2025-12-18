@@ -49,7 +49,7 @@ export class TokenService {
     async initialize(provider: any) {
         if (provider) {
             this.walletClient = createWalletClient({
-                chain: baseSepolia,
+                chain: base, // Use Base Mainnet
                 transport: custom(provider)
             });
         }

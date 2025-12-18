@@ -58,4 +58,47 @@
     .btn-secondary {
         @apply bg-slate-800 text-slate-300 font-bold py-2 px-4 rounded-xl border border-slate-700 hover:bg-slate-700 hover:text-white transition-all duration-300;
     }
+
+    .border-glow {
+        box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .border-glow-gold {
+        box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+    }
+}
+
+@keyframes gradient-x {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.animate-gradient-x {
+    background-size: 200% 200%;
+    animation: gradient-x 3s ease infinite;
+}
+
+@keyframes pulse-slow {
+
+    0%,
+    100% {
+        opacity: 0.2;
+        transform: scale(1) translate(-50%, -50%);
+    }
+
+    50% {
+        opacity: 0.4;
+        transform: scale(1.1) translate(-50%, -50%);
+    }
+}
+
+.animate-pulse-slow {
+    animation: pulse-slow 8s ease-in-out infinite;
 }

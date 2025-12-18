@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { Token } from '../types';
 import TokenCard from './TokenCard';
-import LoadingState from './LoadingState';
+import AILoadingAnimation from './AILoadingAnimation';
 import HistoryAccordion from './HistoryAccordion';
 import Notification from './Notification';
 import { useScanContext } from '../context/ScanContext';
@@ -13,6 +12,7 @@ import { TokenBalance } from './TokenBalance';
 import SwipeView from './SwipeView';
 import SwapModal from './SwapModal';
 import { TokenSaleModal } from './TokenSaleModal';
+import TokenDetailModal from './TokenDetailModal';
 
 const RocketIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -32,8 +32,6 @@ interface GemFinderPageProps {
     onUnsave: (token: Token) => void;
 }
 
-import TokenDetailModal from './TokenDetailModal';
-
 const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUnsave }) => {
     const { gemFinder, scanGemFinder } = useScanContext();
     const { tokens, sources, isLoading, error, hasScanned, history } = gemFinder;
@@ -42,7 +40,6 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
     const [viewMode, setViewMode] = useState<'grid' | 'swipe'>('grid');
     const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
-    // const [isPurchasing, setIsPurchasing] = useState(false); // Managed internally by TokenSaleModal
     const [swapToken, setSwapToken] = useState<Token | null>(null);
     const [selectedToken, setSelectedToken] = useState<Token | null>(null);
     const [analysisCost, setAnalysisCost] = useState<string>('10');
@@ -82,15 +79,6 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
         }
     };
 
-    // const handleBuyTokens = async (amount: string) => { // Moved to internal modal logic
-    //     setIsPurchasing(true);
-    //     const success = await tokenService.buyTokens(amount);
-    //     setIsPurchasing(false);
-    //     if (success) {
-    //         setIsPurchaseModalOpen(false);
-    //     }
-    // };
-
     const handleNotificationAction = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setNewGemsCount(0);
@@ -98,7 +86,7 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
 
     const renderContent = () => {
         if (isLoading) {
-            return <LoadingState />;
+            return <AILoadingAnimation />;
         }
         if (error) {
             return <p className="text-center text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</p>;
@@ -229,8 +217,6 @@ const GemFinderPage: React.FC<GemFinderPageProps> = ({ savedTokens, onSave, onUn
                     )}
                 </div>
             </div>
-
-
 
             <div className="mt-12 md:mt-16">
                 {renderContent()}
