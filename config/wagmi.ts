@@ -1,6 +1,6 @@
 
 import '@rainbow-me/rainbowkit/styles.css';
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { connectorsForWallets } from '@rainbow-me/rainbowkit';
 import {
     coinbaseWallet,
     walletConnectWallet,
@@ -9,17 +9,13 @@ import {
     trustWallet,
     ledgerWallet
 } from '@rainbow-me/rainbowkit/wallets';
+import { createConfig, http } from 'wagmi';
 import { base } from 'wagmi/chains';
-import { http } from 'wagmi';
 
 const projectId = 'f5281b195c2a7472e1b59d1afc9223d7';
 
-export const config = getDefaultConfig({
-    appName: 'MARCMIKO Intelligence',
-    projectId,
-    chains: [base],
-    ssr: false,
-    wallets: [
+const connectors = connectorsForWallets(
+    [
         {
             groupName: 'Recommended',
             wallets: [
@@ -27,17 +23,22 @@ export const config = getDefaultConfig({
                 walletConnectWallet,
                 metaMaskWallet,
                 rainbowWallet,
-            ],
-        },
-        {
-            groupName: 'Other',
-            wallets: [
                 trustWallet,
                 ledgerWallet,
             ],
         },
     ],
+    {
+        appName: 'MARCMIKO Intelligence',
+        projectId,
+    }
+);
+
+export const config = createConfig({
+    connectors,
+    chains: [base],
+    ssr: false,
     transports: {
-        [base.id]: http('https://mainnet.base.org'),
+        [base.id]: http(),
     },
 });

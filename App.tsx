@@ -79,7 +79,7 @@ const App: React.FC = () => {
             fontStack: 'system',
             overlayBlur: 'small',
           })}
-          modalSize="compact"
+          modalSize="wide"
         >
           <ScanProvider>
             <AlertProvider>
