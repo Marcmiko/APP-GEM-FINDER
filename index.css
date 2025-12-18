@@ -102,3 +102,37 @@
 .animate-pulse-slow {
     animation: pulse-slow 8s ease-in-out infinite;
 }
+
+@keyframes radar-sweep {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-radar {
+    animation: radar-sweep 4s linear infinite;
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.radar-gradient {
+    background: conic-gradient(from 0deg, transparent 0deg, transparent 300deg, rgba(99, 102, 241, 0.2) 350deg, rgba(99, 102, 241, 0.4) 360deg);
+}

@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Token, GroundingChunk, ScanResult } from '../types';
-import { findGems, findNewProjects, getAnalystPicks, findSocialTrends, analyzeSpecificToken } from '../services/geminiService';
+import { findGems, getAnalystPicks, findSocialTrends, analyzeSpecificToken } from '../services/geminiService';
 
 interface PageState {
   tokens: Token[];
@@ -15,12 +15,10 @@ interface PageState {
 
 interface ScanContextType {
   gemFinder: PageState;
-  newProjects: PageState;
   analystPicks: PageState;
   socialTrends: PageState;
   tokenAnalyzer: PageState;
   scanGemFinder: (forceRefresh?: boolean) => Promise<void>;
-  scanNewProjects: (forceRefresh?: boolean) => Promise<void>;
   scanAnalystPicks: (forceRefresh?: boolean) => Promise<void>;
   scanSocialTrends: (forceRefresh?: boolean) => Promise<void>;
   analyzeToken: (query: string) => Promise<void>;
@@ -40,7 +38,6 @@ const ScanContext = createContext<ScanContextType | undefined>(undefined);
 
 export const ScanProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [gemFinder, setGemFinder] = useState<PageState>(initialPageState);
-  const [newProjects, setNewProjects] = useState<PageState>(initialPageState);
   const [analystPicks, setAnalystPicks] = useState<PageState>(initialPageState);
   const [socialTrends, setSocialTrends] = useState<PageState>(initialPageState);
   const [tokenAnalyzer, setTokenAnalyzer] = useState<PageState>(initialPageState);
@@ -59,24 +56,24 @@ export const ScanProvider: React.FC<{ children: React.ReactNode }> = ({ children
     scanFn: (forceRefresh?: boolean) => Promise<{ tokens: Token[]; sources: GroundingChunk[] }>,
     forceRefresh: boolean = true
   ) => {
-    
+
     setter(prev => {
-        let newHistory = prev.history;
-        if (prev.tokens.length > 0 && prev.scanTime) {
-             newHistory = [{ timestamp: prev.scanTime, tokens: prev.tokens, sources: prev.sources }, ...prev.history];
-        }
-        
-        return {
-            ...prev,
-            isLoading: true,
-            error: null,
-            history: newHistory
-        };
+      let newHistory = prev.history;
+      if (prev.tokens.length > 0 && prev.scanTime) {
+        newHistory = [{ timestamp: prev.scanTime, tokens: prev.tokens, sources: prev.sources }, ...prev.history];
+      }
+
+      return {
+        ...prev,
+        isLoading: true,
+        error: null,
+        history: newHistory
+      };
     });
 
     try {
       const { tokens, sources } = await scanFn(forceRefresh);
-      
+
       setter(prev => ({
         ...prev,
         tokens,
@@ -96,63 +93,59 @@ export const ScanProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const scanGemFinder = useCallback((forceRefresh = true) => 
-    performScan(setGemFinder, findGems.bind(null, undefined, undefined), forceRefresh), 
-  []);
+  const scanGemFinder = useCallback((forceRefresh = true) =>
+    performScan(setGemFinder, findGems.bind(null, undefined, undefined), forceRefresh),
+    []);
 
-  const scanNewProjects = useCallback((forceRefresh = true) => 
-    performScan(setNewProjects, findNewProjects, forceRefresh), 
-  []);
 
-  const scanAnalystPicks = useCallback((forceRefresh = true) => 
-    performScan(setAnalystPicks, getAnalystPicks, forceRefresh), 
-  []);
 
-  const scanSocialTrends = useCallback((forceRefresh = true) => 
-    performScan(setSocialTrends, findSocialTrends, forceRefresh), 
-  []);
+  const scanAnalystPicks = useCallback((forceRefresh = true) =>
+    performScan(setAnalystPicks, getAnalystPicks, forceRefresh),
+    []);
+
+  const scanSocialTrends = useCallback((forceRefresh = true) =>
+    performScan(setSocialTrends, findSocialTrends, forceRefresh),
+    []);
 
   const analyzeToken = useCallback(async (query: string) => {
-     setTokenAnalyzer(prev => ({
-        ...prev,
-        isLoading: true,
-        error: null,
-        // Do not clear previous result while loading
-     }));
+    setTokenAnalyzer(prev => ({
+      ...prev,
+      isLoading: true,
+      error: null,
+      // Do not clear previous result while loading
+    }));
 
-     try {
-        const { tokens, sources } = await analyzeSpecificToken(query);
-        setTokenAnalyzer(prev => ({
-            ...prev,
-            tokens,
-            sources,
-            scanTime: new Date(),
-            isLoading: false,
-            hasScanned: true,
-            history: prev.tokens.length > 0 && prev.scanTime 
-                ? [{ timestamp: prev.scanTime, tokens: prev.tokens, sources: prev.sources }, ...prev.history] 
-                : prev.history
-        }));
-     } catch (err) {
-        console.error("Analysis failed:", err);
-        setTokenAnalyzer(prev => ({
-            ...prev,
-            isLoading: false,
-            error: err instanceof Error ? err.message : 'Analysis failed',
-        }));
-     }
+    try {
+      const { tokens, sources } = await analyzeSpecificToken(query);
+      setTokenAnalyzer(prev => ({
+        ...prev,
+        tokens,
+        sources,
+        scanTime: new Date(),
+        isLoading: false,
+        hasScanned: true,
+        history: prev.tokens.length > 0 && prev.scanTime
+          ? [{ timestamp: prev.scanTime, tokens: prev.tokens, sources: prev.sources }, ...prev.history]
+          : prev.history
+      }));
+    } catch (err) {
+      console.error("Analysis failed:", err);
+      setTokenAnalyzer(prev => ({
+        ...prev,
+        isLoading: false,
+        error: err instanceof Error ? err.message : 'Analysis failed',
+      }));
+    }
   }, []);
 
   return (
     <ScanContext.Provider
       value={{
         gemFinder,
-        newProjects,
         analystPicks,
         socialTrends,
         tokenAnalyzer,
         scanGemFinder,
-        scanNewProjects,
         scanAnalystPicks,
         scanSocialTrends,
         analyzeToken

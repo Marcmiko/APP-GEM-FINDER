@@ -132,10 +132,13 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, savedCount }
                                 Gem Finder
                             </NavItem>
                             <NavItem page="ai-sniper" activePage={activePage} setActivePage={setActivePage} icon={<SniperIcon className="w-4 h-4" />} isExclusive={true}>
-                                Sniper
-                            </NavItem>
-                            <NavItem page="new-projects" activePage={activePage} setActivePage={setActivePage} isLoading={newProjects.isLoading} icon={<NewIcon className="w-4 h-4" />}>
-                                New
+                                <span className="flex items-center gap-1.5">
+                                    Sniper
+                                    <span className="flex h-1.5 w-1.5">
+                                        <span className="animate-ping absolute inline-flex h-1.5 w-1.5 rounded-full bg-rose-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+                                    </span>
+                                </span>
                             </NavItem>
                             <NavItem page="analyst-picks" activePage={activePage} setActivePage={setActivePage} isLoading={analystPicks.isLoading} icon={<AnalystIcon className="w-4 h-4" />}>
                                 Analyst

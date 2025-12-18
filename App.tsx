@@ -105,13 +105,6 @@ const App: React.FC = () => {
                         onUnsave={handleUnsaveToken}
                       />
                     )}
-                    {activePage === 'new-projects' && (
-                      <NewProjectsPage
-                        savedTokens={safeSavedTokens}
-                        onSave={handleSaveToken}
-                        onUnsave={handleUnsaveToken}
-                      />
-                    )}
                     {activePage === 'analyst-picks' && (
                       <AnalystPicksPage
                         savedTokens={safeSavedTokens}

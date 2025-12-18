@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Token } from '../types';
 import TokenCard from './TokenCard';
 import SniperFilters from './SniperFilters';
@@ -9,6 +9,7 @@ import { tokenService } from '../services/tokenService';
 import { TokenSaleModal } from './TokenSaleModal';
 import FlashTradeModal from './FlashTradeModal';
 import TokenDetailModal from './TokenDetailModal';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SniperPageProps {
     savedTokens: Token[];
@@ -17,15 +18,28 @@ interface SniperPageProps {
 }
 
 const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }) => {
-    const { gemFinder, newProjects, analystPicks, scanGemFinder, scanNewProjects, scanAnalystPicks } = useScanContext();
+    const { analystPicks } = useScanContext();
     const [isSniping, setIsSniping] = useState(false);
     const [sniperTokens, setSniperTokens] = useState<Token[]>([]);
     const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+    const [scannedCount, setScannedCount] = useState(0);
+
     // Filter States
     const [minLiquidity, setMinLiquidity] = useState(15000);
     const [maxAgeHours, setMaxAgeHours] = useState(24);
     const [minBuyPressure, setMinBuyPressure] = useState(45);
     const [honeypotCheck, setHoneypotCheck] = useState(true);
+
+    // Live Scanned Counter Simulation
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isSniping) {
+            interval = setInterval(() => {
+                setScannedCount(prev => prev + Math.floor(Math.random() * 5) + 1);
+            }, 2000);
+        }
+        return () => clearInterval(interval);
+    }, [isSniping]);
 
     // Real-time sniping logic
     useEffect(() => {
@@ -34,19 +48,13 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
         const fetchNewTokens = async () => {
             try {
                 const newTokens = await getNewPools();
-
-                // Filter out tokens we already have to avoid duplicates/re-renders
-                // But since this is a "feed", maybe we just want to update the list?
-                // Let's prepend new ones.
-
                 setSniperTokens(prev => {
                     const existingAddresses = new Set(prev.map(t => t.address));
                     const uniqueNewTokens = newTokens.filter(t => !existingAddresses.has(t.address));
 
                     if (uniqueNewTokens.length > 0) {
-                        // Sort new tokens by gem score (highest first)
                         uniqueNewTokens.sort((a, b) => (b.gemScore || 0) - (a.gemScore || 0));
-                        return [...uniqueNewTokens, ...prev].slice(0, 50); // Keep last 50
+                        return [...uniqueNewTokens, ...prev].slice(0, 50);
                     }
                     return prev;
                 });
@@ -56,10 +64,7 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
         };
 
         if (isSniping) {
-            // Initial fetch
             fetchNewTokens();
-
-            // Poll every 15 seconds (GeckoTerminal rate limit is 30/min, so 15s is safe)
             interval = setInterval(fetchNewTokens, 15000);
         }
 
@@ -68,21 +73,15 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
 
     // Apply filters
     const filteredTokens = sniperTokens.filter(token => {
-        // Safety check for valid creation date
         if (!token.creationDate) return false;
-
         const createdTime = new Date(token.creationDate).getTime();
         if (isNaN(createdTime)) return false;
-
         const tokenAgeHours = (Date.now() - createdTime) / (1000 * 60 * 60);
 
-        // Strict check: must be within the max age limit
-        // Also filter out tokens with suspiciously old creation dates (e.g. > 1 year) if they somehow got here
-        // AAVE and others would fail this if their creation date is correct
         return (
             token.liquidity >= minLiquidity &&
             tokenAgeHours <= maxAgeHours &&
-            tokenAgeHours >= 0 && // Future dates check
+            tokenAgeHours >= 0 &&
             token.buyPressure >= minBuyPressure
         );
     });
@@ -112,7 +111,26 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
     };
 
     return (
-        <div className="container mx-auto px-4 py-8 mt-20">
+        <div className="relative min-h-[80vh] container mx-auto px-4 py-8 mt-20 overflow-hidden">
+            {/* Radar Background Decor */}
+            <AnimatePresence>
+                {isSniping && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 flex items-center justify-center pointer-events-none z-0"
+                    >
+                        <div className="relative w-[800px] h-[800px] border border-indigo-500/10 rounded-full">
+                            <div className="absolute inset-0 border border-indigo-500/5 rounded-full scale-75"></div>
+                            <div className="absolute inset-0 border border-indigo-500/5 rounded-full scale-50"></div>
+                            <div className="absolute inset-0 border border-indigo-500/5 rounded-full scale-25"></div>
+                            <div className="absolute inset-0 animate-radar radar-gradient rounded-full"></div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {selectedToken && (
                 <FlashTradeModal
                     token={selectedToken}
@@ -124,101 +142,164 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
                 isOpen={isPurchaseModalOpen}
                 onClose={() => setIsPurchaseModalOpen(false)}
             />
-            <div className="flex flex-col md:flex-row items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight flex items-center">
-                        <span className="mr-3 text-4xl">🔭</span>
-                        AI Sniper
-                        <span className="ml-3 px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold rounded-full border border-amber-500/30 uppercase tracking-widest">
-                            Exclusive
-                        </span>
-                    </h1>
-                    <p className="text-slate-400 mt-2">Real-time discovery of high-velocity token launches. <span className="text-amber-500/80 font-medium">Requires GFT Tokens.</span></p>
+
+            <div className="relative z-10">
+                <div className="flex flex-col md:flex-row items-center justify-between mb-8">
+                    <div>
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter flex items-center italic">
+                                AI SNIPER
+                                <span className="ml-3 px-3 py-1 bg-amber-500 text-black text-xs font-black rounded italic border border-amber-400 uppercase tracking-widest">
+                                    Exclusive
+                                </span>
+                            </h1>
+                            {isSniping && (
+                                <div className="flex items-center gap-2 px-3 py-1 bg-rose-500/10 border border-rose-500/20 rounded-full">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                                    </span>
+                                    <span className="text-rose-500 text-[10px] font-black uppercase tracking-widest">Live Scanning</span>
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-slate-400 mt-2 font-medium">Real-time Base network surveillance. <span className="text-amber-500 font-bold">GFT Required.</span></p>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-3 mt-6 md:mt-0">
+                        {isSniping && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-slate-800/80 backdrop-blur-md border border-slate-700 px-4 py-2 rounded-2xl flex items-center gap-4 shadow-xl"
+                            >
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Tokens Scanned</span>
+                                    <span className="text-xl font-mono font-bold text-indigo-400">{scannedCount.toLocaleString()}</span>
+                                </div>
+                                <div className="w-px h-8 bg-slate-700"></div>
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest">New Targets</span>
+                                    <span className="text-xl font-mono font-bold text-rose-400">{filteredTokens.length}</span>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        <div className="flex items-center space-x-4">
+                            {sniperTokens.length > 0 && (
+                                <button
+                                    onClick={() => {
+                                        setSniperTokens([]);
+                                        setScannedCount(0);
+                                    }}
+                                    className="text-slate-500 hover:text-white text-xs font-black uppercase tracking-widest transition-colors"
+                                >
+                                    Reset Feed
+                                </button>
+                            )}
+                            <button
+                                onClick={handleStartSniping}
+                                className={`group relative px-10 py-4 rounded-full font-black text-xl transition-all duration-500 shadow-2xl overflow-hidden ${isSniping
+                                    ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/40'
+                                    : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/40'
+                                    }`}
+                            >
+                                <span className={`absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/10 to-white/0 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000`}></span>
+                                <div className="relative flex items-center gap-3">
+                                    {isSniping ? (
+                                        <>
+                                            <span className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></span>
+                                            ABORT SNIPE
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-2xl mt-0.5">⚡</span>
+                                            ENGAGE SNIPER
+                                        </>
+                                    )}
+                                </div>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                    {sniperTokens.length > 0 && (
-                        <button
-                            onClick={() => setSniperTokens([])}
-                            className="text-slate-400 hover:text-white text-sm font-bold px-4 py-2"
+                <SniperFilters
+                    minLiquidity={minLiquidity}
+                    setMinLiquidity={setMinLiquidity}
+                    maxAgeHours={maxAgeHours}
+                    setMaxAgeHours={setMaxAgeHours}
+                    minBuyPressure={minBuyPressure}
+                    setMinBuyPressure={setMinBuyPressure}
+                    honeypotCheck={honeypotCheck}
+                    setHoneypotCheck={setHoneypotCheck}
+                />
+
+                <div className="mt-8">
+                    {filteredTokens.length === 0 ? (
+                        <div className="relative py-32 flex flex-col items-center justify-center bg-slate-800/20 backdrop-blur-sm rounded-3xl border border-slate-700/50 border-dashed overflow-hidden">
+                            {isSniping && (
+                                <div className="absolute inset-0 overflow-hidden">
+                                    <div className="absolute inset-0 animate-radar radar-gradient opacity-20"></div>
+                                </div>
+                            )}
+                            <div className="text-7xl mb-6 relative">
+                                📡
+                                {isSniping && <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-4 w-4 bg-indigo-500"></span>
+                                </span>}
+                            </div>
+                            <h3 className="text-2xl font-black text-white tracking-tight uppercase italic">
+                                {isSniping ? "Searching for Targets..." : "System Standby"}
+                            </h3>
+                            <p className="text-slate-500 mt-3 font-medium max-w-sm text-center">
+                                {isSniping
+                                    ? "Our AI is currently monitoring the Base mempool for high-velocity launches meeting your criteria."
+                                    : "Engage the sniper to begin real-time surveillance of the Base ecosystem."}
+                            </p>
+                            {isSniping && (
+                                <div className="mt-10 flex gap-1.5">
+                                    {[0, 1, 2].map(i => (
+                                        <div key={i} className={`w-2 h-2 bg-indigo-500 rounded-full animate-bounce`} style={{ animationDelay: `${i * 150}ms` }}></div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <motion.div
+                            layout
+                            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
                         >
-                            Clear Feed
-                        </button>
+                            <AnimatePresence mode="popLayout">
+                                {filteredTokens.map((token, index) => {
+                                    const isSaved = savedTokens.some(saved => saved.address === token.address);
+                                    return (
+                                        <motion.div
+                                            key={`${token.address}-${index}`}
+                                            layout
+                                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                                            className="relative group"
+                                        >
+                                            <div className="absolute -inset-0.5 bg-gradient-to-r from-rose-500/20 to-indigo-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                                            <TokenCard
+                                                token={token}
+                                                isSaved={isSaved}
+                                                onSave={onSave}
+                                                onUnsave={onUnsave}
+                                                onFlashBuy={handleFlashBuy}
+                                                isLive={true}
+                                                onViewDetails={() => setSelectedToken(token)}
+                                            />
+                                        </motion.div>
+                                    );
+                                })}
+                            </AnimatePresence>
+                        </motion.div>
                     )}
-                    <button
-                        onClick={handleStartSniping}
-                        className={`px-8 py-3 rounded-full font-bold text-lg transition-all duration-300 shadow-lg flex items-center ${isSniping
-                            ? 'bg-red-500 hover:bg-red-600 text-white shadow-red-500/30 animate-pulse'
-                            : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/30'
-                            }`}
-                    >
-                        {isSniping ? (
-                            <>
-                                <span className="w-3 h-3 bg-white rounded-full mr-3 animate-ping"></span>
-                                Stop Sniping
-                            </>
-                        ) : (
-                            <>
-                                <span className="mr-2">⚡</span>
-                                Start Sniping
-                            </>
-                        )}
-                    </button>
                 </div>
             </div>
-
-            <SniperFilters
-                minLiquidity={minLiquidity}
-                setMinLiquidity={setMinLiquidity}
-                maxAgeHours={maxAgeHours}
-                setMaxAgeHours={setMaxAgeHours}
-                minBuyPressure={minBuyPressure}
-                setMinBuyPressure={setMinBuyPressure}
-                honeypotCheck={honeypotCheck}
-                setHoneypotCheck={setHoneypotCheck}
-            />
-
-            {filteredTokens.length === 0 ? (
-                <div className="text-center py-20 bg-slate-800/30 rounded-3xl border border-slate-700/50 border-dashed">
-                    <div className="text-6xl mb-4">📡</div>
-                    <h3 className="text-xl font-bold text-white">Waiting for Targets...</h3>
-                    <p className="text-slate-400 mt-2">
-                        {isSniping ? "Scanning the mempool for new opportunities..." : "Start the sniper to find gems."}
-                    </p>
-                    {isSniping && (
-                        <div className="mt-8 flex justify-center">
-                            <div className="flex space-x-2">
-                                <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce delay-0"></div>
-                                <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce delay-150"></div>
-                                <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce delay-300"></div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {filteredTokens.map((token, index) => {
-                        const isSaved = savedTokens.some(saved => saved.address === token.address);
-                        return (
-                            <div key={`${token.address}-${index}`} className="animate-fade-in-up">
-                                <TokenCard
-                                    token={token}
-                                    isSaved={isSaved}
-                                    onSave={onSave}
-                                    onUnsave={onUnsave}
-                                    onFlashBuy={handleFlashBuy}
-                                    isLive={true}
-                                    onViewDetails={() => {
-                                        setSelectedToken(token);
-                                        // We need a separate state for Detail Modal vs Trade Modal
-                                        // Let's add one.
-                                    }}
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
 
             {/* Detail Modal */}
             {selectedToken && !isTradeModalOpen && (
@@ -231,7 +312,5 @@ const SniperPage: React.FC<SniperPageProps> = ({ savedTokens, onSave, onUnsave }
         </div>
     );
 };
-
-
 
 export default SniperPage;
