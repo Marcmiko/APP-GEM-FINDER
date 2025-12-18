@@ -24,26 +24,26 @@ export const config = getDefaultConfig({
     chains: [base],
     ssr: false,
     appIcon: 'https://base-gem-finder.vercel.app/gem-logo.png', // Add your app icon here
-    // wallets: [
-    //     {
-    //         groupName: 'Recommended',
-    //         wallets: [
-    //             coinbaseWallet,
-    //             walletConnectWallet,
-    //             metaMaskWallet,
-    //             rainbowWallet,
-    //         ],
-    //     },
-    //     {
-    //         groupName: 'Other',
-    //         wallets: [
-    //             trustWallet,
-    //             ledgerWallet,
-    //             phantomWallet,
-    //             rabbyWallet,
-    //         ],
-    //     },
-    // ],
+    wallets: [
+        {
+            groupName: 'Recommended',
+            wallets: [
+                coinbaseWallet,
+                walletConnectWallet,
+                metaMaskWallet,
+                rainbowWallet,
+            ],
+        },
+        {
+            groupName: 'Other',
+            wallets: [
+                trustWallet,
+                ledgerWallet,
+                phantomWallet,
+                rabbyWallet,
+            ],
+        },
+    ],
     transports: {
         [base.id]: http(), // Use default transport or let wagmi handle it
     },
