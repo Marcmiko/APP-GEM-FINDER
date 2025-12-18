@@ -2,12 +2,12 @@
 import React, { useState } from 'react';
 import Header from './components/Header';
 import GemFinderPage from './components/GemFinderPage';
-import NewProjectsPage from './components/NewProjectsPage';
 import AnalystPicksPage from './components/AnalystPicksPage';
 import SocialTrendsPage from './components/SocialTrendsPage';
 import SavedProjectsPage from './components/SavedProjectsPage';
 import TokenAnalyzerPage from './components/TokenAnalyzerPage';
 import SniperPage from './components/SniperPage';
+import CommunityPage from './components/CommunityPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
 import Footer from './components/Footer';
@@ -134,6 +134,13 @@ const App: React.FC = () => {
                         onUnsave={handleUnsaveToken}
                         onUpdateTokens={handleUpdateTokens}
                         onWalletSync={handleWalletSync}
+                      />
+                    )}
+                    {activePage === 'community' && (
+                      <CommunityPage
+                        savedTokens={safeSavedTokens}
+                        onSave={handleSaveToken}
+                        onUnsave={handleUnsaveToken}
                       />
                     )}
                   </ErrorBoundary>
