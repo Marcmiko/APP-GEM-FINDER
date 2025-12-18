@@ -165,7 +165,13 @@ const TokenCard: React.FC<TokenCardProps> = ({ token, isSaved, onSave, onUnsave,
     const { style: verdictStyle, icon: verdictIcon } = getVerdictStyle(token.verdict);
 
     return (
-        <div className="glass-card rounded-2xl shadow-lg hover:shadow-indigo-500/20 transition-all duration-300 border border-white/5 hover:border-indigo-500/30 flex flex-col overflow-hidden group relative">
+        <div className={`glass-card rounded-2xl shadow-lg hover:shadow-indigo-500/20 transition-all duration-300 border border-white/5 hover:border-indigo-500/30 flex flex-col overflow-hidden group relative ${token.gemScore && token.gemScore >= 80 ? 'border-glow-gold' : ''}`}>
+            {token.gemScore && token.gemScore >= 80 && (
+                <div className="absolute top-0 left-0 bg-gradient-to-r from-amber-400 to-yellow-600 text-slate-900 text-[10px] font-black px-3 py-1 rounded-br-xl shadow-lg z-20 flex items-center gap-1">
+                    <span className="animate-pulse">💎</span>
+                    <span className="tracking-widest uppercase">GEM</span>
+                </div>
+            )}
             <div className="p-5 flex items-start justify-between relative">
                 {/* Background Gradient Effect */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-3xl rounded-full -mr-10 -mt-10 pointer-events-none"></div>
